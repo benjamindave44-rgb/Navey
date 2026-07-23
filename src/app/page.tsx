@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const [spots, collections, tags] = await Promise.all([
-    getApprovedSpots(8),
+    getApprovedSpots({ limit: 8 }),
     getCollections(4),
     getTags(),
   ]);
