@@ -9,29 +9,40 @@ export type SpotWithTags = {
   province: string | null;
   hidden_gem: boolean;
   description: string | null;
+  saveCount: number;
   tags: string[];
 };
+
+export type SpotSort = "recommended" | "newest" | "most_saved";
 
 export type SpotFilters = {
   search?: string;
   category?: string;
   city?: string;
   tag?: string;
+  tags?: string[];
+  sort?: SpotSort;
   limit?: number;
 };
 
 export async function getApprovedSpots(
   filters: SpotFilters = {}
 ): Promise<SpotWithTags[]> {
-  const { search, category, city, tag, limit } = filters;
+  const { search, category, city, tag, tags, sort, limit } = filters;
+  const tagList = tags && tags.length > 0 ? tags : tag ? [tag] : [];
 
   let query = supabase
     .from("spots")
     .select(
-      "id, name, category, price_range, city, province, hidden_gem, description, spot_tags(tags(label))"
+      "id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label))"
     )
-    .eq("status", "approved")
-    .order("created_at", { ascending: false });
+    .eq("status", "approved");
+
+  if (sort === "most_saved") {
+    query = query.order("save_count", { ascending: false });
+  } else {
+    query = query.order("created_at", { ascending: false });
+  }
 
   if (search) {
     const term = `%${search}%`;
@@ -54,13 +65,14 @@ export async function getApprovedSpots(
     province: spot.province,
     hidden_gem: spot.hidden_gem,
     description: spot.description,
+    saveCount: spot.save_count,
     tags: spot.spot_tags
       .map((st) => st.tags?.label)
       .filter((label): label is string => Boolean(label)),
   }));
 
-  if (tag) {
-    spots = spots.filter((spot) => spot.tags.includes(tag));
+  if (tagList.length > 0) {
+    spots = spots.filter((spot) => tagList.every((t) => spot.tags.includes(t)));
   }
 
   return typeof limit === "number" ? spots.slice(0, limit) : spots;

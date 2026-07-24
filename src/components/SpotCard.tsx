@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { SpotWithTags } from "@/lib/queries";
+import { SaveHeartButton } from "@/components/SaveHeartButton";
 
 const CATEGORY_LABEL: Record<string, string> = {
   coffee_shop: "Coffee Shop",
@@ -10,9 +11,11 @@ const CATEGORY_LABEL: Record<string, string> = {
 export function SpotCard({
   spot,
   trending = false,
+  showSaveButton = false,
 }: {
   spot: SpotWithTags;
   trending?: boolean;
+  showSaveButton?: boolean;
 }) {
   return (
     <Link
@@ -31,6 +34,7 @@ export function SpotCard({
             Trending
           </span>
         )}
+        {showSaveButton && <SaveHeartButton />}
       </div>
       <div className="flex flex-col gap-2 p-4">
         <p className="font-heading text-base font-bold">{spot.name}</p>

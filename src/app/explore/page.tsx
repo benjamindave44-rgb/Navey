@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { SpotCard } from "@/components/SpotCard";
-import { getApprovedSpots, getCities, getTags } from "@/lib/queries";
+import { PaginatedSpotGrid } from "@/components/PaginatedSpotGrid";
+import { getApprovedSpots, getCities, getTags, type SpotSort } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +13,27 @@ const CATEGORIES = [
   { value: "both", label: "Coffee Shop & Restaurant" },
 ];
 
+const SORT_OPTIONS: { value: SpotSort; label: string }[] = [
+  { value: "recommended", label: "Recommended" },
+  { value: "newest", label: "Newest" },
+  { value: "most_saved", label: "Most Saved" },
+];
+
 function firstParam(value: string | string[] | undefined): string {
   return typeof value === "string" ? value : "";
+}
+
+function buildHref(
+  base: Record<string, string>,
+  overrides: Record<string, string | undefined>
+): string {
+  const merged = { ...base, ...overrides };
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(merged)) {
+    if (value) query.set(key, value);
+  }
+  const queryString = query.toString();
+  return queryString ? `/explore?${queryString}` : "/explore";
 }
 
 export default async function ExplorePage({
@@ -26,13 +45,32 @@ export default async function ExplorePage({
   const search = firstParam(params.q);
   const category = firstParam(params.category);
   const city = firstParam(params.city);
-  const tag = firstParam(params.tag);
+  const sortParam = firstParam(params.sort);
+  const sort: SpotSort = (["recommended", "newest", "most_saved"] as string[]).includes(
+    sortParam
+  )
+    ? (sortParam as SpotSort)
+    : "recommended";
+  const activeTags = firstParam(params.tags)
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
 
   const [spots, cities, tags] = await Promise.all([
-    getApprovedSpots({ search, category, city, tag }),
+    getApprovedSpots({ search, category, city, tags: activeTags, sort }),
     getCities(),
     getTags(),
   ]);
+
+  const baseParams = {
+    q: search,
+    category,
+    city,
+    sort,
+    tags: activeTags.join(","),
+  };
+
+  const hasActiveFilters = Boolean(search || category || city || activeTags.length > 0);
 
   return (
     <>
@@ -44,13 +82,24 @@ export default async function ExplorePage({
         </p>
 
         <form className="mt-6 flex flex-wrap items-center gap-3">
-          <input
-            type="text"
-            name="q"
-            defaultValue={search}
-            placeholder="Search spots, cities, vibes..."
-            className="min-w-[200px] flex-1 rounded-full bg-white px-4 py-2 text-sm shadow-[0_8px_24px_rgba(20,18,11,0.08)] outline-none"
-          />
+          <div className="relative min-w-[200px] flex-1">
+            <input
+              type="text"
+              name="q"
+              defaultValue={search}
+              placeholder="Search spots, cities, vibes..."
+              className="w-full rounded-full bg-white px-4 py-2 pr-9 text-sm shadow-[0_8px_24px_rgba(20,18,11,0.08)] outline-none"
+            />
+            {search && (
+              <Link
+                href={buildHref(baseParams, { q: "" })}
+                aria-label="Clear search"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-navey-ink/50 hover:text-navey-ink"
+              >
+                ×
+              </Link>
+            )}
+          </div>
           <select
             name="category"
             defaultValue={category}
@@ -74,7 +123,20 @@ export default async function ExplorePage({
               </option>
             ))}
           </select>
-          {tag && <input type="hidden" name="tag" value={tag} />}
+          <select
+            name="sort"
+            defaultValue={sort}
+            className="rounded-full bg-white px-4 py-2 text-sm shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
+          >
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                Sort: {option.label}
+              </option>
+            ))}
+          </select>
+          {activeTags.length > 0 && (
+            <input type="hidden" name="tags" value={activeTags.join(",")} />
+          )}
           <button
             type="submit"
             className="rounded-full bg-navey-ink px-5 py-2 text-sm font-bold text-navey-yellow"
@@ -83,39 +145,54 @@ export default async function ExplorePage({
           </button>
         </form>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Link
-            href="/explore"
-            className={`rounded-full px-4 py-2 text-xs font-semibold ${
-              !tag ? "bg-navey-ink text-navey-yellow" : "bg-white"
-            }`}
-          >
-            All vibes
-          </Link>
-          {tags.map((option) => (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {tags.map((option) => {
+            const isActive = activeTags.includes(option.label);
+            const nextTags = isActive
+              ? activeTags.filter((t) => t !== option.label)
+              : [...activeTags, option.label];
+            return (
+              <Link
+                key={option.id}
+                href={buildHref(baseParams, { tags: nextTags.join(",") })}
+                className={`rounded-full px-4 py-2 text-xs font-semibold ${
+                  isActive ? "bg-navey-ink text-navey-yellow" : "bg-white"
+                }`}
+              >
+                {option.label}
+              </Link>
+            );
+          })}
+          {hasActiveFilters && (
             <Link
-              key={option.id}
-              href={`/explore?tag=${encodeURIComponent(option.label)}`}
-              className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                tag === option.label
-                  ? "bg-navey-ink text-navey-yellow"
-                  : "bg-white"
-              }`}
+              href="/explore"
+              className="rounded-full px-4 py-2 text-xs font-semibold text-navey-ink/50 hover:text-navey-ink"
             >
-              {option.label}
+              Clear all
             </Link>
-          ))}
+          )}
         </div>
 
         {spots.length === 0 ? (
-          <p className="mt-10 text-sm text-navey-ink/60">
-            No spots match your filters yet. Try widening your search.
-          </p>
+          <div className="mt-16 flex flex-col items-center gap-3 text-center">
+            <span className="text-4xl" aria-hidden>
+              🔍
+            </span>
+            <p className="text-sm text-navey-ink/60">
+              No spots match your filters yet. Try widening your search.
+            </p>
+            {hasActiveFilters && (
+              <Link
+                href="/explore"
+                className="rounded-full bg-navey-ink px-5 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
+              >
+                Clear filters
+              </Link>
+            )}
+          </div>
         ) : (
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {spots.map((spot) => (
-              <SpotCard key={spot.id} spot={spot} />
-            ))}
+          <div className="mt-8">
+            <PaginatedSpotGrid spots={spots} />
           </div>
         )}
       </main>
