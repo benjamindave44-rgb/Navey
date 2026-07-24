@@ -7,7 +7,13 @@ const CATEGORY_LABEL: Record<string, string> = {
   both: "Coffee Shop & Restaurant",
 };
 
-export function SpotCard({ spot }: { spot: SpotWithTags }) {
+export function SpotCard({
+  spot,
+  trending = false,
+}: {
+  spot: SpotWithTags;
+  trending?: boolean;
+}) {
   return (
     <Link
       href={`/spots/${spot.id}`}
@@ -18,6 +24,11 @@ export function SpotCard({ spot }: { spot: SpotWithTags }) {
         {spot.hidden_gem && (
           <span className="absolute left-3 top-3 rounded-full bg-navey-ink px-3 py-1 text-xs font-bold text-navey-yellow">
             Hidden Gem
+          </span>
+        )}
+        {trending && !spot.hidden_gem && (
+          <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-bold text-navey-ink shadow-[0_4px_12px_rgba(20,18,11,0.12)]">
+            Trending
           </span>
         )}
       </div>

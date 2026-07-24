@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
+import type { SpotWithTags } from "@/lib/queries";
 
 const CITIES = [
   "Philippines",
@@ -18,7 +20,7 @@ const CITIES = [
 
 const FILTER_CHIPS = ["WiFi", "24 Hours", "Hidden Gems", "Chill", "Date Spot", "Charging"];
 
-export function Hero() {
+export function Hero({ featured }: { featured: SpotWithTags | null }) {
   const [cityIndex, setCityIndex] = useState(0);
 
   useEffect(() => {
@@ -57,7 +59,7 @@ export function Hero() {
             Let&apos;s explore
           </button>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {FILTER_CHIPS.map((chip) => (
             <span
               key={chip}
@@ -66,10 +68,47 @@ export function Hero() {
               {chip}
             </span>
           ))}
+          <button
+            type="button"
+            aria-label="More filters"
+            disabled
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm disabled:cursor-not-allowed"
+          >
+            <span aria-hidden>⋯</span>
+          </button>
         </div>
       </div>
-      <div className="hidden items-center justify-center rounded-[260px_260px_40px_260px] bg-navey-band text-7xl md:flex">
+      <div className="relative hidden items-center justify-center rounded-[260px_260px_40px_260px] bg-navey-band text-7xl md:flex">
         📍
+        {featured && (
+          <Link
+            href={`/spots/${featured.id}`}
+            className="group absolute -bottom-6 left-8 flex w-64 items-center gap-3 rounded-2xl bg-white p-3 shadow-[0_16px_32px_rgba(20,18,11,0.16)] transition-transform hover:-translate-y-1"
+          >
+            <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-navey-band text-2xl">
+              ☕
+              {featured.hidden_gem && (
+                <span className="absolute -right-1 -top-1 text-base" aria-hidden>
+                  🔥
+                </span>
+              )}
+            </div>
+            <div className="flex min-w-0 flex-col gap-0.5 text-left">
+              <p className="truncate text-sm font-heading font-bold">
+                {featured.name}
+              </p>
+              <p className="truncate text-xs text-navey-ink/60">
+                {featured.city}
+              </p>
+            </div>
+            <span
+              aria-hidden
+              className="ml-auto text-lg opacity-0 transition-opacity group-hover:opacity-100"
+            >
+              →
+            </span>
+          </Link>
+        )}
       </div>
     </section>
   );

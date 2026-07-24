@@ -22,15 +22,26 @@ export function Header() {
           Explore
         </Link>
         <span className="text-navey-ink/40">Collections</span>
+        <span className="text-navey-ink/40">Map</span>
         <span className="text-navey-ink/40">Community</span>
         <span className="text-navey-ink/40">About</span>
       </nav>
-      <Link
-        href="/sign-in"
-        className="rounded-full bg-navey-ink px-5 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
-      >
-        Sign in
-      </Link>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          aria-label="Saved places"
+          disabled
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/70 text-lg disabled:cursor-not-allowed"
+        >
+          <span aria-hidden>♡</span>
+        </button>
+        <Link
+          href="/sign-in"
+          className="rounded-full bg-navey-ink px-5 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
+        >
+          Sign in
+        </Link>
+      </div>
     </header>
   );
 }
