@@ -1,9 +1,18 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export function Header() {
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between border-b border-black/5 bg-navey-yellow px-6 py-4 md:px-12">
       <Link href="/" className="flex items-center gap-3">
+        <Image
+          src="/navey-icon.png"
+          alt="Navey"
+          width={44}
+          height={44}
+          priority
+          className="h-9 w-9 md:h-11 md:w-11"
+        />
         <span className="font-heading text-3xl font-extrabold tracking-tight">
           NAVEY
         </span>
