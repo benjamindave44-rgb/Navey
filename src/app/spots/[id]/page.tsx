@@ -2,7 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { getSpotDetail, type SpotDetail } from "@/lib/queries";
+import { SpotCard } from "@/components/SpotCard";
+import {
+  getRelatedSpots,
+  getSpotDetail,
+  type SpotDetail,
+} from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -45,188 +50,295 @@ export default async function SpotDetailPage({
 
   if (!spot) notFound();
 
+  const related = await getRelatedSpots(spot.id, spot.city, 4);
   const acceptedPayments = PAYMENT_OPTIONS.filter(({ key }) => spot[key]);
+  const today = new Date().getDay();
+  const mapsHref =
+    spot.lat != null && spot.lng != null
+      ? `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+          `${spot.address}, ${spot.city}`
+        )}`;
 
   return (
     <>
       <Header />
       <main className="flex-1">
-        <div className="flex aspect-[16/6] items-center justify-center bg-navey-band text-6xl">
-          ☕
-        </div>
+        <div className="mx-auto max-w-6xl px-6 py-6 md:px-12">
+          <nav className="flex items-center gap-2 text-xs font-semibold text-navey-ink/50">
+            <Link href="/" className="hover:opacity-60">
+              Home
+            </Link>
+            <span aria-hidden>/</span>
+            <Link
+              href={`/explore?city=${encodeURIComponent(spot.city)}`}
+              className="hover:opacity-60"
+            >
+              {spot.city}
+            </Link>
+            <span aria-hidden>/</span>
+            <span className="text-navey-ink">{spot.name}</span>
+          </nav>
 
-        <div className="mx-auto max-w-4xl px-6 py-10 md:px-0">
-          <Link
-            href="/explore"
-            className="text-sm font-semibold hover:opacity-60"
-          >
-            ← Back to Explore
-          </Link>
+          <div className="mt-4 grid gap-3 md:grid-cols-[1.5fr_1fr]">
+            <GalleryTile photo={spot.galleryPhotos[0]} name={spot.name} big />
+            <div className="grid grid-rows-2 gap-3">
+              <GalleryTile photo={spot.galleryPhotos[1]} name={spot.name} />
+              <GalleryTile photo={spot.galleryPhotos[2]} name={spot.name} />
+            </div>
+          </div>
 
-          <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
+          <div className="mt-8 grid gap-10 lg:grid-cols-[1.5fr_1fr]">
             <div>
-              <h1 className="font-heading text-3xl font-extrabold">
-                {spot.name}
-              </h1>
-              <p className="mt-1 text-sm text-navey-ink/70">
-                {spot.address}, {spot.city}
-                {spot.province ? `, ${spot.province}` : ""}
-              </p>
-            </div>
-            {spot.hidden_gem && (
-              <span className="rounded-full bg-navey-ink px-3 py-1 text-xs font-bold text-navey-yellow">
-                Hidden Gem
-              </span>
-            )}
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-            <span className="rounded-full bg-navey-band px-3 py-1 font-semibold uppercase tracking-wide">
-              {CATEGORY_LABEL[spot.category] ?? spot.category}
-            </span>
-            {spot.price_range && <span>{spot.price_range}</span>}
-            {spot.averageRating !== null && (
-              <span>
-                ★ {spot.averageRating.toFixed(1)} ({spot.reviews.length}{" "}
-                review{spot.reviews.length === 1 ? "" : "s"})
-              </span>
-            )}
-          </div>
-
-          {spot.tags.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {spot.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-white px-4 py-2 text-xs font-semibold shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
-                >
-                  {tag}
+              {spot.hidden_gem && (
+                <span className="mb-3 inline-block rounded-full bg-navey-ink px-3 py-1 text-xs font-bold text-navey-yellow">
+                  Hidden Gem
                 </span>
-              ))}
-            </div>
-          )}
+              )}
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <h1 className="font-heading text-3xl font-extrabold md:text-4xl">
+                  {spot.name}
+                </h1>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    aria-label="Save spot"
+                    disabled
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-navey-band text-lg disabled:cursor-not-allowed"
+                  >
+                    <span aria-hidden>♡</span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Share spot"
+                    disabled
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-navey-band text-lg disabled:cursor-not-allowed"
+                  >
+                    <span aria-hidden>↗</span>
+                  </button>
+                </div>
+              </div>
+              <p className="mt-1 text-sm text-navey-ink/70">
+                {CATEGORY_LABEL[spot.category] ?? spot.category}
+                {spot.price_range ? ` · ${spot.price_range}` : ""} · {spot.city}
+              </p>
+              <p className="mt-1 text-xs text-navey-ink/50">
+                {spot.saveCount} save{spot.saveCount === 1 ? "" : "s"}
+              </p>
 
-          {spot.description && (
-            <p className="mt-6 text-base text-navey-ink/80">
-              {spot.description}
-            </p>
-          )}
-
-          <div className="mt-8 grid gap-8 md:grid-cols-2">
-            <section>
-              <h2 className="font-heading text-lg font-bold">Vibe</h2>
-              <dl className="mt-3 space-y-2 text-sm">
-                {spot.noise_level && (
-                  <Detail label="Noise level" value={spot.noise_level} />
-                )}
-                {spot.music_style && (
-                  <Detail label="Music" value={spot.music_style} />
-                )}
-                {spot.lighting && (
-                  <Detail label="Lighting" value={spot.lighting} />
-                )}
-                {spot.seating_style && (
-                  <Detail label="Seating" value={spot.seating_style} />
-                )}
-                {spot.pwd_friendly && (
-                  <Detail label="Accessibility" value="PWD friendly" />
-                )}
-              </dl>
-            </section>
-
-            <section>
-              <h2 className="font-heading text-lg font-bold">Payments</h2>
-              {acceptedPayments.length === 0 ? (
-                <p className="mt-3 text-sm text-navey-ink/60">
-                  No payment info yet.
-                </p>
-              ) : (
-                <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                  {acceptedPayments.map(({ key, label }) => (
+              {(spot.tags.length > 0 || spot.pwd_friendly) && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {spot.tags.map((tag) => (
                     <span
-                      key={key}
-                      className="rounded-full bg-navey-band px-3 py-1 font-semibold"
+                      key={tag}
+                      className="rounded-full bg-white px-4 py-2 text-xs font-semibold shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
                     >
-                      {label}
+                      {tag}
                     </span>
                   ))}
+                  {spot.pwd_friendly && (
+                    <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
+                      PWD Friendly
+                    </span>
+                  )}
                 </div>
               )}
-            </section>
+
+              {spot.description && (
+                <p className="mt-6 text-base text-navey-ink/80">
+                  {spot.description}
+                </p>
+              )}
+
+              <section className="mt-8">
+                <h2 className="font-heading text-lg font-bold">
+                  Vibe & Ambiance
+                </h2>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <VibeCard label="Noise Level" value={spot.noise_level} />
+                  <VibeCard label="Music" value={spot.music_style} />
+                  <VibeCard label="Lighting" value={spot.lighting} />
+                  <VibeCard label="Seating" value={spot.seating_style} />
+                </div>
+              </section>
+
+              <section className="mt-8">
+                <h2 className="font-heading text-lg font-bold">Menu</h2>
+                {spot.menuPhotos.length === 0 ? (
+                  <p className="mt-3 text-sm text-navey-ink/60">
+                    No menu photos uploaded yet.
+                  </p>
+                ) : (
+                  <div className="mt-3 grid grid-cols-3 gap-3">
+                    {spot.menuPhotos.map((photo) => (
+                      <div
+                        key={photo.id}
+                        className="aspect-[3/4] overflow-hidden rounded-xl bg-navey-band"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={photo.url}
+                          alt={`${spot.name} menu`}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="mt-2 text-xs text-navey-ink/50">
+                  Updated by owner · uploadable anytime
+                </p>
+              </section>
+
+              <section className="mt-10">
+                <h2 className="font-heading text-lg font-bold">
+                  Recent Visits
+                </h2>
+                {spot.reviews.length === 0 ? (
+                  <p className="mt-3 text-sm text-navey-ink/60">
+                    No reviews yet — be the first to share your visit.
+                  </p>
+                ) : (
+                  <ul className="mt-4 space-y-4">
+                    {spot.reviews.map((review) => (
+                      <li
+                        key={review.id}
+                        className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold">
+                            {review.author}
+                          </span>
+                          <span aria-label={`${review.rating} out of 5 stars`}>
+                            {"★".repeat(review.rating)}
+                            {"☆".repeat(5 - review.rating)}
+                          </span>
+                        </div>
+                        {review.body && (
+                          <p className="mt-2 text-sm text-navey-ink/80">
+                            {review.body}
+                          </p>
+                        )}
+                        {review.photos.length > 0 && (
+                          <div className="mt-3 flex gap-2">
+                            {review.photos.map((url) => (
+                              <div
+                                key={url}
+                                className="h-16 w-16 overflow-hidden rounded-lg bg-navey-band"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={url}
+                                  alt="From a visitor's review"
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </div>
+
+            <aside className="flex h-fit flex-col gap-6 lg:sticky lg:top-24">
+              <div className="overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
+                <div className="flex aspect-[4/3] items-center justify-center bg-navey-band text-4xl">
+                  🗺️
+                </div>
+                <div className="flex flex-col gap-3 p-4">
+                  <p className="text-sm text-navey-ink/70">
+                    {spot.address}, {spot.city}
+                    {spot.province ? `, ${spot.province}` : ""}
+                  </p>
+                  <div className="flex gap-2">
+                    <a
+                      href={mapsHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex-1 rounded-full bg-navey-ink px-4 py-2 text-center text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
+                    >
+                      Get Directions
+                    </a>
+                    <button
+                      type="button"
+                      disabled
+                      className="rounded-full bg-navey-band px-4 py-2 text-sm font-bold disabled:cursor-not-allowed"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
+                <p className="font-heading font-bold">Payment Methods</p>
+                {acceptedPayments.length === 0 ? (
+                  <p className="mt-3 text-sm text-navey-ink/60">
+                    No payment info yet.
+                  </p>
+                ) : (
+                  <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                    {acceptedPayments.map(({ key, label }) => (
+                      <span
+                        key={key}
+                        className="rounded-full bg-navey-band px-3 py-1 font-semibold"
+                      >
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {spot.hours.length > 0 && (
+                <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
+                  <p className="font-heading font-bold">Hours</p>
+                  <ul className="mt-3 space-y-1 text-sm">
+                    {spot.hours.map((hour) => (
+                      <li
+                        key={hour.day_of_week}
+                        className={`flex justify-between border-b border-black/5 py-1 ${
+                          hour.day_of_week === today ? "font-bold" : ""
+                        }`}
+                      >
+                        <span>{DAY_LABELS[hour.day_of_week]}</span>
+                        <span>
+                          {hour.is_closed
+                            ? "Closed"
+                            : `${hour.open_time ?? "?"} – ${hour.close_time ?? "?"}`}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {spot.contributor && (
+                <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
+                  <p className="font-heading font-bold">Contributed by</p>
+                  <p className="mt-2 text-sm text-navey-ink/70">
+                    {spot.contributor.name}
+                  </p>
+                </div>
+              )}
+            </aside>
           </div>
 
-          {spot.hours.length > 0 && (
-            <section className="mt-8">
-              <h2 className="font-heading text-lg font-bold">Hours</h2>
-              <ul className="mt-3 space-y-1 text-sm">
-                {spot.hours.map((hour) => (
-                  <li
-                    key={hour.day_of_week}
-                    className="flex justify-between border-b border-black/5 py-1"
-                  >
-                    <span>{DAY_LABELS[hour.day_of_week]}</span>
-                    <span>
-                      {hour.is_closed
-                        ? "Closed"
-                        : `${hour.open_time ?? "?"} – ${hour.close_time ?? "?"}`}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {spot.photos.length > 0 && (
-            <section className="mt-8">
-              <h2 className="font-heading text-lg font-bold">Photos</h2>
-              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {spot.photos.map((photo) => (
-                  <div
-                    key={photo.id}
-                    className="aspect-square overflow-hidden rounded-xl bg-navey-band"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={photo.url}
-                      alt={spot.name}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
+          {related.length > 0 && (
+            <section className="mt-16 border-t border-black/5 pt-10">
+              <h2 className="mb-6 font-heading text-2xl font-extrabold">
+                More spots nearby
+              </h2>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {related.map((relatedSpot) => (
+                  <SpotCard key={relatedSpot.id} spot={relatedSpot} />
                 ))}
               </div>
             </section>
           )}
-
-          <section className="mt-10">
-            <h2 className="font-heading text-lg font-bold">Reviews</h2>
-            {spot.reviews.length === 0 ? (
-              <p className="mt-3 text-sm text-navey-ink/60">
-                No reviews yet — be the first to share your visit.
-              </p>
-            ) : (
-              <ul className="mt-4 space-y-4">
-                {spot.reviews.map((review) => (
-                  <li
-                    key={review.id}
-                    className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold">{review.author}</span>
-                      <span aria-label={`${review.rating} out of 5 stars`}>
-                        {"★".repeat(review.rating)}
-                        {"☆".repeat(5 - review.rating)}
-                      </span>
-                    </div>
-                    {review.body && (
-                      <p className="mt-2 text-sm text-navey-ink/80">
-                        {review.body}
-                      </p>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
         </div>
       </main>
       <Footer />
@@ -234,11 +346,38 @@ export default async function SpotDetailPage({
   );
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
+function GalleryTile({
+  photo,
+  name,
+  big = false,
+}: {
+  photo?: { id: string; url: string };
+  name: string;
+  big?: boolean;
+}) {
   return (
-    <div className="flex justify-between gap-4">
-      <dt className="text-navey-ink/60">{label}</dt>
-      <dd className="font-semibold">{value}</dd>
+    <div
+      className={`flex items-center justify-center overflow-hidden rounded-[22px] bg-navey-band ${
+        big ? "aspect-[4/3] text-6xl md:aspect-auto md:h-full" : "text-4xl"
+      }`}
+    >
+      {photo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={photo.url} alt={name} className="h-full w-full object-cover" />
+      ) : (
+        "☕"
+      )}
+    </div>
+  );
+}
+
+function VibeCard({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div className="rounded-xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
+      <p className="text-xs uppercase tracking-wide text-navey-ink/50">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-semibold">{value ?? "Not set"}</p>
     </div>
   );
 }

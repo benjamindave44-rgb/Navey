@@ -116,6 +116,7 @@ export type SpotReview = {
   body: string | null;
   created_at: string;
   author: string;
+  photos: string[];
 };
 
 export type SpotDetail = SpotWithTags & {
@@ -127,11 +128,13 @@ export type SpotDetail = SpotWithTags & {
   lighting: string | null;
   seating_style: string | null;
   pwd_friendly: boolean;
+  saveCount: number;
   accepts_cash: boolean;
   accepts_qr_ph: boolean;
   accepts_cards: boolean;
   accepts_bank_transfer: boolean;
-  photos: { id: string; url: string; kind: string }[];
+  galleryPhotos: { id: string; url: string }[];
+  menuPhotos: { id: string; url: string }[];
   hours: {
     day_of_week: number;
     open_time: string | null;
@@ -140,6 +143,7 @@ export type SpotDetail = SpotWithTags & {
   }[];
   reviews: SpotReview[];
   averageRating: number | null;
+  contributor: { name: string } | null;
 };
 
 export async function getSpotDetail(id: string): Promise<SpotDetail | null> {
@@ -147,13 +151,14 @@ export async function getSpotDetail(id: string): Promise<SpotDetail | null> {
     .from("spots")
     .select(
       `id, name, category, price_range, city, province, address, lat, lng,
-       description, hidden_gem, pwd_friendly,
+       description, hidden_gem, pwd_friendly, save_count,
        noise_level, music_style, lighting, seating_style,
        accepts_cash, accepts_qr_ph, accepts_cards, accepts_bank_transfer,
        spot_tags(tags(label)),
        spot_photos(id, url, kind),
        spot_hours(day_of_week, open_time, close_time, is_closed),
-       reviews(id, rating, body, created_at, profiles(display_name))`
+       reviews(id, rating, body, created_at, profiles(display_name), review_photos(url)),
+       submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)`
     )
     .eq("id", id)
     .eq("status", "approved")
@@ -167,6 +172,7 @@ export async function getSpotDetail(id: string): Promise<SpotDetail | null> {
     body: review.body,
     created_at: review.created_at,
     author: review.profiles?.display_name ?? "Anonymous",
+    photos: review.review_photos.map((photo) => photo.url),
   }));
 
   const averageRating = reviews.length
@@ -193,13 +199,38 @@ export async function getSpotDetail(id: string): Promise<SpotDetail | null> {
     lighting: data.lighting,
     seating_style: data.seating_style,
     pwd_friendly: data.pwd_friendly,
+    saveCount: data.save_count,
     accepts_cash: data.accepts_cash,
     accepts_qr_ph: data.accepts_qr_ph,
     accepts_cards: data.accepts_cards,
     accepts_bank_transfer: data.accepts_bank_transfer,
-    photos: data.spot_photos,
+    galleryPhotos: data.spot_photos.filter((p) => p.kind === "gallery"),
+    menuPhotos: data.spot_photos.filter((p) => p.kind === "menu"),
     hours: [...data.spot_hours].sort((a, b) => a.day_of_week - b.day_of_week),
     reviews,
     averageRating,
+    contributor: data.submitted_by_profile?.display_name
+      ? { name: data.submitted_by_profile.display_name }
+      : null,
   };
+}
+
+export async function getRelatedSpots(
+  excludeId: string,
+  city: string,
+  limit = 4
+): Promise<SpotWithTags[]> {
+  const sameCity = await getApprovedSpots({ city, limit: limit + 1 });
+  const filtered = sameCity.filter((spot) => spot.id !== excludeId);
+  if (filtered.length >= limit) return filtered.slice(0, limit);
+
+  const rest = await getApprovedSpots({ limit: limit + 1 });
+  const combined = [...filtered];
+  for (const spot of rest) {
+    if (combined.length >= limit) break;
+    if (spot.id === excludeId) continue;
+    if (combined.some((existing) => existing.id === spot.id)) continue;
+    combined.push(spot);
+  }
+  return combined.slice(0, limit);
 }
