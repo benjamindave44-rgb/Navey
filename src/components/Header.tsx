@@ -1,7 +1,26 @@
 import Image from "next/image";
 import Link from "next/link";
+import { signOutAction } from "@/app/sign-in/actions";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 
-export function Header() {
+export async function Header() {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let displayName: string | null = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", user.id)
+      .maybeSingle();
+    displayName = profile?.display_name ?? user.email ?? null;
+  }
+
+  const initial = displayName?.trim()?.[0]?.toUpperCase() ?? "?";
+
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between border-b border-black/5 bg-navey-yellow px-6 py-4 md:px-12">
       <Link href="/" className="flex items-center gap-4">
@@ -35,12 +54,32 @@ export function Header() {
         >
           <span aria-hidden>♡</span>
         </button>
-        <Link
-          href="/sign-in"
-          className="rounded-full bg-navey-ink px-5 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
-        >
-          Sign in
-        </Link>
+        {user ? (
+          <div className="flex items-center gap-2">
+            <span
+              aria-hidden
+              title={displayName ?? undefined}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-navey-ink text-sm font-bold text-navey-yellow"
+            >
+              {initial}
+            </span>
+            <form action={signOutAction}>
+              <button
+                type="submit"
+                className="rounded-full bg-white px-4 py-2 text-sm font-bold hover:bg-white/80"
+              >
+                Sign out
+              </button>
+            </form>
+          </div>
+        ) : (
+          <Link
+            href="/sign-in"
+            className="rounded-full bg-navey-ink px-5 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
+          >
+            Sign in
+          </Link>
+        )}
       </div>
     </header>
   );
