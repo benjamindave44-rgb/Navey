@@ -20,7 +20,7 @@ export async function requestPasswordReset(formData: FormData) {
 
   const supabase = await createServerSupabaseClient();
   await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/confirm?next=/reset-password`,
+    redirectTo: `${origin}/auth/confirm`,
   });
 
   // Always show the same outcome whether or not the email has an
