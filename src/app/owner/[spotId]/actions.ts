@@ -5,7 +5,12 @@ import { checkContentGuidelines } from "@/lib/content-guidelines";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { storagePathFromPublicUrl, uploadPhotos } from "@/lib/photo-upload";
 
-const MAX_MENU_PHOTOS = 9;
+type PhotoKind = "gallery" | "menu";
+
+const PHOTO_LIMITS: Record<PhotoKind, number> = {
+  gallery: 12,
+  menu: 9,
+};
 
 async function requireOwnerAccess(spotId: string) {
   const supabase = await createServerSupabaseClient();
@@ -153,7 +158,7 @@ export async function updateAmenities(formData: FormData) {
   );
 }
 
-export async function addMenuPhotos(formData: FormData) {
+async function addSpotPhotos(kind: PhotoKind, formData: FormData) {
   const spotId = String(formData.get("spotId") ?? "");
   const supabase = await requireOwnerAccess(spotId);
 
@@ -161,31 +166,32 @@ export async function addMenuPhotos(formData: FormData) {
     .from("spot_photos")
     .select("id", { count: "exact", head: true })
     .eq("spot_id", spotId)
-    .eq("kind", "menu");
+    .eq("kind", kind);
 
-  const remaining = MAX_MENU_PHOTOS - (count ?? 0);
+  const max = PHOTO_LIMITS[kind];
+  const remaining = max - (count ?? 0);
   if (remaining <= 0) {
     redirect(
-      `/owner/${spotId}?tab=menu&error=${encodeURIComponent(
-        `You've reached the ${MAX_MENU_PHOTOS}-photo menu limit. Remove one first.`
+      `/owner/${spotId}?tab=${kind}&error=${encodeURIComponent(
+        `You've reached the ${max}-photo limit. Remove one first.`
       )}`
     );
   }
 
   const photoUrls = (
-    await uploadPhotos(supabase, formData.getAll("photos"), `spots/${spotId}/menu`)
+    await uploadPhotos(supabase, formData.getAll("photos"), `spots/${spotId}/${kind}`)
   ).slice(0, remaining);
 
   if (photoUrls.length > 0) {
     await supabase
       .from("spot_photos")
-      .insert(photoUrls.map((url) => ({ spot_id: spotId, url, kind: "menu" })));
+      .insert(photoUrls.map((url) => ({ spot_id: spotId, url, kind })));
   }
 
-  redirect(`/owner/${spotId}?tab=menu&notice=${encodeURIComponent("Menu photos updated.")}`);
+  redirect(`/owner/${spotId}?tab=${kind}&notice=${encodeURIComponent("Photos updated.")}`);
 }
 
-export async function deleteMenuPhoto(formData: FormData) {
+async function deleteSpotPhoto(kind: PhotoKind, formData: FormData) {
   const spotId = String(formData.get("spotId") ?? "");
   const photoId = String(formData.get("photoId") ?? "");
   const supabase = await requireOwnerAccess(spotId);
@@ -203,5 +209,21 @@ export async function deleteMenuPhoto(formData: FormData) {
     await supabase.from("spot_photos").delete().eq("id", photo.id);
   }
 
-  redirect(`/owner/${spotId}?tab=menu&notice=${encodeURIComponent("Photo removed.")}`);
+  redirect(`/owner/${spotId}?tab=${kind}&notice=${encodeURIComponent("Photo removed.")}`);
+}
+
+export async function addMenuPhotos(formData: FormData) {
+  await addSpotPhotos("menu", formData);
+}
+
+export async function deleteMenuPhoto(formData: FormData) {
+  await deleteSpotPhoto("menu", formData);
+}
+
+export async function addGalleryPhotos(formData: FormData) {
+  await addSpotPhotos("gallery", formData);
+}
+
+export async function deleteGalleryPhoto(formData: FormData) {
+  await deleteSpotPhoto("gallery", formData);
 }

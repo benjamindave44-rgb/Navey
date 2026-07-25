@@ -51,6 +51,7 @@ export type OwnerSpotDetail = {
     isClosed: boolean;
   }[];
   tagIds: number[];
+  galleryPhotos: { id: string; url: string }[];
   menuPhotos: { id: string; url: string }[];
 };
 
@@ -101,6 +102,9 @@ export async function getOwnerSpotDetail(
       isClosed: hour.is_closed,
     })),
     tagIds: data.spot_tags.map((tag) => tag.tag_id),
+    galleryPhotos: data.spot_photos
+      .filter((photo) => photo.kind === "gallery")
+      .map((photo) => ({ id: photo.id, url: photo.url })),
     menuPhotos: data.spot_photos
       .filter((photo) => photo.kind === "menu")
       .map((photo) => ({ id: photo.id, url: photo.url })),

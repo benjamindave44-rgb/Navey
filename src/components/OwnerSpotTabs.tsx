@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
+  addGalleryPhotos,
   addMenuPhotos,
+  deleteGalleryPhoto,
   deleteMenuPhoto,
   updateAmenities,
   updateBasicInfo,
@@ -13,6 +15,7 @@ import {
 import { PhotoPicker } from "@/components/PhotoPicker";
 import type { OwnerSpotDetail } from "@/lib/owner";
 
+const MAX_GALLERY_PHOTOS = 12;
 const MAX_MENU_PHOTOS = 9;
 
 const CATEGORIES = [
@@ -46,7 +49,76 @@ function SaveButton({ label }: { label: string }) {
   );
 }
 
-type Tab = "overview" | "hours" | "payments" | "amenities" | "menu";
+function PhotoManager({
+  spotId,
+  photos,
+  max,
+  aspect,
+  addAction,
+  deleteAction,
+  emptyLabel,
+  addLabel,
+}: {
+  spotId: string;
+  photos: { id: string; url: string }[];
+  max: number;
+  aspect: string;
+  addAction: (formData: FormData) => Promise<void>;
+  deleteAction: (formData: FormData) => Promise<void>;
+  emptyLabel: string;
+  addLabel: string;
+}) {
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <p className="mb-2 text-sm font-semibold">Current photos</p>
+        {photos.length === 0 ? (
+          <p className="text-sm text-navey-ink/50">{emptyLabel}</p>
+        ) : (
+          <div className="grid grid-cols-3 gap-3">
+            {photos.map((photo) => (
+              <div
+                key={photo.id}
+                className={`relative ${aspect} overflow-hidden rounded-xl bg-navey-band`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- external Supabase Storage URL */}
+                <img
+                  src={photo.url}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+                <form action={deleteAction} className="absolute right-1 top-1">
+                  <input type="hidden" name="spotId" value={spotId} />
+                  <input type="hidden" name="photoId" value={photo.id} />
+                  <button
+                    type="submit"
+                    aria-label="Remove photo"
+                    className="flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white hover:bg-black/80"
+                  >
+                    ×
+                  </button>
+                </form>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {photos.length < max && (
+        <form action={addAction} className="flex flex-col gap-4">
+          <input type="hidden" name="spotId" value={spotId} />
+          <div>
+            <p className="mb-2 text-sm font-semibold">{addLabel}</p>
+            <PhotoPicker name="photos" max={max - photos.length} aspect={aspect} />
+          </div>
+          <SaveButton label="Upload Photos" />
+        </form>
+      )}
+    </div>
+  );
+}
+
+type Tab = "overview" | "hours" | "payments" | "amenities" | "gallery" | "menu";
 
 export function OwnerSpotTabs({
   spot,
@@ -58,9 +130,9 @@ export function OwnerSpotTabs({
   initialTab: string;
 }) {
   const [tab, setTab] = useState<Tab>(
-    (["overview", "hours", "payments", "amenities", "menu"] as string[]).includes(
-      initialTab
-    )
+    (
+      ["overview", "hours", "payments", "amenities", "gallery", "menu"] as string[]
+    ).includes(initialTab)
       ? (initialTab as Tab)
       : "overview"
   );
@@ -81,6 +153,7 @@ export function OwnerSpotTabs({
     { id: "hours", label: "Hours" },
     { id: "payments", label: "Payments" },
     { id: "amenities", label: "Amenities & Vibe" },
+    { id: "gallery", label: "Gallery" },
     { id: "menu", label: "Menu" },
   ];
 
@@ -377,62 +450,30 @@ export function OwnerSpotTabs({
           </form>
         )}
 
-        {tab === "menu" && (
-          <div className="flex flex-col gap-6">
-            <div>
-              <p className="mb-2 text-sm font-semibold">Current menu photos</p>
-              {spot.menuPhotos.length === 0 ? (
-                <p className="text-sm text-navey-ink/50">
-                  No menu photos uploaded yet.
-                </p>
-              ) : (
-                <div className="grid grid-cols-3 gap-3">
-                  {spot.menuPhotos.map((photo) => (
-                    <div
-                      key={photo.id}
-                      className="relative aspect-[3/4] overflow-hidden rounded-xl bg-navey-band"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element -- external Supabase Storage URL */}
-                      <img
-                        src={photo.url}
-                        alt=""
-                        className="h-full w-full object-cover"
-                      />
-                      <form
-                        action={deleteMenuPhoto}
-                        className="absolute right-1 top-1"
-                      >
-                        <input type="hidden" name="spotId" value={spot.id} />
-                        <input type="hidden" name="photoId" value={photo.id} />
-                        <button
-                          type="submit"
-                          aria-label="Remove photo"
-                          className="flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white hover:bg-black/80"
-                        >
-                          ×
-                        </button>
-                      </form>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+        {tab === "gallery" && (
+          <PhotoManager
+            spotId={spot.id}
+            photos={spot.galleryPhotos}
+            max={MAX_GALLERY_PHOTOS}
+            aspect="aspect-square"
+            addAction={addGalleryPhotos}
+            deleteAction={deleteGalleryPhoto}
+            emptyLabel="No gallery photos uploaded yet."
+            addLabel="Add gallery photos"
+          />
+        )}
 
-            {spot.menuPhotos.length < MAX_MENU_PHOTOS && (
-              <form action={addMenuPhotos} className="flex flex-col gap-4">
-                <input type="hidden" name="spotId" value={spot.id} />
-                <div>
-                  <p className="mb-2 text-sm font-semibold">Add menu photos</p>
-                  <PhotoPicker
-                    name="photos"
-                    max={MAX_MENU_PHOTOS - spot.menuPhotos.length}
-                    aspect="aspect-[3/4]"
-                  />
-                </div>
-                <SaveButton label="Upload Photos" />
-              </form>
-            )}
-          </div>
+        {tab === "menu" && (
+          <PhotoManager
+            spotId={spot.id}
+            photos={spot.menuPhotos}
+            max={MAX_MENU_PHOTOS}
+            aspect="aspect-[3/4]"
+            addAction={addMenuPhotos}
+            deleteAction={deleteMenuPhoto}
+            emptyLabel="No menu photos uploaded yet."
+            addLabel="Add menu photos"
+          />
         )}
       </div>
     </div>
