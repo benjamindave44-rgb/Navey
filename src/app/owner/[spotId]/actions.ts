@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { checkContentGuidelines } from "@/lib/content-guidelines";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { storagePathFromPublicUrl, uploadPhotos } from "@/lib/photo-upload";
+import { geocodeAddress } from "@/lib/geocode";
 
 type PhotoKind = "gallery" | "menu";
 
@@ -54,6 +55,22 @@ export async function updateBasicInfo(formData: FormData) {
   const issues = checkContentGuidelines({ name, description: description || null });
   const needsReview = issues.length > 0;
 
+  const { data: existing } = await supabase
+    .from("spots")
+    .select("address, city, province")
+    .eq("id", spotId)
+    .maybeSingle();
+
+  const addressChanged =
+    existing &&
+    (existing.address !== address ||
+      existing.city !== city ||
+      existing.province !== (province || null));
+
+  const coords = addressChanged
+    ? await geocodeAddress({ address, city, province: province || null })
+    : null;
+
   await supabase
     .from("spots")
     .update({
@@ -65,6 +82,7 @@ export async function updateBasicInfo(formData: FormData) {
       province: province || null,
       description: description || null,
       needs_review: needsReview,
+      ...(addressChanged ? { lat: coords?.lat ?? null, lng: coords?.lng ?? null } : {}),
     })
     .eq("id", spotId);
 

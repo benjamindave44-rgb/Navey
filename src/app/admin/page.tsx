@@ -1,16 +1,51 @@
 import Link from "next/link";
-import { getAdminOverviewStats } from "@/lib/admin";
+import { backfillCoordinates } from "@/app/admin/actions";
+import { getAdminOverviewStats, getMissingCoordinatesCount } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminOverviewPage() {
-  const stats = await getAdminOverviewStats();
+export default async function AdminOverviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const query = await searchParams;
+  const notice = typeof query.notice === "string" ? query.notice : undefined;
+
+  const [stats, missingCoords] = await Promise.all([
+    getAdminOverviewStats(),
+    getMissingCoordinatesCount(),
+  ]);
   const needsAttention = stats.pendingSpots + stats.flaggedSpots;
   const maxCityCount = Math.max(...stats.spotsByCity.map((c) => c.count), 1);
 
   return (
     <div className="mx-auto max-w-4xl">
       <h1 className="font-heading text-3xl font-extrabold">Overview</h1>
+
+      {notice && (
+        <p className="mt-4 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
+          {notice}
+        </p>
+      )}
+
+      {missingCoords > 0 && (
+        <form
+          action={backfillCoordinates}
+          className="mt-4 flex items-center justify-between gap-4 rounded-2xl bg-navey-band px-5 py-4 text-sm font-semibold"
+        >
+          <span>
+            {missingCoords} spot{missingCoords === 1 ? "" : "s"} missing map
+            coordinates — they won&apos;t show up as pins on the Explore Map.
+          </span>
+          <button
+            type="submit"
+            className="shrink-0 rounded-full bg-navey-ink px-4 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
+          >
+            Fill In Coordinates
+          </button>
+        </form>
+      )}
 
       {needsAttention > 0 && (
         <Link

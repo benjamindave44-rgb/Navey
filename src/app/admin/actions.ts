@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { geocodeAddress } from "@/lib/geocode";
 
 async function requireAdmin() {
   const supabase = await createServerSupabaseClient();
@@ -52,4 +53,36 @@ export async function takeSpotOffline(formData: FormData) {
       .update({ status: "rejected", needs_review: false })
       .eq("id", id);
   redirect("/admin");
+}
+
+export async function backfillCoordinates() {
+  const supabase = await requireAdmin();
+
+  const { data: spots } = await supabase
+    .from("spots")
+    .select("id, address, city, province")
+    .or("lat.is.null,lng.is.null");
+
+  let updated = 0;
+  for (const spot of spots ?? []) {
+    const coords = await geocodeAddress({
+      address: spot.address,
+      city: spot.city,
+      province: spot.province,
+    });
+    if (coords) {
+      await supabase
+        .from("spots")
+        .update({ lat: coords.lat, lng: coords.lng })
+        .eq("id", spot.id);
+      updated++;
+    }
+  }
+
+  const total = spots?.length ?? 0;
+  redirect(
+    `/admin?notice=${encodeURIComponent(
+      `Geocoded ${updated} of ${total} spot${total === 1 ? "" : "s"} missing coordinates.`
+    )}`
+  );
 }

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { uploadPhotos } from "@/lib/photo-upload";
+import { geocodeAddress } from "@/lib/geocode";
 
 export async function submitSpot(formData: FormData) {
   const supabase = await createServerSupabaseClient();
@@ -39,6 +40,8 @@ export async function submitSpot(formData: FormData) {
     .maybeSingle();
   const isHiddenGem = hiddenGemTag ? tagIds.includes(hiddenGemTag.id) : false;
 
+  const coords = await geocodeAddress({ address, city, province: province || null });
+
   const { data: spot, error } = await supabase
     .from("spots")
     .insert({
@@ -51,6 +54,8 @@ export async function submitSpot(formData: FormData) {
       description: description || null,
       submitted_by: user.id,
       hidden_gem: isHiddenGem,
+      lat: coords?.lat ?? null,
+      lng: coords?.lng ?? null,
     })
     .select("id")
     .single();

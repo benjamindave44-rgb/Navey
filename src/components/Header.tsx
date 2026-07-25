@@ -43,7 +43,9 @@ export async function Header() {
           Explore
         </Link>
         <span className="text-navey-ink/40">Collections</span>
-        <span className="text-navey-ink/40">Map</span>
+        <Link href="/explore/map" className="hover:opacity-60">
+          Map
+        </Link>
         <Link href="/community" className="hover:opacity-60">
           Community
         </Link>

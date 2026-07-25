@@ -78,6 +78,43 @@ export async function getApprovedSpots(
   return typeof limit === "number" ? spots.slice(0, limit) : spots;
 }
 
+export type MapSpot = {
+  id: string;
+  name: string;
+  category: string;
+  city: string;
+  priceRange: string | null;
+  lat: number;
+  lng: number;
+  coverPhoto: string | null;
+};
+
+export async function getMapSpots(): Promise<MapSpot[]> {
+  const { data, error } = await supabase
+    .from("spots")
+    .select("id, name, category, city, price_range, lat, lng, spot_photos(url, kind)")
+    .eq("status", "approved")
+    .not("lat", "is", null)
+    .not("lng", "is", null);
+
+  if (error || !data) return [];
+
+  return data
+    .filter((spot): spot is typeof spot & { lat: number; lng: number } =>
+      spot.lat !== null && spot.lng !== null
+    )
+    .map((spot) => ({
+      id: spot.id,
+      name: spot.name,
+      category: spot.category,
+      city: spot.city,
+      priceRange: spot.price_range,
+      lat: spot.lat,
+      lng: spot.lng,
+      coverPhoto: spot.spot_photos.find((p) => p.kind === "gallery")?.url ?? null,
+    }));
+}
+
 export async function getCities(): Promise<string[]> {
   const { data, error } = await supabase
     .from("spots")

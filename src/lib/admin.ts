@@ -68,6 +68,15 @@ export async function getFlaggedSpots(): Promise<FlaggedSpot[]> {
   }));
 }
 
+export async function getMissingCoordinatesCount(): Promise<number> {
+  const supabase = await createServerSupabaseClient();
+  const { count } = await supabase
+    .from("spots")
+    .select("id", { count: "exact", head: true })
+    .or("lat.is.null,lng.is.null");
+  return count ?? 0;
+}
+
 export type AdminOverviewStats = {
   approvedSpots: number;
   pendingSpots: number;
