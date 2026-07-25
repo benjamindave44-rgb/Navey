@@ -191,9 +191,17 @@ export default async function SpotDetailPage({
               </section>
 
               <section className="mt-10">
-                <h2 className="font-heading text-lg font-bold">
-                  Recent Visits
-                </h2>
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="font-heading text-lg font-bold">
+                    Recent Visits
+                  </h2>
+                  <Link
+                    href={`/spots/${spot.id}/review`}
+                    className="rounded-full bg-navey-ink px-4 py-2 text-xs font-bold text-navey-yellow hover:bg-navey-ink/80"
+                  >
+                    Write a Review
+                  </Link>
+                </div>
                 {spot.reviews.length === 0 ? (
                   <p className="mt-3 text-sm text-navey-ink/60">
                     No reviews yet — be the first to share your visit.
