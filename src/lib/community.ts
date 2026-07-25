@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { computeTopBadge } from "@/lib/badges";
 
 export type CommunityStats = {
   explorers: number;
@@ -29,6 +30,7 @@ export async function getCommunityStats(): Promise<CommunityStats> {
 export type ActivityItem = {
   id: string;
   type: "submitted_spot" | "created_list";
+  actorId: string | null;
   actorName: string;
   createdAt: string;
   spotName?: string;
@@ -42,14 +44,14 @@ export async function getRecentActivity(limit = 10): Promise<ActivityItem[]> {
     supabase
       .from("spots")
       .select(
-        "id, name, city, created_at, submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)"
+        "id, name, city, created_at, submitted_by, submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)"
       )
       .not("submitted_by", "is", null)
       .order("created_at", { ascending: false })
       .limit(limit),
     supabase
       .from("saved_lists")
-      .select("id, name, created_at, profiles(display_name)")
+      .select("id, name, created_at, user_id, profiles(display_name)")
       .eq("is_public", true)
       .order("created_at", { ascending: false })
       .limit(limit),
@@ -59,6 +61,7 @@ export async function getRecentActivity(limit = 10): Promise<ActivityItem[]> {
     ...(submissions ?? []).map((spot) => ({
       id: `spot-${spot.id}`,
       type: "submitted_spot" as const,
+      actorId: spot.submitted_by,
       actorName: spot.submitted_by_profile?.display_name ?? "Someone",
       createdAt: spot.created_at,
       spotName: spot.name,
@@ -68,6 +71,7 @@ export async function getRecentActivity(limit = 10): Promise<ActivityItem[]> {
     ...(lists ?? []).map((list) => ({
       id: `list-${list.id}`,
       type: "created_list" as const,
+      actorId: list.user_id,
       actorName: list.profiles?.display_name ?? "Someone",
       createdAt: list.created_at,
       listName: list.name,
@@ -199,20 +203,16 @@ export async function getLeaderboard(limit = 10): Promise<LeaderboardEntry[]> {
         s.submissions * LEADERBOARD_POINTS.submission +
         s.hiddenGems * LEADERBOARD_POINTS.hiddenGemBonus;
 
-      const categories: [string, number][] = [
-        ["💎 Gem Hunter", s.hiddenGems],
-        ["✍️ Top Reviewer", s.reviews],
-        ["🗂 List Maker", s.lists],
-        ["📍 Explorer", s.saves],
-      ];
-      categories.sort((a, b) => b[1] - a[1]);
-      const badge = categories[0][1] > 0 ? categories[0][0] : "📍 Explorer";
-
       return {
         id,
         name: nameById.get(id) ?? "Explorer",
         points,
-        badge,
+        badge: computeTopBadge({
+          reviews: s.reviews,
+          saves: s.saves,
+          hiddenGems: s.hiddenGems,
+          lists: s.lists,
+        }),
         reviewsCount: s.reviews,
         savesCount: s.saves,
         submittedCount: s.submissions,

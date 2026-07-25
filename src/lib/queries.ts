@@ -256,6 +256,7 @@ export type SpotReview = {
   rating: number;
   body: string | null;
   created_at: string;
+  authorId: string | null;
   author: string;
   photos: string[];
 };
@@ -284,7 +285,7 @@ export type SpotDetail = SpotWithTags & {
   }[];
   reviews: SpotReview[];
   averageRating: number | null;
-  contributor: { name: string } | null;
+  contributor: { id: string; name: string } | null;
 };
 
 export async function getSpotDetail(id: string): Promise<SpotDetail | null> {
@@ -298,8 +299,8 @@ export async function getSpotDetail(id: string): Promise<SpotDetail | null> {
        spot_tags(tags(label)),
        spot_photos(id, url, kind),
        spot_hours(day_of_week, open_time, close_time, is_closed),
-       reviews(id, rating, body, created_at, profiles(display_name), review_photos(url)),
-       submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)`
+       reviews(id, rating, body, created_at, user_id, profiles(display_name), review_photos(url)),
+       submitted_by, submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)`
     )
     .eq("id", id)
     .eq("status", "approved")
@@ -312,6 +313,7 @@ export async function getSpotDetail(id: string): Promise<SpotDetail | null> {
     rating: review.rating,
     body: review.body,
     created_at: review.created_at,
+    authorId: review.user_id,
     author: review.profiles?.display_name ?? "Anonymous",
     photos: review.review_photos.map((photo) => photo.url),
   }));
@@ -350,9 +352,10 @@ export async function getSpotDetail(id: string): Promise<SpotDetail | null> {
     hours: [...data.spot_hours].sort((a, b) => a.day_of_week - b.day_of_week),
     reviews,
     averageRating,
-    contributor: data.submitted_by_profile?.display_name
-      ? { name: data.submitted_by_profile.display_name }
-      : null,
+    contributor:
+      data.submitted_by && data.submitted_by_profile?.display_name
+        ? { id: data.submitted_by, name: data.submitted_by_profile.display_name }
+        : null,
   };
 }
 

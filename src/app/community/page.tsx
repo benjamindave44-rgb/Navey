@@ -79,20 +79,22 @@ export default async function CommunityPage() {
                 ) : (
                   <ol className="flex flex-col gap-3">
                     {contributors.map((contributor, index) => (
-                      <li
-                        key={contributor.id}
-                        className="flex items-center justify-between text-sm"
-                      >
-                        <span className="flex items-center gap-2">
-                          <span className="text-navey-ink/40">
-                            #{index + 1}
+                      <li key={contributor.id}>
+                        <Link
+                          href={`/u/${contributor.id}`}
+                          className="flex items-center justify-between text-sm hover:opacity-60"
+                        >
+                          <span className="flex items-center gap-2">
+                            <span className="text-navey-ink/40">
+                              #{index + 1}
+                            </span>
+                            {contributor.name}
                           </span>
-                          {contributor.name}
-                        </span>
-                        <span className="rounded-full bg-navey-band px-2 py-1 text-xs font-semibold">
-                          {contributor.approvedCount} spot
-                          {contributor.approvedCount === 1 ? "" : "s"}
-                        </span>
+                          <span className="rounded-full bg-navey-band px-2 py-1 text-xs font-semibold">
+                            {contributor.approvedCount} spot
+                            {contributor.approvedCount === 1 ? "" : "s"}
+                          </span>
+                        </Link>
                       </li>
                     ))}
                   </ol>
@@ -182,7 +184,13 @@ function ActivityCard({ item }: { item: ActivityItem }) {
   return (
     <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
       <p className="text-sm">
-        <span className="font-semibold">{item.actorName}</span>{" "}
+        {item.actorId ? (
+          <Link href={`/u/${item.actorId}`} className="font-semibold hover:underline">
+            {item.actorName}
+          </Link>
+        ) : (
+          <span className="font-semibold">{item.actorName}</span>
+        )}{" "}
         {item.type === "submitted_spot" ? (
           <>
             submitted{" "}

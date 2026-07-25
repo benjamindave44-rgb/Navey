@@ -61,7 +61,10 @@ export default async function LeaderboardPage() {
                   const entry = podium[i];
                   return (
                     <div key={entry.id} className={PODIUM_MARGIN[i]}>
-                      <div className="rounded-2xl bg-white p-5 text-center shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
+                      <Link
+                        href={`/u/${entry.id}`}
+                        className="block rounded-2xl bg-white p-5 text-center shadow-[0_8px_24px_rgba(20,18,11,0.08)] transition-transform hover:-translate-y-1"
+                      >
                         <p className="text-2xl" aria-hidden>
                           {MEDALS[i]}
                         </p>
@@ -74,7 +77,7 @@ export default async function LeaderboardPage() {
                         <p className="text-xs text-navey-ink/55">
                           {entry.points} pts
                         </p>
-                      </div>
+                      </Link>
                     </div>
                   );
                 })}
@@ -84,9 +87,10 @@ export default async function LeaderboardPage() {
             {rest.length > 0 && (
               <div className="mt-8 overflow-hidden rounded-2xl bg-white shadow-[0_4px_16px_rgba(20,18,11,0.05)]">
                 {rest.map((entry, index) => (
-                  <div
+                  <Link
                     key={entry.id}
-                    className="flex items-center gap-4 border-b border-black/5 px-5 py-3.5 last:border-b-0"
+                    href={`/u/${entry.id}`}
+                    className="flex items-center gap-4 border-b border-black/5 px-5 py-3.5 last:border-b-0 hover:bg-navey-band/40"
                   >
                     <span className="w-6 font-heading text-sm font-extrabold text-navey-ink/40">
                       {index + (showPodium ? 4 : 1)}
@@ -101,7 +105,7 @@ export default async function LeaderboardPage() {
                       <p className="text-xs text-navey-ink/50">{entry.badge}</p>
                     </div>
                     <p className="text-sm font-bold">{entry.points} pts</p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

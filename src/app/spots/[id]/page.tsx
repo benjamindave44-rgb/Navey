@@ -290,9 +290,18 @@ export default async function SpotDetailPage({
                         className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold">
-                            {review.author}
-                          </span>
+                          {review.authorId ? (
+                            <Link
+                              href={`/u/${review.authorId}`}
+                              className="font-semibold hover:underline"
+                            >
+                              {review.author}
+                            </Link>
+                          ) : (
+                            <span className="font-semibold">
+                              {review.author}
+                            </span>
+                          )}
                           <span aria-label={`${review.rating} out of 5 stars`}>
                             <span className="text-amber-400">
                               {"★".repeat(review.rating)}
@@ -407,9 +416,12 @@ export default async function SpotDetailPage({
               {spot.contributor && (
                 <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
                   <p className="font-heading font-bold">Contributed by</p>
-                  <p className="mt-2 text-sm text-navey-ink/70">
+                  <Link
+                    href={`/u/${spot.contributor.id}`}
+                    className="mt-2 block text-sm text-navey-ink/70 hover:text-navey-ink hover:underline"
+                  >
                     {spot.contributor.name}
-                  </p>
+                  </Link>
                 </div>
               )}
             </aside>
