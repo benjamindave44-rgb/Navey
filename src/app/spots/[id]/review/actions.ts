@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { uploadPhotos } from "@/lib/photo-upload";
 
 export async function submitReview(formData: FormData) {
   const spotId = String(formData.get("spotId") ?? "");
@@ -31,15 +32,33 @@ export async function submitReview(formData: FormData) {
     .eq("user_id", user.id)
     .maybeSingle();
 
+  let reviewId = existing?.id;
+
   if (existing) {
     await supabase
       .from("reviews")
       .update({ rating, body: body || null })
       .eq("id", existing.id);
   } else {
-    await supabase
+    const { data: inserted } = await supabase
       .from("reviews")
-      .insert({ spot_id: spotId, user_id: user.id, rating, body: body || null });
+      .insert({ spot_id: spotId, user_id: user.id, rating, body: body || null })
+      .select("id")
+      .single();
+    reviewId = inserted?.id;
+  }
+
+  if (reviewId) {
+    const photoUrls = await uploadPhotos(
+      supabase,
+      formData.getAll("photos"),
+      `reviews/${reviewId}`
+    );
+    if (photoUrls.length > 0) {
+      await supabase
+        .from("review_photos")
+        .insert(photoUrls.map((url) => ({ review_id: reviewId, url })));
+    }
   }
 
   redirect(`/spots/${spotId}`);

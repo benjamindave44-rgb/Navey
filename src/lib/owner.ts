@@ -51,6 +51,7 @@ export type OwnerSpotDetail = {
     isClosed: boolean;
   }[];
   tagIds: number[];
+  menuPhotos: { id: string; url: string }[];
 };
 
 export async function getOwnerSpotDetail(
@@ -65,7 +66,8 @@ export async function getOwnerSpotDetail(
        noise_level, music_style, lighting, seating_style,
        accepts_cash, accepts_qr_ph, accepts_cards, accepts_bank_transfer,
        spot_hours(day_of_week, open_time, close_time, is_closed),
-       spot_tags(tag_id)`
+       spot_tags(tag_id),
+       spot_photos(id, url, kind)`
     )
     .eq("id", spotId)
     .eq("submitted_by", userId)
@@ -99,5 +101,8 @@ export async function getOwnerSpotDetail(
       isClosed: hour.is_closed,
     })),
     tagIds: data.spot_tags.map((tag) => tag.tag_id),
+    menuPhotos: data.spot_photos
+      .filter((photo) => photo.kind === "menu")
+      .map((photo) => ({ id: photo.id, url: photo.url })),
   };
 }

@@ -3,12 +3,17 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
+  addMenuPhotos,
+  deleteMenuPhoto,
   updateAmenities,
   updateBasicInfo,
   updateHours,
   updatePayments,
 } from "@/app/owner/[spotId]/actions";
+import { PhotoPicker } from "@/components/PhotoPicker";
 import type { OwnerSpotDetail } from "@/lib/owner";
+
+const MAX_MENU_PHOTOS = 9;
 
 const CATEGORIES = [
   { value: "coffee_shop", label: "Coffee Shop" },
@@ -373,22 +378,60 @@ export function OwnerSpotTabs({
         )}
 
         {tab === "menu" && (
-          <div>
-            <p className="mb-2 text-sm font-semibold">Menu photos</p>
-            <div className="grid grid-cols-3 gap-3">
-              {[0, 1, 2].map((slot) => (
-                <div
-                  key={slot}
-                  className="flex aspect-[3/4] items-center justify-center rounded-xl border-2 border-dashed border-black/15 text-xs text-navey-ink/30"
-                >
-                  Add photo
+          <div className="flex flex-col gap-6">
+            <div>
+              <p className="mb-2 text-sm font-semibold">Current menu photos</p>
+              {spot.menuPhotos.length === 0 ? (
+                <p className="text-sm text-navey-ink/50">
+                  No menu photos uploaded yet.
+                </p>
+              ) : (
+                <div className="grid grid-cols-3 gap-3">
+                  {spot.menuPhotos.map((photo) => (
+                    <div
+                      key={photo.id}
+                      className="relative aspect-[3/4] overflow-hidden rounded-xl bg-navey-band"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element -- external Supabase Storage URL */}
+                      <img
+                        src={photo.url}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                      <form
+                        action={deleteMenuPhoto}
+                        className="absolute right-1 top-1"
+                      >
+                        <input type="hidden" name="spotId" value={spot.id} />
+                        <input type="hidden" name="photoId" value={photo.id} />
+                        <button
+                          type="submit"
+                          aria-label="Remove photo"
+                          className="flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white hover:bg-black/80"
+                        >
+                          ×
+                        </button>
+                      </form>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-            <p className="mt-2 text-xs text-navey-ink/50">
-              Photo uploads aren&apos;t available yet — coming in a future
-              update.
-            </p>
+
+            {spot.menuPhotos.length < MAX_MENU_PHOTOS && (
+              <form action={addMenuPhotos} className="flex flex-col gap-4">
+                <input type="hidden" name="spotId" value={spot.id} />
+                <div>
+                  <p className="mb-2 text-sm font-semibold">Add menu photos</p>
+                  <PhotoPicker
+                    name="photos"
+                    max={MAX_MENU_PHOTOS - spot.menuPhotos.length}
+                    aspect="aspect-[3/4]"
+                  />
+                </div>
+                <SaveButton label="Upload Photos" />
+              </form>
+            )}
           </div>
         )}
       </div>

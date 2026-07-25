@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { submitReview } from "@/app/spots/[id]/review/actions";
+import { PhotoPicker } from "@/components/PhotoPicker";
 
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -89,20 +90,7 @@ export function WriteReviewForm({
 
       <div>
         <p className="mb-2 text-sm font-semibold">Photos</p>
-        <div className="grid grid-cols-4 gap-3">
-          {[0, 1, 2, 3].map((slot) => (
-            <div
-              key={slot}
-              className="flex aspect-square items-center justify-center rounded-xl border-2 border-dashed border-black/15 text-center text-xs text-navey-ink/30"
-            >
-              Add photo
-            </div>
-          ))}
-        </div>
-        <p className="mt-2 text-xs text-navey-ink/50">
-          Photo uploads aren&apos;t available yet — coming in a future
-          update.
-        </p>
+        <PhotoPicker name="photos" max={4} />
       </div>
 
       <SubmitButton label={initialRating ? "Update Review" : "Submit Review"} />

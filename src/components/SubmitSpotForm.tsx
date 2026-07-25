@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { submitSpot } from "@/app/submit-a-spot/actions";
+import { PhotoPicker } from "@/components/PhotoPicker";
 
 const CATEGORIES = [
   { value: "coffee_shop", label: "Coffee Shop" },
@@ -52,19 +53,7 @@ export function SubmitSpotForm({
 
       <section>
         <p className="mb-2 text-sm font-semibold">Photos</p>
-        <div className="grid grid-cols-4 gap-3">
-          {[0, 1, 2, 3].map((slot) => (
-            <div
-              key={slot}
-              className="flex aspect-square items-center justify-center rounded-xl border-2 border-dashed border-black/15 text-2xl text-navey-ink/30"
-            >
-              +
-            </div>
-          ))}
-        </div>
-        <p className="mt-2 text-xs text-navey-ink/50">
-          Photo uploads aren&apos;t available yet — coming in a future update.
-        </p>
+        <PhotoPicker name="photos" max={4} />
       </section>
 
       <div className="flex flex-col gap-2">

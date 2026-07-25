@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { uploadPhotos } from "@/lib/photo-upload";
 
 export async function submitSpot(formData: FormData) {
   const supabase = await createServerSupabaseClient();
@@ -66,6 +67,17 @@ export async function submitSpot(formData: FormData) {
     await supabase
       .from("spot_tags")
       .insert(tagIds.map((tagId) => ({ spot_id: spot.id, tag_id: tagId })));
+  }
+
+  const photoUrls = await uploadPhotos(
+    supabase,
+    formData.getAll("photos"),
+    `spots/${spot.id}/gallery`
+  );
+  if (photoUrls.length > 0) {
+    await supabase
+      .from("spot_photos")
+      .insert(photoUrls.map((url) => ({ spot_id: spot.id, url, kind: "gallery" })));
   }
 
   redirect(`/submit-a-spot?success=${encodeURIComponent(name)}`);

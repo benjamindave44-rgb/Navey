@@ -3,6 +3,9 @@
 import { redirect } from "next/navigation";
 import { checkContentGuidelines } from "@/lib/content-guidelines";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { storagePathFromPublicUrl, uploadPhotos } from "@/lib/photo-upload";
+
+const MAX_MENU_PHOTOS = 9;
 
 async function requireOwnerAccess(spotId: string) {
   const supabase = await createServerSupabaseClient();
@@ -148,4 +151,57 @@ export async function updateAmenities(formData: FormData) {
       "Amenities & Vibe updated."
     )}`
   );
+}
+
+export async function addMenuPhotos(formData: FormData) {
+  const spotId = String(formData.get("spotId") ?? "");
+  const supabase = await requireOwnerAccess(spotId);
+
+  const { count } = await supabase
+    .from("spot_photos")
+    .select("id", { count: "exact", head: true })
+    .eq("spot_id", spotId)
+    .eq("kind", "menu");
+
+  const remaining = MAX_MENU_PHOTOS - (count ?? 0);
+  if (remaining <= 0) {
+    redirect(
+      `/owner/${spotId}?tab=menu&error=${encodeURIComponent(
+        `You've reached the ${MAX_MENU_PHOTOS}-photo menu limit. Remove one first.`
+      )}`
+    );
+  }
+
+  const photoUrls = (
+    await uploadPhotos(supabase, formData.getAll("photos"), `spots/${spotId}/menu`)
+  ).slice(0, remaining);
+
+  if (photoUrls.length > 0) {
+    await supabase
+      .from("spot_photos")
+      .insert(photoUrls.map((url) => ({ spot_id: spotId, url, kind: "menu" })));
+  }
+
+  redirect(`/owner/${spotId}?tab=menu&notice=${encodeURIComponent("Menu photos updated.")}`);
+}
+
+export async function deleteMenuPhoto(formData: FormData) {
+  const spotId = String(formData.get("spotId") ?? "");
+  const photoId = String(formData.get("photoId") ?? "");
+  const supabase = await requireOwnerAccess(spotId);
+
+  const { data: photo } = await supabase
+    .from("spot_photos")
+    .select("id, url")
+    .eq("id", photoId)
+    .eq("spot_id", spotId)
+    .maybeSingle();
+
+  if (photo) {
+    const path = storagePathFromPublicUrl(photo.url);
+    if (path) await supabase.storage.from("photos").remove([path]);
+    await supabase.from("spot_photos").delete().eq("id", photo.id);
+  }
+
+  redirect(`/owner/${spotId}?tab=menu&notice=${encodeURIComponent("Photo removed.")}`);
 }
