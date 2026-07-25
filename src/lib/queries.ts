@@ -115,6 +115,24 @@ export async function getMapSpots(): Promise<MapSpot[]> {
     }));
 }
 
+/**
+ * Scores approved spots by how many of the given tag labels they match
+ * and returns the top matches. Falls back to the most-saved spots when
+ * no tags are given (e.g. the user picked "no preference" throughout).
+ */
+export async function getVibeMatches(
+  tagLabels: string[],
+  limit = 3
+): Promise<SpotWithTags[]> {
+  const spots = await getApprovedSpots({});
+  const scored = spots.map((spot) => ({
+    spot,
+    score: tagLabels.filter((tag) => spot.tags.includes(tag)).length,
+  }));
+  scored.sort((a, b) => b.score - a.score || b.spot.saveCount - a.spot.saveCount);
+  return scored.slice(0, limit).map((entry) => entry.spot);
+}
+
 export async function getCities(): Promise<string[]> {
   const { data, error } = await supabase
     .from("spots")

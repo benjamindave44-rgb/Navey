@@ -110,9 +110,17 @@ export default async function Home() {
         </section>
 
         <section className="bg-navey-band px-6 py-12 md:px-12">
-          <h2 className="mb-6 font-heading text-2xl font-extrabold">
-            Browse by Vibe
-          </h2>
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-heading text-2xl font-extrabold">
+              Browse by Vibe
+            </h2>
+            <Link
+              href="/onboarding"
+              className="flex items-center gap-2 rounded-full bg-navey-ink px-4 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
+            >
+              Take the Vibe Quiz →
+            </Link>
+          </div>
           <div className="flex flex-wrap gap-3">
             {tags.map((tag) => (
               <span
