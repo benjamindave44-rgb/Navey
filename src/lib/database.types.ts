@@ -14,6 +14,67 @@ export type Database = {
   }
   public: {
     Tables: {
+      business_claims: {
+        Row: {
+          claimant_email: string
+          claimant_id: string
+          claimant_name: string
+          created_at: string
+          id: string
+          proof_path: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          spot_id: string
+          status: string
+        }
+        Insert: {
+          claimant_email: string
+          claimant_id: string
+          claimant_name: string
+          created_at?: string
+          id?: string
+          proof_path?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          spot_id: string
+          status?: string
+        }
+        Update: {
+          claimant_email?: string
+          claimant_id?: string
+          claimant_name?: string
+          created_at?: string
+          id?: string
+          proof_path?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          spot_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_claims_spot_id_fkey"
+            columns: ["spot_id"]
+            isOneToOne: false
+            referencedRelation: "spots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_claims_claimant_id_fkey"
+            columns: ["claimant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_claims_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collection_photos: {
         Row: {
           collection_id: string

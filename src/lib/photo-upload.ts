@@ -47,3 +47,35 @@ export function storagePathFromPublicUrl(url: string): string | null {
   if (index === -1) return null;
   return url.slice(index + marker.length);
 }
+
+const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
+const DOCUMENT_EXTENSION_BY_TYPE: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "application/pdf": "pdf",
+};
+
+/**
+ * Uploads a single proof-of-ownership document to the private
+ * `claim-proofs` bucket and returns its storage path (not a public URL --
+ * the bucket isn't public, so viewing it later requires a signed URL).
+ */
+export async function uploadClaimProof(
+  supabase: SupabaseClient<Database>,
+  file: FormDataEntryValue | null,
+  pathPrefix: string
+): Promise<string | null> {
+  if (!(file instanceof File) || file.size === 0) return null;
+  if (file.size > MAX_DOCUMENT_BYTES) return null;
+  const extension = DOCUMENT_EXTENSION_BY_TYPE[file.type];
+  if (!extension) return null;
+
+  const path = `${pathPrefix}/${crypto.randomUUID()}.${extension}`;
+  const { error } = await supabase.storage.from("claim-proofs").upload(path, file, {
+    contentType: file.type,
+    upsert: false,
+  });
+  if (error) return null;
+
+  return path;
+}

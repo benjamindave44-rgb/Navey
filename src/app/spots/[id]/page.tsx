@@ -9,6 +9,7 @@ import {
   getSpotDetail,
   type SpotDetail,
 } from "@/lib/queries";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +86,12 @@ export default async function SpotDetailPage({
   const spot = await getSpotDetail(id);
 
   if (!spot) notFound();
+
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const isOwner = Boolean(user && spot.contributor?.id === user.id);
 
   const related = await getRelatedSpots(spot.id, spot.city, 4);
   const acceptedPayments = PAYMENT_OPTIONS.filter(({ key }) => spot[key]);
@@ -421,6 +428,21 @@ export default async function SpotDetailPage({
                     className="mt-2 block text-sm text-navey-ink/70 hover:text-navey-ink hover:underline"
                   >
                     {spot.contributor.name}
+                  </Link>
+                </div>
+              )}
+
+              {!isOwner && (
+                <div className="rounded-2xl bg-navey-band p-4">
+                  <p className="font-heading font-bold">Own this business?</p>
+                  <p className="mt-1 text-sm text-navey-ink/70">
+                    Claim this listing to manage its menu, hours, and photos.
+                  </p>
+                  <Link
+                    href={`/spots/${spot.id}/claim`}
+                    className="mt-3 inline-block rounded-full bg-navey-ink px-4 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
+                  >
+                    Claim this business
                   </Link>
                 </div>
               )}

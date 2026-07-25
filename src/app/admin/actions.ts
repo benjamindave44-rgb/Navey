@@ -86,3 +86,71 @@ export async function backfillCoordinates() {
     )}`
   );
 }
+
+export async function approveClaim(formData: FormData) {
+  const supabase = await requireAdmin();
+  const claimId = String(formData.get("id") ?? "");
+  if (!claimId) redirect("/admin/claims");
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: claim } = await supabase
+    .from("business_claims")
+    .select("id, spot_id, claimant_id")
+    .eq("id", claimId)
+    .maybeSingle();
+
+  if (claim) {
+    await supabase
+      .from("spots")
+      .update({ submitted_by: claim.claimant_id })
+      .eq("id", claim.spot_id);
+
+    await supabase
+      .from("business_claims")
+      .update({
+        status: "approved",
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: user?.id,
+      })
+      .eq("id", claim.id);
+
+    // Any other pending claims on the same spot no longer make sense
+    // now that it has a verified owner.
+    await supabase
+      .from("business_claims")
+      .update({
+        status: "rejected",
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: user?.id,
+      })
+      .eq("spot_id", claim.spot_id)
+      .eq("status", "pending")
+      .neq("id", claim.id);
+  }
+
+  redirect("/admin/claims");
+}
+
+export async function rejectClaim(formData: FormData) {
+  const supabase = await requireAdmin();
+  const claimId = String(formData.get("id") ?? "");
+  if (!claimId) redirect("/admin/claims");
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  await supabase
+    .from("business_claims")
+    .update({
+      status: "rejected",
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: user?.id,
+    })
+    .eq("id", claimId);
+
+  redirect("/admin/claims");
+}

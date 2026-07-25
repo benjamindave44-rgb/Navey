@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { backfillCoordinates } from "@/app/admin/actions";
-import { getAdminOverviewStats, getMissingCoordinatesCount } from "@/lib/admin";
+import {
+  getAdminOverviewStats,
+  getMissingCoordinatesCount,
+  getPendingClaimsCount,
+} from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -12,9 +16,10 @@ export default async function AdminOverviewPage({
   const query = await searchParams;
   const notice = typeof query.notice === "string" ? query.notice : undefined;
 
-  const [stats, missingCoords] = await Promise.all([
+  const [stats, missingCoords, pendingClaims] = await Promise.all([
     getAdminOverviewStats(),
     getMissingCoordinatesCount(),
+    getPendingClaimsCount(),
   ]);
   const needsAttention = stats.pendingSpots + stats.flaggedSpots;
   const maxCityCount = Math.max(...stats.spotsByCity.map((c) => c.count), 1);
@@ -56,6 +61,19 @@ export default async function AdminOverviewPage({
             {needsAttention} item{needsAttention === 1 ? "" : "s"} need
             {needsAttention === 1 ? "s" : ""} your attention (
             {stats.pendingSpots} pending, {stats.flaggedSpots} flagged)
+          </span>
+          <span aria-hidden>→</span>
+        </Link>
+      )}
+
+      {pendingClaims > 0 && (
+        <Link
+          href="/admin/claims"
+          className="mt-4 flex items-center justify-between rounded-2xl bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+        >
+          <span>
+            {pendingClaims} business claim{pendingClaims === 1 ? "" : "s"}{" "}
+            waiting for review
           </span>
           <span aria-hidden>→</span>
         </Link>

@@ -35,6 +35,9 @@ export default async function AdminLayout({
           <Link href="/admin/review-queue" className="hover:opacity-60">
             Review Queue
           </Link>
+          <Link href="/admin/claims" className="hover:opacity-60">
+            Claims
+          </Link>
         </nav>
       </div>
       <main className="flex-1 px-6 py-10 md:px-12">{children}</main>

@@ -68,6 +68,62 @@ export async function getFlaggedSpots(): Promise<FlaggedSpot[]> {
   }));
 }
 
+export type PendingClaim = {
+  id: string;
+  spotId: string;
+  spotName: string;
+  spotCity: string;
+  claimantName: string;
+  claimantEmail: string;
+  createdAt: string;
+  proofUrl: string | null;
+};
+
+export async function getPendingClaims(): Promise<PendingClaim[]> {
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("business_claims")
+    .select(
+      "id, spot_id, claimant_name, claimant_email, proof_path, created_at, spots(name, city)"
+    )
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+
+  if (error || !data) return [];
+
+  return Promise.all(
+    data.map(async (claim) => {
+      let proofUrl: string | null = null;
+      if (claim.proof_path) {
+        const { data: signed } = await supabase.storage
+          .from("claim-proofs")
+          .createSignedUrl(claim.proof_path, 60 * 10);
+        proofUrl = signed?.signedUrl ?? null;
+      }
+
+      return {
+        id: claim.id,
+        spotId: claim.spot_id,
+        spotName: claim.spots?.name ?? "Unknown spot",
+        spotCity: claim.spots?.city ?? "",
+        claimantName: claim.claimant_name,
+        claimantEmail: claim.claimant_email,
+        createdAt: claim.created_at,
+        proofUrl,
+      };
+    })
+  );
+}
+
+export async function getPendingClaimsCount(): Promise<number> {
+  const supabase = await createServerSupabaseClient();
+  const { count } = await supabase
+    .from("business_claims")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending");
+  return count ?? 0;
+}
+
 export async function getMissingCoordinatesCount(): Promise<number> {
   const supabase = await createServerSupabaseClient();
   const { count } = await supabase
