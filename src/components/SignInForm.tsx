@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { signIn, signUp } from "@/app/sign-in/actions";
@@ -183,9 +184,12 @@ export function SignInForm({
         )}
 
         {mode === "signin" && (
-          <span className="self-end text-xs font-semibold text-navey-ink/30">
+          <Link
+            href="/forgot-password"
+            className="self-end text-xs font-semibold text-navey-ink/60 hover:text-navey-ink"
+          >
             Forgot?
-          </span>
+          </Link>
         )}
 
         <SubmitButton label={mode === "signin" ? "Sign in" : "Sign up"} />
