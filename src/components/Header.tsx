@@ -44,7 +44,9 @@ export async function Header() {
         </Link>
         <span className="text-navey-ink/40">Collections</span>
         <span className="text-navey-ink/40">Map</span>
-        <span className="text-navey-ink/40">Community</span>
+        <Link href="/community" className="hover:opacity-60">
+          Community
+        </Link>
         <span className="text-navey-ink/40">About</span>
       </nav>
       <div className="flex items-center gap-3">
