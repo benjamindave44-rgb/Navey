@@ -35,3 +35,21 @@ export async function rejectSpot(formData: FormData) {
   if (id) await supabase.from("spots").update({ status: "rejected" }).eq("id", id);
   redirect("/admin");
 }
+
+export async function dismissFlag(formData: FormData) {
+  const supabase = await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (id) await supabase.from("spots").update({ needs_review: false }).eq("id", id);
+  redirect("/admin");
+}
+
+export async function takeSpotOffline(formData: FormData) {
+  const supabase = await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (id)
+    await supabase
+      .from("spots")
+      .update({ status: "rejected", needs_review: false })
+      .eq("id", id);
+  redirect("/admin");
+}

@@ -38,3 +38,32 @@ export async function getPendingSpots(): Promise<PendingSpot[]> {
     submitterName: spot.submitted_by_profile?.display_name ?? null,
   }));
 }
+
+export type FlaggedSpot = {
+  id: string;
+  name: string;
+  city: string;
+  description: string | null;
+  submitterName: string | null;
+};
+
+export async function getFlaggedSpots(): Promise<FlaggedSpot[]> {
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("spots")
+    .select(
+      "id, name, city, description, submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)"
+    )
+    .eq("needs_review", true)
+    .order("created_at", { ascending: true });
+
+  if (error || !data) return [];
+
+  return data.map((spot) => ({
+    id: spot.id,
+    name: spot.name,
+    city: spot.city,
+    description: spot.description,
+    submitterName: spot.submitted_by_profile?.display_name ?? null,
+  }));
+}

@@ -377,6 +377,7 @@ export type Database = {
           lng: number | null
           music_style: string | null
           name: string
+          needs_review: boolean
           noise_level: string | null
           price_range: string | null
           province: string | null
@@ -403,6 +404,7 @@ export type Database = {
           lng?: number | null
           music_style?: string | null
           name: string
+          needs_review?: boolean
           noise_level?: string | null
           price_range?: string | null
           province?: string | null
@@ -429,6 +431,7 @@ export type Database = {
           lng?: number | null
           music_style?: string | null
           name?: string
+          needs_review?: boolean
           noise_level?: string | null
           price_range?: string | null
           province?: string | null

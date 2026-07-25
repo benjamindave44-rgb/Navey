@@ -209,13 +209,21 @@ export function ProfileTabs({ profile }: { profile: ProfileData }) {
                     <p className="font-heading font-bold">{spot.name}</p>
                     <p className="text-sm text-navey-ink/60">{spot.city}</p>
                   </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
-                      STATUS_STYLE[spot.status] ?? "bg-navey-band text-navey-ink"
-                    }`}
-                  >
-                    {spot.status}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+                        STATUS_STYLE[spot.status] ?? "bg-navey-band text-navey-ink"
+                      }`}
+                    >
+                      {spot.status}
+                    </span>
+                    <Link
+                      href={`/owner/${spot.id}`}
+                      className="rounded-full bg-navey-ink px-3 py-1 text-xs font-bold text-navey-yellow hover:bg-navey-ink/80"
+                    >
+                      Manage
+                    </Link>
+                  </div>
                 </div>
               ))
             )}
