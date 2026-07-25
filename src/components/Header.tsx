@@ -10,13 +10,15 @@ export async function Header() {
   } = await supabase.auth.getUser();
 
   let displayName: string | null = null;
+  let isAdmin = false;
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("display_name")
+      .select("display_name, role")
       .eq("id", user.id)
       .maybeSingle();
     displayName = profile?.display_name ?? user.email ?? null;
+    isAdmin = profile?.role === "admin";
   }
 
   const initial = displayName?.trim()?.[0]?.toUpperCase() ?? "?";
@@ -56,6 +58,14 @@ export async function Header() {
         </button>
         {user ? (
           <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="rounded-full bg-navey-ink/10 px-4 py-2 text-sm font-bold hover:bg-navey-ink/20"
+              >
+                Admin
+              </Link>
+            )}
             <Link
               href="/profile"
               aria-label="Your profile"
