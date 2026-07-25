@@ -1,0 +1,119 @@
+import { createServerSupabaseClient } from "@/lib/supabase-server";
+
+export type ProfileSavedList = {
+  id: string;
+  name: string;
+  isPublic: boolean;
+  spotCount: number;
+};
+
+export type ProfileReview = {
+  id: string;
+  rating: number;
+  body: string | null;
+  createdAt: string;
+  spotId: string;
+  spotName: string;
+};
+
+export type ProfileContribution = {
+  id: string;
+  name: string;
+  city: string;
+  status: string;
+  createdAt: string;
+};
+
+export type ProfileData = {
+  id: string;
+  displayName: string;
+  handle: string | null;
+  avatarUrl: string | null;
+  joinedAt: string;
+  stats: {
+    spotsSaved: number;
+    reviewsCount: number;
+    hiddenGemsFound: number;
+    listsCreated: number;
+  };
+  savedLists: ProfileSavedList[];
+  reviews: ProfileReview[];
+  contributions: ProfileContribution[];
+};
+
+export async function getProfileData(userId: string): Promise<ProfileData | null> {
+  const supabase = await createServerSupabaseClient();
+
+  const [{ data: profile }, { data: lists }, { data: reviews }, { data: contributions }] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, display_name, handle, avatar_url, created_at")
+        .eq("id", userId)
+        .maybeSingle(),
+      supabase
+        .from("saved_lists")
+        .select(
+          "id, name, is_public, created_at, saved_list_spots(spot_id, spots(hidden_gem))"
+        )
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("reviews")
+        .select("id, rating, body, created_at, spots(id, name)")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("spots")
+        .select("id, name, city, status, created_at")
+        .eq("submitted_by", userId)
+        .order("created_at", { ascending: false }),
+    ]);
+
+  if (!profile) return null;
+
+  const savedSpotIds = new Set<string>();
+  const hiddenGemSpotIds = new Set<string>();
+  const savedLists: ProfileSavedList[] = (lists ?? []).map((list) => {
+    for (const entry of list.saved_list_spots) {
+      savedSpotIds.add(entry.spot_id);
+      if (entry.spots?.hidden_gem) hiddenGemSpotIds.add(entry.spot_id);
+    }
+    return {
+      id: list.id,
+      name: list.name,
+      isPublic: list.is_public,
+      spotCount: list.saved_list_spots.length,
+    };
+  });
+
+  return {
+    id: profile.id,
+    displayName: profile.display_name ?? "Explorer",
+    handle: profile.handle,
+    avatarUrl: profile.avatar_url,
+    joinedAt: profile.created_at,
+    stats: {
+      spotsSaved: savedSpotIds.size,
+      reviewsCount: reviews?.length ?? 0,
+      hiddenGemsFound: hiddenGemSpotIds.size,
+      listsCreated: savedLists.length,
+    },
+    savedLists,
+    reviews: (reviews ?? []).map((review) => ({
+      id: review.id,
+      rating: review.rating,
+      body: review.body,
+      createdAt: review.created_at,
+      spotId: review.spots?.id ?? "",
+      spotName: review.spots?.name ?? "Unknown spot",
+    })),
+    contributions: (contributions ?? []).map((spot) => ({
+      id: spot.id,
+      name: spot.name,
+      city: spot.city,
+      status: spot.status,
+      createdAt: spot.created_at,
+    })),
+  };
+}

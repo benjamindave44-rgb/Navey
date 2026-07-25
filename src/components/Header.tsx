@@ -56,13 +56,14 @@ export async function Header() {
         </button>
         {user ? (
           <div className="flex items-center gap-2">
-            <span
-              aria-hidden
+            <Link
+              href="/profile"
+              aria-label="Your profile"
               title={displayName ?? undefined}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-navey-ink text-sm font-bold text-navey-yellow"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-navey-ink text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
             >
               {initial}
-            </span>
+            </Link>
             <form action={signOutAction}>
               <button
                 type="submit"
