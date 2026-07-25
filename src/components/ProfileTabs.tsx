@@ -142,8 +142,12 @@ export function ProfileTabs({ profile }: { profile: ProfileData }) {
                       {review.spotName}
                     </Link>
                     <span aria-label={`${review.rating} out of 5 stars`}>
-                      {"★".repeat(review.rating)}
-                      {"☆".repeat(5 - review.rating)}
+                      <span className="text-amber-400">
+                        {"★".repeat(review.rating)}
+                      </span>
+                      <span className="text-navey-ink/20">
+                        {"★".repeat(5 - review.rating)}
+                      </span>
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-navey-ink/50">

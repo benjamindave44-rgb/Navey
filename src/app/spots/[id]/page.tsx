@@ -218,8 +218,12 @@ export default async function SpotDetailPage({
                             {review.author}
                           </span>
                           <span aria-label={`${review.rating} out of 5 stars`}>
-                            {"★".repeat(review.rating)}
-                            {"☆".repeat(5 - review.rating)}
+                            <span className="text-amber-400">
+                              {"★".repeat(review.rating)}
+                            </span>
+                            <span className="text-navey-ink/20">
+                              {"★".repeat(5 - review.rating)}
+                            </span>
                           </span>
                         </div>
                         {review.body && (

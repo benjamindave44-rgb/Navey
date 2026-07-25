@@ -59,7 +59,7 @@ export function WriteReviewForm({
             >
               <span
                 aria-hidden
-                className={activeRating >= star ? "text-navey-ink" : "text-navey-ink/20"}
+                className={activeRating >= star ? "text-amber-400" : "text-navey-ink/20"}
               >
                 ★
               </span>
