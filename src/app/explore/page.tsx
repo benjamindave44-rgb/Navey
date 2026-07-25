@@ -186,22 +186,52 @@ export default async function ExplorePage({
           )}
         </div>
 
+        {!hasActiveFilters && cities.length > 0 && (
+          <div className="mt-6">
+            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-navey-ink/50">
+              Trending cities
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {cities.slice(0, 8).map((option) => (
+                <Link
+                  key={option}
+                  href={buildHref(baseParams, { city: option })}
+                  className="rounded-full bg-white px-4 py-2 text-xs font-semibold hover:bg-navey-band"
+                >
+                  {option}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {spots.length === 0 ? (
           <div className="mt-16 flex flex-col items-center gap-3 text-center">
             <span className="text-4xl" aria-hidden>
               🔍
             </span>
-            <p className="text-sm text-navey-ink/60">
-              No spots match your filters yet. Try widening your search.
+            <h2 className="font-heading text-xl font-extrabold">
+              {search ? `No spots found for "${search}"` : "No spots match your filters yet"}
+            </h2>
+            <p className="max-w-sm text-sm text-navey-ink/60">
+              Try a different city or vibe — or be the first to add it.
             </p>
-            {hasActiveFilters && (
+            <div className="mt-2 flex flex-wrap justify-center gap-3">
+              {hasActiveFilters && (
+                <Link
+                  href="/explore"
+                  className="rounded-full border border-black/10 bg-white px-5 py-2 text-sm font-bold hover:bg-navey-band"
+                >
+                  Clear filters
+                </Link>
+              )}
               <Link
-                href="/explore"
+                href="/submit-a-spot"
                 className="rounded-full bg-navey-ink px-5 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
               >
-                Clear filters
+                Submit a Spot
               </Link>
-            )}
+            </div>
           </div>
         ) : (
           <div className="mt-8">

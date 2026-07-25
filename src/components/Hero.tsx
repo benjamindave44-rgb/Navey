@@ -43,39 +43,42 @@ export function Hero({ featured }: { featured: SpotWithTags | null }) {
           Discover coffee shops and restaurants worth the trip, curated by
           people who actually go there.
         </p>
-        <div className="flex items-center gap-3 rounded-full bg-white px-3 py-2 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
+        <form
+          action="/explore"
+          method="GET"
+          className="flex items-center gap-3 rounded-full bg-white px-3 py-2 shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
+        >
           <span aria-hidden>🔍</span>
           <input
             type="text"
+            name="q"
             placeholder="Search spots, cities, vibes..."
             className="flex-1 border-none bg-transparent text-sm outline-none"
-            disabled
           />
           <button
-            type="button"
-            className="rounded-full bg-navey-ink px-5 py-2 text-sm font-bold text-navey-yellow"
-            disabled
+            type="submit"
+            className="rounded-full bg-navey-ink px-5 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
           >
             Let&apos;s explore
           </button>
-        </div>
+        </form>
         <div className="flex flex-wrap items-center gap-2">
           {FILTER_CHIPS.map((chip) => (
-            <span
+            <Link
               key={chip}
-              className="rounded-full bg-white px-4 py-2 text-xs font-semibold"
+              href={`/explore?tags=${encodeURIComponent(chip)}`}
+              className="rounded-full bg-white px-4 py-2 text-xs font-semibold hover:bg-navey-band"
             >
               {chip}
-            </span>
+            </Link>
           ))}
-          <button
-            type="button"
+          <Link
+            href="/explore"
             aria-label="More filters"
-            disabled
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm disabled:cursor-not-allowed"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm hover:bg-navey-band"
           >
             <span aria-hidden>⋯</span>
-          </button>
+          </Link>
         </div>
       </div>
       <div className="relative hidden items-center justify-center rounded-[260px_260px_40px_260px] bg-navey-band text-7xl md:flex">
