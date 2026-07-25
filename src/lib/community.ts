@@ -114,3 +114,113 @@ export async function getTopContributors(limit = 5): Promise<TopContributor[]> {
     .sort((a, b) => b.approvedCount - a.approvedCount)
     .slice(0, limit);
 }
+
+const LEADERBOARD_POINTS = {
+  review: 10,
+  save: 5,
+  submission: 20,
+  hiddenGemBonus: 15,
+};
+
+export type LeaderboardEntry = {
+  id: string;
+  name: string;
+  points: number;
+  badge: string;
+  reviewsCount: number;
+  savesCount: number;
+  submittedCount: number;
+  hiddenGemCount: number;
+  listsCount: number;
+};
+
+/**
+ * All-time points leaderboard. Points come from real activity: reviews
+ * written, spots saved, spots submitted (with a bonus for hidden gems),
+ * and lists created. There's no per-save timestamp in the schema, so
+ * this can't honestly be scoped to "this month" -- it's all-time.
+ */
+export async function getLeaderboard(limit = 10): Promise<LeaderboardEntry[]> {
+  const [{ data: profiles }, { data: reviews }, { data: lists }, { data: listSpots }, { data: spots }] =
+    await Promise.all([
+      supabase.from("profiles").select("id, display_name"),
+      supabase.from("reviews").select("user_id"),
+      supabase.from("saved_lists").select("id, user_id"),
+      supabase.from("saved_list_spots").select("list_id"),
+      supabase
+        .from("spots")
+        .select("submitted_by, hidden_gem")
+        .eq("status", "approved")
+        .not("submitted_by", "is", null),
+    ]);
+
+  const listOwner = new Map<string, string>();
+  for (const list of lists ?? []) listOwner.set(list.id, list.user_id);
+
+  type Stats = {
+    reviews: number;
+    saves: number;
+    lists: number;
+    submissions: number;
+    hiddenGems: number;
+  };
+  const stats = new Map<string, Stats>();
+  const statsFor = (id: string) => {
+    let entry = stats.get(id);
+    if (!entry) {
+      entry = { reviews: 0, saves: 0, lists: 0, submissions: 0, hiddenGems: 0 };
+      stats.set(id, entry);
+    }
+    return entry;
+  };
+
+  for (const review of reviews ?? []) statsFor(review.user_id).reviews += 1;
+  for (const list of lists ?? []) statsFor(list.user_id).lists += 1;
+  for (const listSpot of listSpots ?? []) {
+    const ownerId = listOwner.get(listSpot.list_id);
+    if (ownerId) statsFor(ownerId).saves += 1;
+  }
+  for (const spot of spots ?? []) {
+    if (!spot.submitted_by) continue;
+    const entry = statsFor(spot.submitted_by);
+    entry.submissions += 1;
+    if (spot.hidden_gem) entry.hiddenGems += 1;
+  }
+
+  const nameById = new Map(
+    (profiles ?? []).map((profile) => [profile.id, profile.display_name ?? "Explorer"])
+  );
+
+  return Array.from(stats.entries())
+    .map(([id, s]) => {
+      const points =
+        s.reviews * LEADERBOARD_POINTS.review +
+        s.saves * LEADERBOARD_POINTS.save +
+        s.submissions * LEADERBOARD_POINTS.submission +
+        s.hiddenGems * LEADERBOARD_POINTS.hiddenGemBonus;
+
+      const categories: [string, number][] = [
+        ["💎 Gem Hunter", s.hiddenGems],
+        ["✍️ Top Reviewer", s.reviews],
+        ["🗂 List Maker", s.lists],
+        ["📍 Explorer", s.saves],
+      ];
+      categories.sort((a, b) => b[1] - a[1]);
+      const badge = categories[0][1] > 0 ? categories[0][0] : "📍 Explorer";
+
+      return {
+        id,
+        name: nameById.get(id) ?? "Explorer",
+        points,
+        badge,
+        reviewsCount: s.reviews,
+        savesCount: s.saves,
+        submittedCount: s.submissions,
+        hiddenGemCount: s.hiddenGems,
+        listsCount: s.lists,
+      };
+    })
+    .filter((entry) => entry.points > 0)
+    .sort((a, b) => b.points - a.points)
+    .slice(0, limit);
+}

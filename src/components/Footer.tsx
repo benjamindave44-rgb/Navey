@@ -6,8 +6,8 @@ const LINK_COLUMNS: { title: string; links: { label: string; href?: string }[] }
     title: "Explore",
     links: [
       { label: "All spots", href: "/explore" },
-      { label: "Hidden gems", href: "/explore?tag=Hidden%20Gems" },
-      { label: "Map" },
+      { label: "Hidden gems", href: "/explore?tags=Hidden%20Gems" },
+      { label: "Map", href: "/explore/map" },
     ],
   },
   {
@@ -26,7 +26,7 @@ const LINK_COLUMNS: { title: string; links: { label: string; href?: string }[] }
     title: "Community",
     links: [
       { label: "Submit a spot", href: "/submit-a-spot" },
-      { label: "Leaderboard" },
+      { label: "Leaderboard", href: "/leaderboard" },
     ],
   },
 ];

@@ -97,6 +97,12 @@ export default async function CommunityPage() {
                     ))}
                   </ol>
                 )}
+                <Link
+                  href="/leaderboard"
+                  className="mt-4 inline-block text-xs font-bold hover:opacity-60"
+                >
+                  View full leaderboard →
+                </Link>
               </div>
 
               <div className="rounded-2xl bg-navey-ink p-5">
