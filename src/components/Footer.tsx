@@ -20,7 +20,10 @@ const LINK_COLUMNS: { title: string; links: { label: string; href?: string }[] }
   },
   {
     title: "Community",
-    links: [{ label: "Submit a spot" }, { label: "Leaderboard" }],
+    links: [
+      { label: "Submit a spot", href: "/submit-a-spot" },
+      { label: "Leaderboard" },
+    ],
   },
 ];
 

@@ -1,0 +1,72 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
+
+export async function submitSpot(formData: FormData) {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/sign-in");
+
+  const name = String(formData.get("name") ?? "").trim();
+  const address = String(formData.get("address") ?? "").trim();
+  const city = String(formData.get("city") ?? "").trim();
+  const province = String(formData.get("province") ?? "").trim();
+  const category = String(formData.get("category") ?? "coffee_shop");
+  const priceRange = String(formData.get("priceRange") ?? "");
+  const description = String(formData.get("description") ?? "").trim();
+  const tagIds = formData
+    .getAll("tagIds")
+    .map((id) => Number(id))
+    .filter((id) => Number.isFinite(id));
+
+  if (!name || !address || !city) {
+    redirect(
+      `/submit-a-spot?error=${encodeURIComponent(
+        "Spot name, address, and city are required."
+      )}`
+    );
+  }
+
+  const { data: hiddenGemTag } = await supabase
+    .from("tags")
+    .select("id")
+    .eq("label", "Hidden Gems")
+    .maybeSingle();
+  const isHiddenGem = hiddenGemTag ? tagIds.includes(hiddenGemTag.id) : false;
+
+  const { data: spot, error } = await supabase
+    .from("spots")
+    .insert({
+      name,
+      address,
+      city,
+      province: province || null,
+      category,
+      price_range: priceRange || null,
+      description: description || null,
+      submitted_by: user.id,
+      hidden_gem: isHiddenGem,
+    })
+    .select("id")
+    .single();
+
+  if (error || !spot) {
+    redirect(
+      `/submit-a-spot?error=${encodeURIComponent(
+        error?.message ?? "Something went wrong submitting your spot."
+      )}`
+    );
+  }
+
+  if (tagIds.length > 0) {
+    await supabase
+      .from("spot_tags")
+      .insert(tagIds.map((tagId) => ({ spot_id: spot.id, tag_id: tagId })));
+  }
+
+  redirect(`/submit-a-spot?success=${encodeURIComponent(name)}`);
+}

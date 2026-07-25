@@ -1,0 +1,205 @@
+"use client";
+
+import { useState } from "react";
+import { useFormStatus } from "react-dom";
+import { submitSpot } from "@/app/submit-a-spot/actions";
+
+const CATEGORIES = [
+  { value: "coffee_shop", label: "Coffee Shop" },
+  { value: "restaurant", label: "Restaurant" },
+  { value: "both", label: "Both" },
+];
+
+const PRICES = ["₱", "₱₱", "₱₱₱"];
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="self-start rounded-full bg-navey-ink px-6 py-3 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {pending ? "Submitting…" : "Submit Spot"}
+    </button>
+  );
+}
+
+export function SubmitSpotForm({
+  tags,
+  error,
+}: {
+  tags: { id: number; label: string; icon: string | null }[];
+  error?: string;
+}) {
+  const [category, setCategory] = useState("coffee_shop");
+  const [price, setPrice] = useState("₱₱");
+  const [selectedTags, setSelectedTags] = useState<number[]>([]);
+
+  function toggleTag(id: number) {
+    setSelectedTags((current) =>
+      current.includes(id) ? current.filter((t) => t !== id) : [...current, id]
+    );
+  }
+
+  return (
+    <form action={submitSpot} className="flex max-w-2xl flex-col gap-6">
+      {error && (
+        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </p>
+      )}
+
+      <section>
+        <p className="mb-2 text-sm font-semibold">Photos</p>
+        <div className="grid grid-cols-4 gap-3">
+          {[0, 1, 2, 3].map((slot) => (
+            <div
+              key={slot}
+              className="flex aspect-square items-center justify-center rounded-xl border-2 border-dashed border-black/15 text-2xl text-navey-ink/30"
+            >
+              +
+            </div>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-navey-ink/50">
+          Photo uploads aren&apos;t available yet — coming in a future update.
+        </p>
+      </section>
+
+      <div className="flex flex-col gap-2">
+        <label htmlFor="name" className="text-sm font-semibold">
+          Spot name
+        </label>
+        <input
+          id="name"
+          type="text"
+          name="name"
+          required
+          className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+        />
+      </div>
+
+      <div>
+        <p className="mb-2 text-sm font-semibold">Category</p>
+        <div className="flex gap-2">
+          {CATEGORIES.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setCategory(option.value)}
+              className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                category === option.value
+                  ? "bg-navey-ink text-navey-yellow"
+                  : "bg-navey-band"
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <input type="hidden" name="category" value={category} />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label htmlFor="address" className="text-sm font-semibold">
+          Address
+        </label>
+        <input
+          id="address"
+          type="text"
+          name="address"
+          required
+          className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="city" className="text-sm font-semibold">
+            City
+          </label>
+          <input
+            id="city"
+            type="text"
+            name="city"
+            required
+            className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="province" className="text-sm font-semibold">
+            Province (optional)
+          </label>
+          <input
+            id="province"
+            type="text"
+            name="province"
+            className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+          />
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-2 text-sm font-semibold">Price range</p>
+        <div className="flex gap-2">
+          {PRICES.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setPrice(option)}
+              className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                price === option ? "bg-navey-ink text-navey-yellow" : "bg-navey-band"
+              }`}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+        <input type="hidden" name="priceRange" value={price} />
+      </div>
+
+      <div>
+        <p className="mb-2 text-sm font-semibold">Vibe & Amenities</p>
+        <div className="flex flex-wrap gap-2">
+          {tags.map((tag) => (
+            <button
+              key={tag.id}
+              type="button"
+              onClick={() => toggleTag(tag.id)}
+              className={`rounded-full px-4 py-2 text-xs font-semibold ${
+                selectedTags.includes(tag.id)
+                  ? "bg-navey-ink text-navey-yellow"
+                  : "bg-navey-band"
+              }`}
+            >
+              {tag.label}
+            </button>
+          ))}
+        </div>
+        {selectedTags.map((id) => (
+          <input key={id} type="hidden" name="tagIds" value={id} />
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label htmlFor="description" className="text-sm font-semibold">
+          Description (optional)
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          rows={4}
+          className="rounded-2xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+        />
+      </div>
+
+      <p className="text-xs text-navey-ink/50">
+        Submitted spots are reviewed by our team before they appear publicly.
+        This usually takes a day or two.
+      </p>
+
+      <SubmitButton />
+    </form>
+  );
+}

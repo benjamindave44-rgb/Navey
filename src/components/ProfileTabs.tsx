@@ -184,9 +184,17 @@ export function ProfileTabs({ profile }: { profile: ProfileData }) {
         {tab === "contributions" && (
           <div className="flex flex-col gap-3">
             {profile.contributions.length === 0 ? (
-              <p className="text-sm text-navey-ink/60">
-                You haven&apos;t submitted any spots yet.
-              </p>
+              <div className="flex flex-col items-start gap-3">
+                <p className="text-sm text-navey-ink/60">
+                  You haven&apos;t submitted any spots yet.
+                </p>
+                <Link
+                  href="/submit-a-spot"
+                  className="rounded-full bg-navey-ink px-5 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
+                >
+                  Submit a Spot
+                </Link>
+              </div>
             ) : (
               profile.contributions.map((spot) => (
                 <div
