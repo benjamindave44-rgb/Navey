@@ -12,10 +12,14 @@ export function SpotCard({
   spot,
   trending = false,
   showSaveButton = false,
+  rank,
+  showDescription = false,
 }: {
   spot: SpotWithTags;
   trending?: boolean;
   showSaveButton?: boolean;
+  rank?: number;
+  showDescription?: boolean;
 }) {
   return (
     <Link
@@ -24,13 +28,18 @@ export function SpotCard({
     >
       <div className="relative flex aspect-[4/3] items-center justify-center bg-navey-band text-4xl">
         ☕
+        {typeof rank === "number" && (
+          <span className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-navey-ink text-xs font-bold text-navey-yellow">
+            #{rank}
+          </span>
+        )}
         {spot.hidden_gem && (
-          <span className="absolute left-3 top-3 rounded-full bg-navey-ink px-3 py-1 text-xs font-bold text-navey-yellow">
+          <span className="absolute right-3 top-3 rounded-full bg-navey-ink px-3 py-1 text-xs font-bold text-navey-yellow">
             Hidden Gem
           </span>
         )}
         {trending && !spot.hidden_gem && (
-          <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-bold text-navey-ink shadow-[0_4px_12px_rgba(20,18,11,0.12)]">
+          <span className="absolute right-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-bold text-navey-ink shadow-[0_4px_12px_rgba(20,18,11,0.12)]">
             Trending
           </span>
         )}
@@ -45,6 +54,11 @@ export function SpotCard({
         <p className="text-xs uppercase tracking-wide text-navey-ink/50">
           {CATEGORY_LABEL[spot.category] ?? spot.category}
         </p>
+        {showDescription && spot.description && (
+          <p className="line-clamp-2 text-sm text-navey-ink/70">
+            {spot.description}
+          </p>
+        )}
         {spot.tags.length > 0 && (
           <div className="mt-1 flex flex-wrap gap-2">
             {spot.tags.map((tag) => (

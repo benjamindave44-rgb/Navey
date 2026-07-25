@@ -56,9 +56,10 @@ export default async function Home() {
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {collections.map((collection) => (
-                <div
+                <Link
                   key={collection.id}
-                  className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
+                  href={`/collections/${collection.id}`}
+                  className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_rgba(20,18,11,0.08)] transition-transform hover:-translate-y-1"
                 >
                   <div className="relative flex aspect-[4/3] items-center justify-center bg-navey-band text-4xl">
                     🗺️
@@ -70,7 +71,7 @@ export default async function Home() {
                     <p className="font-heading font-bold">{collection.title}</p>
                     <p className="text-sm text-navey-ink/60">Philippines</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

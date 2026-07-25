@@ -122,6 +122,80 @@ export async function getTags() {
   return data;
 }
 
+export type CollectionSpot = SpotWithTags & { rank: number };
+
+export type CollectionDetail = {
+  id: string;
+  title: string;
+  description: string | null;
+  createdAt: string;
+  curatorName: string | null;
+  coverPhotos: { id: string; url: string }[];
+  spots: CollectionSpot[];
+};
+
+export async function getCollectionDetail(
+  id: string,
+  sort: "recommended" | "most_saved" = "recommended"
+): Promise<CollectionDetail | null> {
+  const { data, error } = await supabase
+    .from("collections")
+    .select(
+      `id, title, description, created_at,
+       curator:profiles(display_name),
+       collection_photos(id, url),
+       collection_spots(rank, spots(id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label))))`
+    )
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  let spots: CollectionSpot[] = data.collection_spots
+    .filter((entry) => entry.spots)
+    .map((entry) => {
+      const spot = entry.spots!;
+      return {
+        id: spot.id,
+        name: spot.name,
+        category: spot.category,
+        price_range: spot.price_range,
+        city: spot.city,
+        province: spot.province,
+        hidden_gem: spot.hidden_gem,
+        description: spot.description,
+        saveCount: spot.save_count,
+        tags: spot.spot_tags
+          .map((st) => st.tags?.label)
+          .filter((label): label is string => Boolean(label)),
+        rank: entry.rank,
+      };
+    });
+
+  spots =
+    sort === "most_saved"
+      ? [...spots].sort((a, b) => b.saveCount - a.saveCount)
+      : [...spots].sort((a, b) => a.rank - b.rank);
+
+  return {
+    id: data.id,
+    title: data.title,
+    description: data.description,
+    createdAt: data.created_at,
+    curatorName: data.curator?.display_name ?? null,
+    coverPhotos: data.collection_photos,
+    spots,
+  };
+}
+
+export async function getOtherCollections(
+  excludeId: string,
+  limit = 4
+): Promise<CollectionWithSpots[]> {
+  const all = await getCollections(limit + 1);
+  return all.filter((collection) => collection.id !== excludeId).slice(0, limit);
+}
+
 export type SpotReview = {
   id: string;
   rating: number;
