@@ -16,7 +16,11 @@ const LINK_COLUMNS: { title: string; links: { label: string; href?: string }[] }
   },
   {
     title: "About",
-    links: [{ label: "Our story" }, { label: "Privacy policy" }, { label: "Terms" }],
+    links: [
+      { label: "Our story" },
+      { label: "Privacy policy", href: "/privacy" },
+      { label: "Terms", href: "/terms" },
+    ],
   },
   {
     title: "Community",

@@ -222,7 +222,15 @@ export function SignInForm({
       </p>
 
       <p className="mt-4 text-center text-xs text-navey-ink/40">
-        By continuing you agree to Navey&apos;s Terms and Privacy Policy.
+        By continuing you agree to Navey&apos;s{" "}
+        <Link href="/terms" className="underline hover:text-navey-ink">
+          Terms
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="underline hover:text-navey-ink">
+          Privacy Policy
+        </Link>
+        .
       </p>
     </div>
   );
