@@ -67,3 +67,67 @@ export async function getFlaggedSpots(): Promise<FlaggedSpot[]> {
     submitterName: spot.submitted_by_profile?.display_name ?? null,
   }));
 }
+
+export type AdminOverviewStats = {
+  approvedSpots: number;
+  pendingSpots: number;
+  flaggedSpots: number;
+  totalUsers: number;
+  totalReviews: number;
+  totalCollections: number;
+  totalSaves: number;
+  spotsByCity: { city: string; count: number }[];
+};
+
+export async function getAdminOverviewStats(): Promise<AdminOverviewStats> {
+  const supabase = await createServerSupabaseClient();
+
+  const [
+    { count: approvedSpots },
+    { count: pendingSpots },
+    { count: flaggedSpots },
+    { count: totalUsers },
+    { count: totalReviews },
+    { count: totalCollections },
+    { data: savedSpots },
+    { data: citySpots },
+  ] = await Promise.all([
+    supabase
+      .from("spots")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "approved"),
+    supabase
+      .from("spots")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending"),
+    supabase
+      .from("spots")
+      .select("id", { count: "exact", head: true })
+      .eq("needs_review", true),
+    supabase.from("profiles").select("id", { count: "exact", head: true }),
+    supabase.from("reviews").select("id", { count: "exact", head: true }),
+    supabase.from("collections").select("id", { count: "exact", head: true }),
+    supabase.from("saved_list_spots").select("spot_id"),
+    supabase.from("spots").select("city").eq("status", "approved"),
+  ]);
+
+  const cityCounts = new Map<string, number>();
+  for (const row of citySpots ?? []) {
+    cityCounts.set(row.city, (cityCounts.get(row.city) ?? 0) + 1);
+  }
+  const spotsByCity = Array.from(cityCounts.entries())
+    .map(([city, count]) => ({ city, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8);
+
+  return {
+    approvedSpots: approvedSpots ?? 0,
+    pendingSpots: pendingSpots ?? 0,
+    flaggedSpots: flaggedSpots ?? 0,
+    totalUsers: totalUsers ?? 0,
+    totalReviews: totalReviews ?? 0,
+    totalCollections: totalCollections ?? 0,
+    totalSaves: savedSpots?.length ?? 0,
+    spotsByCity,
+  };
+}

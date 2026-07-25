@@ -1,176 +1,79 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import {
-  approveSpot,
-  dismissFlag,
-  rejectSpot,
-  takeSpotOffline,
-} from "@/app/admin/actions";
-import { getFlaggedSpots, getPendingSpots } from "@/lib/admin";
-import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { getAdminOverviewStats } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 
-const CATEGORY_LABEL: Record<string, string> = {
-  coffee_shop: "Coffee Shop",
-  restaurant: "Restaurant",
-  both: "Coffee Shop & Restaurant",
-};
-
-export default async function AdminPage() {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/sign-in");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (profile?.role !== "admin") redirect("/");
-
-  const [pendingSpots, flaggedSpots] = await Promise.all([
-    getPendingSpots(),
-    getFlaggedSpots(),
-  ]);
+export default async function AdminOverviewPage() {
+  const stats = await getAdminOverviewStats();
+  const needsAttention = stats.pendingSpots + stats.flaggedSpots;
+  const maxCityCount = Math.max(...stats.spotsByCity.map((c) => c.count), 1);
 
   return (
-    <>
-      <Header />
-      <main className="flex-1 px-6 py-10 md:px-12">
-        <div className="mx-auto max-w-4xl">
-          {flaggedSpots.length > 0 && (
-            <section className="mb-12">
-              <h2 className="font-heading text-xl font-extrabold text-amber-700">
-                Flagged for Review
-              </h2>
-              <p className="mt-1 text-sm text-navey-ink/60">
-                Owner edits that tripped the automated content-guideline
-                check. Still live — take a look and dismiss or take offline.
-              </p>
-              <div className="mt-4 flex flex-col gap-4">
-                {flaggedSpots.map((spot) => (
-                  <div
-                    key={spot.id}
-                    className="rounded-2xl border-2 border-amber-200 bg-amber-50 p-5"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <Link
-                          href={`/spots/${spot.id}`}
-                          className="font-heading text-lg font-bold hover:opacity-60"
-                        >
-                          {spot.name}
-                        </Link>
-                        <p className="text-sm text-navey-ink/60">
-                          {spot.city} · submitted by{" "}
-                          {spot.submitterName ?? "unknown"}
-                        </p>
-                        {spot.description && (
-                          <p className="mt-2 max-w-xl text-sm text-navey-ink/80">
-                            {spot.description}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex shrink-0 gap-2">
-                        <form action={dismissFlag}>
-                          <input type="hidden" name="id" value={spot.id} />
-                          <button
-                            type="submit"
-                            className="rounded-full bg-navey-ink px-4 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
-                          >
-                            Dismiss Flag
-                          </button>
-                        </form>
-                        <form action={takeSpotOffline}>
-                          <input type="hidden" name="id" value={spot.id} />
-                          <button
-                            type="submit"
-                            className="rounded-full bg-red-100 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-200"
-                          >
-                            Take Offline
-                          </button>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+    <div className="mx-auto max-w-4xl">
+      <h1 className="font-heading text-3xl font-extrabold">Overview</h1>
 
-          <h1 className="font-heading text-3xl font-extrabold">Review Queue</h1>
-          <p className="mt-2 text-sm text-navey-ink/60">
-            {pendingSpots.length} spot{pendingSpots.length === 1 ? "" : "s"}{" "}
-            waiting for review
+      {needsAttention > 0 && (
+        <Link
+          href="/admin/review-queue"
+          className="mt-4 flex items-center justify-between rounded-2xl bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+        >
+          <span>
+            {needsAttention} item{needsAttention === 1 ? "" : "s"} need
+            {needsAttention === 1 ? "s" : ""} your attention (
+            {stats.pendingSpots} pending, {stats.flaggedSpots} flagged)
+          </span>
+          <span aria-hidden>→</span>
+        </Link>
+      )}
+
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <StatCard label="Live Spots" value={stats.approvedSpots} />
+        <StatCard label="Pending Review" value={stats.pendingSpots} />
+        <StatCard label="Flagged" value={stats.flaggedSpots} />
+        <StatCard label="Explorers" value={stats.totalUsers} />
+        <StatCard label="Reviews" value={stats.totalReviews} />
+        <StatCard label="Collections" value={stats.totalCollections} />
+        <StatCard label="Total Saves" value={stats.totalSaves} />
+      </div>
+
+      <section className="mt-10">
+        <h2 className="font-heading text-xl font-extrabold">Spots by City</h2>
+        {stats.spotsByCity.length === 0 ? (
+          <p className="mt-3 text-sm text-navey-ink/60">
+            No approved spots yet.
           </p>
-
-          {pendingSpots.length === 0 ? (
-            <p className="mt-10 text-sm text-navey-ink/60">
-              Nothing pending — you&apos;re all caught up.
-            </p>
-          ) : (
-            <div className="mt-8 flex flex-col gap-4">
-              {pendingSpots.map((spot) => (
-                <div
-                  key={spot.id}
-                  className="rounded-2xl bg-white p-5 shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                      <p className="font-heading text-lg font-bold">
-                        {spot.name}
-                      </p>
-                      <p className="text-sm text-navey-ink/60">
-                        {spot.address}, {spot.city}
-                        {spot.province ? `, ${spot.province}` : ""}
-                      </p>
-                      <p className="mt-1 text-xs text-navey-ink/50">
-                        {CATEGORY_LABEL[spot.category] ?? spot.category} ·{" "}
-                        {spot.priceRange ?? "no price set"} · submitted by{" "}
-                        {spot.submitterName ?? "unknown"} on{" "}
-                        {new Date(spot.createdAt).toLocaleDateString()}
-                      </p>
-                      {spot.description && (
-                        <p className="mt-2 max-w-xl text-sm text-navey-ink/80">
-                          {spot.description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex shrink-0 gap-2">
-                      <form action={approveSpot}>
-                        <input type="hidden" name="id" value={spot.id} />
-                        <button
-                          type="submit"
-                          className="rounded-full bg-navey-ink px-4 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
-                        >
-                          Approve
-                        </button>
-                      </form>
-                      <form action={rejectSpot}>
-                        <input type="hidden" name="id" value={spot.id} />
-                        <button
-                          type="submit"
-                          className="rounded-full bg-red-100 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-200"
-                        >
-                          Reject
-                        </button>
-                      </form>
-                    </div>
-                  </div>
+        ) : (
+          <div className="mt-4 flex flex-col gap-3">
+            {stats.spotsByCity.map((row) => (
+              <div key={row.city} className="flex items-center gap-3">
+                <span className="w-28 shrink-0 truncate text-sm font-semibold">
+                  {row.city}
+                </span>
+                <div className="h-4 flex-1 overflow-hidden rounded-full bg-navey-band">
+                  <div
+                    className="h-full rounded-full bg-navey-ink"
+                    style={{ width: `${(row.count / maxCityCount) * 100}%` }}
+                  />
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
-      <Footer />
-    </>
+                <span className="w-6 shrink-0 text-right text-sm text-navey-ink/60">
+                  {row.count}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-2xl bg-white p-4 text-center shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
+      <p className="font-heading text-2xl font-extrabold">{value}</p>
+      <p className="text-xs uppercase tracking-wide text-navey-ink/50">
+        {label}
+      </p>
+    </div>
   );
 }
