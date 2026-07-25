@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/admin", "/owner", "/profile", "/reset-password", "/forgot-password"],
     },
-    sitemap: "https://navey.co/sitemap.xml",
+    sitemap: "https://www.navey.co/sitemap.xml",
   };
 }

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { supabase } from "@/lib/supabase";
 
-const SITE_URL = "https://navey.co";
+const SITE_URL = "https://www.navey.co";
 
 const STATIC_ROUTES: { path: string; priority: number }[] = [
   { path: "/", priority: 1 },

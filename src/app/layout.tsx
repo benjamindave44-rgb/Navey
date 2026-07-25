@@ -15,7 +15,7 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://navey.co"),
+  metadataBase: new URL("https://www.navey.co"),
   title: {
     default: "Navey — Navigate Good Spots Nearby",
     template: "%s | Navey",
