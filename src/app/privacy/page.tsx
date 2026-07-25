@@ -48,8 +48,8 @@ export default function PrivacyPage() {
                 <>
                   To update your account details, remove content, or delete
                   your account entirely, email us at{" "}
-                  <a href="mailto:hello@navey.co" className="font-bold">
-                    hello@navey.co
+                  <a href="mailto:navey.ph@gmail.com" className="font-bold">
+                    navey.ph@gmail.com
                   </a>{" "}
                   and we&apos;ll take care of it. Self-service account settings
                   are on our roadmap.
@@ -61,8 +61,8 @@ export default function PrivacyPage() {
               body: (
                 <>
                   Questions about your data? Reach us at{" "}
-                  <a href="mailto:hello@navey.co" className="font-bold">
-                    hello@navey.co
+                  <a href="mailto:navey.ph@gmail.com" className="font-bold">
+                    navey.ph@gmail.com
                   </a>
                   .
                 </>

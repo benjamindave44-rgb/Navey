@@ -42,8 +42,8 @@ export default function TermsPage() {
               body: (
                 <>
                   Questions about these Terms? Reach us at{" "}
-                  <a href="mailto:hello@navey.co" className="font-bold">
-                    hello@navey.co
+                  <a href="mailto:navey.ph@gmail.com" className="font-bold">
+                    navey.ph@gmail.com
                   </a>
                   .
                 </>
