@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SpotCard } from "@/components/SpotCard";
@@ -12,6 +13,13 @@ import {
 import { timeAgo } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Community",
+  description:
+    "See what Navey's community of explorers is finding, reviewing, and saving across the Philippines.",
+  alternates: { canonical: "/community" },
+};
 
 export default async function CommunityPage() {
   const [stats, activity, contributors, mostSaved] = await Promise.all([

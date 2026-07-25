@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SpotCard } from "@/components/SpotCard";
@@ -10,6 +11,41 @@ import {
 } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const spot = await getSpotDetail(id);
+  if (!spot) return { title: "Spot not found" };
+
+  const description =
+    spot.description ??
+    `${spot.name} in ${spot.city} — ${
+      CATEGORY_LABEL[spot.category] ?? spot.category
+    }${spot.price_range ? `, ${spot.price_range}` : ""}. Find hours, reviews, and photos on Navey.`;
+  const photo = spot.galleryPhotos[0]?.url;
+
+  return {
+    title: `${spot.name} in ${spot.city}`,
+    description,
+    alternates: { canonical: `/spots/${spot.id}` },
+    openGraph: {
+      title: spot.name,
+      description,
+      type: "website",
+      images: photo ? [{ url: photo }] : undefined,
+    },
+    twitter: {
+      card: photo ? "summary_large_image" : "summary",
+      title: spot.name,
+      description,
+      images: photo ? [photo] : undefined,
+    },
+  };
+}
 
 const CATEGORY_LABEL: Record<string, string> = {
   coffee_shop: "Coffee Shop",
@@ -53,6 +89,42 @@ export default async function SpotDetailPage({
   const related = await getRelatedSpots(spot.id, spot.city, 4);
   const acceptedPayments = PAYMENT_OPTIONS.filter(({ key }) => spot[key]);
   const today = new Date().getDay();
+
+  const schemaType =
+    spot.category === "restaurant"
+      ? "Restaurant"
+      : spot.category === "coffee_shop"
+      ? "CafeOrCoffeeShop"
+      : "FoodEstablishment";
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": schemaType,
+    name: spot.name,
+    ...(spot.description ? { description: spot.description } : {}),
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: spot.address,
+      addressLocality: spot.city,
+      ...(spot.province ? { addressRegion: spot.province } : {}),
+      addressCountry: "PH",
+    },
+    ...(spot.lat != null && spot.lng != null
+      ? { geo: { "@type": "GeoCoordinates", latitude: spot.lat, longitude: spot.lng } }
+      : {}),
+    ...(spot.galleryPhotos.length > 0
+      ? { image: spot.galleryPhotos.map((photo) => photo.url) }
+      : {}),
+    ...(spot.price_range ? { priceRange: spot.price_range } : {}),
+    ...(spot.averageRating != null && spot.reviews.length > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: spot.averageRating.toFixed(1),
+            reviewCount: spot.reviews.length,
+          },
+        }
+      : {}),
+  };
   const mapsHref =
     spot.lat != null && spot.lng != null
       ? `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}`
@@ -62,6 +134,10 @@ export default async function SpotDetailPage({
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Header />
       <main className="flex-1">
         <div className="mx-auto max-w-6xl px-6 py-6 md:px-12">

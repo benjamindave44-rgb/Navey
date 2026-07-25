@@ -1,6 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { VibeQuiz } from "@/components/VibeQuiz";
+
+export const metadata: Metadata = {
+  title: "Find Your Vibe",
+  description:
+    "Answer three quick questions and we'll match you with coffee shops and restaurants that fit your mood.",
+  alternates: { canonical: "/onboarding" },
+};
 
 export default function OnboardingPage() {
   return (

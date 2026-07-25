@@ -1,10 +1,18 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PaginatedSpotGrid } from "@/components/PaginatedSpotGrid";
 import { getApprovedSpots, getCities, getTags, type SpotSort } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Explore Coffee Shops & Restaurants in the Philippines",
+  description:
+    "Search and filter coffee shops and restaurants across the Philippines by city, vibe, and price. Find your next favorite spot on Navey.",
+  alternates: { canonical: "/explore" },
+};
 
 const CATEGORIES = [
   { value: "", label: "All categories" },

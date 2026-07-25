@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SpotCard } from "@/components/SpotCard";
@@ -10,6 +11,35 @@ export const dynamic = "force-dynamic";
 
 function firstParam(value: string | string[] | undefined): string {
   return typeof value === "string" ? value : "";
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const collection = await getCollectionDetail(id);
+  if (!collection) return { title: "Collection not found" };
+
+  const description =
+    collection.description ??
+    `${collection.spots.length} spot${
+      collection.spots.length === 1 ? "" : "s"
+    } curated by Navey. ${collection.title}.`;
+  const photo = collection.coverPhotos[0]?.url;
+
+  return {
+    title: collection.title,
+    description,
+    alternates: { canonical: `/collections/${collection.id}` },
+    openGraph: {
+      title: collection.title,
+      description,
+      type: "website",
+      images: photo ? [{ url: photo }] : undefined,
+    },
+  };
 }
 
 export default async function CollectionDetailPage({

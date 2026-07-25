@@ -15,8 +15,34 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Navey",
-  description: "Navigate Good Spots Nearby",
+  metadataBase: new URL("https://navey.co"),
+  title: {
+    default: "Navey — Navigate Good Spots Nearby",
+    template: "%s | Navey",
+  },
+  description:
+    "Discover coffee shops and restaurants worth the trip across the Philippines, curated by people who actually go there. Real reviews, real photos, real spots.",
+  keywords: [
+    "coffee shops Philippines",
+    "restaurants Philippines",
+    "cafe finder",
+    "Philippines food guide",
+    "hidden gems Philippines",
+  ],
+  openGraph: {
+    type: "website",
+    locale: "en_PH",
+    siteName: "Navey",
+    title: "Navey — Navigate Good Spots Nearby",
+    description:
+      "Discover coffee shops and restaurants worth the trip across the Philippines, curated by people who actually go there.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Navey — Navigate Good Spots Nearby",
+    description:
+      "Discover coffee shops and restaurants worth the trip across the Philippines.",
+  },
 };
 
 export default function RootLayout({
