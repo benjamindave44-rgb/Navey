@@ -35,6 +35,9 @@ export default async function AdminLayout({
           <Link href="/admin/review-queue" className="hover:opacity-60">
             Review Queue
           </Link>
+          <Link href="/admin/listings" className="hover:opacity-60">
+            Manage Listings
+          </Link>
           <Link href="/admin/claims" className="hover:opacity-60">
             Claims
           </Link>

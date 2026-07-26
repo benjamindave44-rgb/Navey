@@ -124,6 +124,89 @@ export async function getPendingClaimsCount(): Promise<number> {
   return count ?? 0;
 }
 
+export type AdminSpotListItem = {
+  id: string;
+  name: string;
+  city: string;
+  category: string;
+  status: string;
+  needsReview: boolean;
+  createdAt: string;
+};
+
+export async function getAdminSpotList(filters: {
+  search?: string;
+  status?: string;
+}): Promise<AdminSpotListItem[]> {
+  const supabase = await createServerSupabaseClient();
+  let query = supabase
+    .from("spots")
+    .select("id, name, city, category, status, needs_review, created_at")
+    .order("created_at", { ascending: false });
+
+  if (filters.status) query = query.eq("status", filters.status);
+  if (filters.search) {
+    const term = `%${filters.search}%`;
+    query = query.or(`name.ilike.${term},city.ilike.${term}`);
+  }
+
+  const { data, error } = await query;
+  if (error || !data) return [];
+
+  return data.map((spot) => ({
+    id: spot.id,
+    name: spot.name,
+    city: spot.city,
+    category: spot.category,
+    status: spot.status,
+    needsReview: spot.needs_review,
+    createdAt: spot.created_at,
+  }));
+}
+
+export type AdminSpotDetail = {
+  id: string;
+  name: string;
+  category: string;
+  priceRange: string | null;
+  address: string;
+  city: string;
+  province: string | null;
+  description: string | null;
+  status: string;
+  hiddenGem: boolean;
+  needsReview: boolean;
+  submitterName: string | null;
+};
+
+export async function getAdminSpotDetail(spotId: string): Promise<AdminSpotDetail | null> {
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("spots")
+    .select(
+      "id, name, category, price_range, address, city, province, description, status, hidden_gem, needs_review, submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)"
+    )
+    .eq("id", spotId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  return {
+    id: data.id,
+    name: data.name,
+    category: data.category,
+    priceRange: data.price_range,
+    address: data.address,
+    city: data.city,
+    province: data.province,
+    description: data.description,
+    status: data.status,
+    hiddenGem: data.hidden_gem,
+    needsReview: data.needs_review,
+    submitterName: data.submitted_by_profile?.display_name ?? null,
+  };
+}
+
 export async function getMissingCoordinatesCount(): Promise<number> {
   const supabase = await createServerSupabaseClient();
   const { count } = await supabase
