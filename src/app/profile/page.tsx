@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -64,13 +65,12 @@ export default async function ProfilePage({
                 <p className="text-sm text-navey-ink/60">Joined {joined}</p>
               </div>
             </div>
-            <button
-              type="button"
-              disabled
-              className="rounded-full bg-navey-band px-5 py-2 text-sm font-bold disabled:cursor-not-allowed"
+            <Link
+              href="/settings"
+              className="rounded-full bg-navey-band px-5 py-2 text-sm font-bold hover:bg-navey-band/70"
             >
               Edit Profile
-            </button>
+            </Link>
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
