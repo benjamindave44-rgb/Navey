@@ -28,7 +28,7 @@ export default async function AdminLayout({
     <>
       <Header />
       <div className="border-b border-black/5 bg-white px-6 md:px-12">
-        <nav className="mx-auto flex max-w-4xl gap-6 py-3 text-sm font-semibold">
+        <nav className="mx-auto flex max-w-4xl flex-wrap gap-x-6 gap-y-2 py-3 text-sm font-semibold">
           <Link href="/admin" className="hover:opacity-60">
             Overview
           </Link>
