@@ -13,7 +13,7 @@ const CATEGORIES = [
 
 const PRICES = ["₱", "₱₱", "₱₱₱"];
 
-function SubmitButton() {
+function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -21,7 +21,7 @@ function SubmitButton() {
       disabled={pending}
       className="self-start rounded-full bg-navey-ink px-6 py-3 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {pending ? "Submitting…" : "Submit Spot"}
+      {pending ? "Submitting…" : label}
     </button>
   );
 }
@@ -29,9 +29,15 @@ function SubmitButton() {
 export function SubmitSpotForm({
   tags,
   error,
+  action = submitSpot,
+  submitLabel = "Submit Spot",
+  footnote = "Submitted spots are reviewed by our team before they appear publicly. This usually takes a day or two.",
 }: {
   tags: { id: number; label: string; icon: string | null }[];
   error?: string;
+  action?: (formData: FormData) => void | Promise<void>;
+  submitLabel?: string;
+  footnote?: string | null;
 }) {
   const [category, setCategory] = useState("coffee_shop");
   const [price, setPrice] = useState("₱₱");
@@ -44,7 +50,7 @@ export function SubmitSpotForm({
   }
 
   return (
-    <form action={submitSpot} className="flex max-w-2xl flex-col gap-6">
+    <form action={action} className="flex max-w-2xl flex-col gap-6">
       {error && (
         <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
@@ -183,12 +189,11 @@ export function SubmitSpotForm({
         />
       </div>
 
-      <p className="text-xs text-navey-ink/50">
-        Submitted spots are reviewed by our team before they appear publicly.
-        This usually takes a day or two.
-      </p>
+      {footnote && (
+        <p className="text-xs text-navey-ink/50">{footnote}</p>
+      )}
 
-      <SubmitButton />
+      <SubmitButton label={submitLabel} />
     </form>
   );
 }

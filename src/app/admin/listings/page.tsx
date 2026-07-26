@@ -34,7 +34,17 @@ export default async function AdminListingsPage({
 
   return (
     <div className="mx-auto max-w-4xl">
-      <h1 className="font-heading text-3xl font-extrabold">Manage Listings</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="font-heading text-3xl font-extrabold">
+          Manage Listings
+        </h1>
+        <Link
+          href="/admin/listings/new"
+          className="rounded-full bg-navey-ink px-5 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
+        >
+          + Add Spot
+        </Link>
+      </div>
       <p className="mt-2 text-sm text-navey-ink/60">
         {spots.length} spot{spots.length === 1 ? "" : "s"}
       </p>
