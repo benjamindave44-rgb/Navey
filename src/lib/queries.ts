@@ -11,6 +11,7 @@ export type SpotWithTags = {
   description: string | null;
   saveCount: number;
   tags: string[];
+  coverPhoto: string | null;
 };
 
 export type SpotSort = "recommended" | "newest" | "most_saved";
@@ -34,7 +35,7 @@ export async function getApprovedSpots(
   let query = supabase
     .from("spots")
     .select(
-      "id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label))"
+      "id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label)), spot_photos(url, kind)"
     )
     .eq("status", "approved");
 
@@ -69,6 +70,7 @@ export async function getApprovedSpots(
     tags: spot.spot_tags
       .map((st) => st.tags?.label)
       .filter((label): label is string => Boolean(label)),
+    coverPhoto: spot.spot_photos.find((p) => p.kind === "gallery")?.url ?? null,
   }));
 
   if (tagList.length > 0) {
@@ -199,7 +201,7 @@ export async function getCollectionDetail(
       `id, title, description, created_at,
        curator:profiles(display_name),
        collection_photos(id, url),
-       collection_spots(rank, spots(id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label))))`
+       collection_spots(rank, spots(id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label)), spot_photos(url, kind)))`
     )
     .eq("id", id)
     .maybeSingle();
@@ -223,6 +225,7 @@ export async function getCollectionDetail(
         tags: spot.spot_tags
           .map((st) => st.tags?.label)
           .filter((label): label is string => Boolean(label)),
+        coverPhoto: spot.spot_photos.find((p) => p.kind === "gallery")?.url ?? null,
         rank: entry.rank,
       };
     });
@@ -334,6 +337,8 @@ export async function getSpotDetail(id: string): Promise<SpotDetail | null> {
     tags: data.spot_tags
       .map((st) => st.tags?.label)
       .filter((label): label is string => Boolean(label)),
+    coverPhoto:
+      data.spot_photos.find((p) => p.kind === "gallery")?.url ?? null,
     address: data.address,
     lat: data.lat,
     lng: data.lng,

@@ -26,8 +26,17 @@ export function SpotCard({
       href={`/spots/${spot.id}`}
       className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_rgba(20,18,11,0.08)] transition-transform hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(20,18,11,0.14)]"
     >
-      <div className="relative flex aspect-[4/3] items-center justify-center bg-navey-band text-4xl">
-        ☕
+      <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-navey-band text-4xl">
+        {spot.coverPhoto ? (
+          // eslint-disable-next-line @next/next/no-img-element -- external Supabase Storage URL
+          <img
+            src={spot.coverPhoto}
+            alt={spot.name}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          "☕"
+        )}
         {typeof rank === "number" && (
           <span className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-navey-ink text-xs font-bold text-navey-yellow">
             #{rank}

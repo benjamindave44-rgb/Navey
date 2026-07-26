@@ -88,8 +88,17 @@ export function Hero({ featured }: { featured: SpotWithTags | null }) {
             href={`/spots/${featured.id}`}
             className="group absolute -bottom-6 left-8 flex w-64 items-center gap-3 rounded-2xl bg-white p-3 shadow-[0_16px_32px_rgba(20,18,11,0.16)] transition-transform hover:-translate-y-1"
           >
-            <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-navey-band text-2xl">
-              ☕
+            <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-navey-band text-2xl">
+              {featured.coverPhoto ? (
+                // eslint-disable-next-line @next/next/no-img-element -- external Supabase Storage URL
+                <img
+                  src={featured.coverPhoto}
+                  alt={featured.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                "☕"
+              )}
               {featured.hidden_gem && (
                 <span className="absolute -right-1 -top-1 text-base" aria-hidden>
                   🔥
