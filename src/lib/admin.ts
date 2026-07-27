@@ -172,6 +172,8 @@ export type AdminSpotDetail = {
   address: string;
   city: string;
   province: string | null;
+  lat: number | null;
+  lng: number | null;
   description: string | null;
   status: string;
   hiddenGem: boolean;
@@ -184,7 +186,7 @@ export async function getAdminSpotDetail(spotId: string): Promise<AdminSpotDetai
   const { data, error } = await supabase
     .from("spots")
     .select(
-      "id, name, category, price_range, address, city, province, description, status, hidden_gem, needs_review, submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)"
+      "id, name, category, price_range, address, city, province, lat, lng, description, status, hidden_gem, needs_review, submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)"
     )
     .eq("id", spotId)
     .maybeSingle();
@@ -199,6 +201,8 @@ export async function getAdminSpotDetail(spotId: string): Promise<AdminSpotDetai
     address: data.address,
     city: data.city,
     province: data.province,
+    lat: data.lat,
+    lng: data.lng,
     description: data.description,
     status: data.status,
     hiddenGem: data.hidden_gem,

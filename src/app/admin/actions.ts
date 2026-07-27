@@ -261,11 +261,18 @@ export async function updateListing(formData: FormData) {
       existing.city !== city ||
       existing.province !== (province || null));
 
-  const coords = addressChanged
-    ? await geocodeAddress({ address, city, province: province || null })
-    : null;
+  const locationAdjusted = formData.get("locationAdjusted") === "true";
+  const manualLat = Number(formData.get("lat"));
+  const manualLng = Number(formData.get("lng"));
 
-  await supabase
+  const coords =
+    locationAdjusted && Number.isFinite(manualLat) && Number.isFinite(manualLng)
+      ? { lat: manualLat, lng: manualLng }
+      : addressChanged
+        ? await geocodeAddress({ address, city, province: province || null })
+        : null;
+
+  const { error: updateError } = await supabase
     .from("spots")
     .update({
       name,
@@ -278,9 +285,17 @@ export async function updateListing(formData: FormData) {
       status,
       hidden_gem: hiddenGem,
       needs_review: needsReview,
-      ...(addressChanged ? { lat: coords?.lat ?? null, lng: coords?.lng ?? null } : {}),
+      ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
     })
     .eq("id", id);
+
+  if (updateError) {
+    redirect(
+      `/admin/listings/${id}?error=${encodeURIComponent(
+        `Save failed: ${updateError.message}`
+      )}`
+    );
+  }
 
   redirect(
     `/admin/listings/${id}?notice=${encodeURIComponent("Listing updated.")}`

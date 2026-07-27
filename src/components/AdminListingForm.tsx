@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { updateListing } from "@/app/admin/actions";
+import { LocationFields } from "@/components/LocationFields";
 import type { AdminSpotDetail } from "@/lib/admin";
 
 const CATEGORIES = [
@@ -97,47 +98,13 @@ export function AdminListingForm({ spot }: { spot: AdminSpotDetail }) {
         <input type="hidden" name="category" value={category} />
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="address" className="text-sm font-semibold">
-          Address
-        </label>
-        <input
-          id="address"
-          name="address"
-          type="text"
-          defaultValue={spot.address}
-          required
-          className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="city" className="text-sm font-semibold">
-            City
-          </label>
-          <input
-            id="city"
-            name="city"
-            type="text"
-            defaultValue={spot.city}
-            required
-            className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="province" className="text-sm font-semibold">
-            Province
-          </label>
-          <input
-            id="province"
-            name="province"
-            type="text"
-            defaultValue={spot.province ?? ""}
-            className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
-          />
-        </div>
-      </div>
+      <LocationFields
+        initialAddress={spot.address}
+        initialCity={spot.city}
+        initialProvince={spot.province ?? ""}
+        initialLat={spot.lat}
+        initialLng={spot.lng}
+      />
 
       <div>
         <p className="mb-2 text-sm font-semibold">Price range</p>
