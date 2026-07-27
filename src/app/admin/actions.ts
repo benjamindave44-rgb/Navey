@@ -313,7 +313,32 @@ export async function updateListing(formData: FormData) {
 export async function deleteListing(formData: FormData) {
   const supabase = await requireAdmin();
   const id = String(formData.get("id") ?? "");
-  if (id) await supabase.from("spots").delete().eq("id", id);
+  if (!id) redirect("/admin/listings");
+
+  // Ask for the deleted row back: a delete blocked by row-level security
+  // succeeds while removing nothing, so only the returned rows prove it went.
+  const { data: deleted, error } = await supabase
+    .from("spots")
+    .delete()
+    .eq("id", id)
+    .select("id");
+
+  if (error) {
+    redirect(
+      `/admin/listings/${id}?error=${encodeURIComponent(
+        `Delete failed: ${error.message}`
+      )}`
+    );
+  }
+
+  if (!deleted || deleted.length === 0) {
+    redirect(
+      `/admin/listings/${id}?error=${encodeURIComponent(
+        "Delete did not go through — the listing is still live. Nothing was removed."
+      )}`
+    );
+  }
+
   redirect(
     `/admin/listings?notice=${encodeURIComponent("Listing permanently deleted.")}`
   );
