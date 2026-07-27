@@ -43,24 +43,27 @@ export async function Header() {
         <Link href="/explore" className="hover:opacity-60">
           Explore
         </Link>
-        <span className="text-navey-ink/40">Collections</span>
+        <Link href="/collections" className="hover:opacity-60">
+          Collections
+        </Link>
         <Link href="/explore/map" className="hover:opacity-60">
           Map
         </Link>
         <Link href="/community" className="hover:opacity-60">
           Community
         </Link>
-        <span className="text-navey-ink/40">About</span>
+        <Link href="/leaderboard" className="hover:opacity-60">
+          Leaderboard
+        </Link>
       </nav>
       <div className="flex items-center gap-3">
-        <button
-          type="button"
+        <Link
+          href="/profile"
           aria-label="Saved places"
-          disabled
-          className="hidden h-10 w-10 items-center justify-center rounded-full bg-white/70 text-lg disabled:cursor-not-allowed md:flex"
+          className="hidden h-10 w-10 items-center justify-center rounded-full bg-white/70 text-lg hover:bg-white md:flex"
         >
           <span aria-hidden>♡</span>
-        </button>
+        </Link>
         <MobileMenu
           isSignedIn={Boolean(user)}
           isAdmin={isAdmin}

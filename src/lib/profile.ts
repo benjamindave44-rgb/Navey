@@ -1,4 +1,23 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+
+/**
+ * Spot ids the signed-in person has saved, so cards render in the right
+ * state on first paint instead of flashing unsaved. Empty when signed out.
+ */
+export async function getSavedSpotIds(): Promise<Set<string>> {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return new Set();
+
+  const { data } = await supabase
+    .from("saved_list_spots")
+    .select("spot_id, saved_lists!inner(user_id)")
+    .eq("saved_lists.user_id", user.id);
+
+  return new Set((data ?? []).map((row) => row.spot_id));
+}
 import { supabase } from "@/lib/supabase";
 import { computeTopBadge } from "@/lib/badges";
 

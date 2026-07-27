@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PaginatedSpotGrid } from "@/components/PaginatedSpotGrid";
 import { getApprovedSpots, getCities, getTags, type SpotSort } from "@/lib/queries";
+import { getSavedSpotIds } from "@/lib/profile";
 
 export const dynamic = "force-dynamic";
 
@@ -64,10 +65,11 @@ export default async function ExplorePage({
     .map((t) => t.trim())
     .filter(Boolean);
 
-  const [spots, cities, tags] = await Promise.all([
+  const [spots, cities, tags, savedSpotIds] = await Promise.all([
     getApprovedSpots({ search, category, city, tags: activeTags, sort }),
     getCities(),
     getTags(),
+    getSavedSpotIds(),
   ]);
 
   const baseParams = {
@@ -243,7 +245,7 @@ export default async function ExplorePage({
           </div>
         ) : (
           <div className="mt-8">
-            <PaginatedSpotGrid spots={spots} />
+            <PaginatedSpotGrid spots={spots} savedSpotIds={[...savedSpotIds]} />
           </div>
         )}
       </main>

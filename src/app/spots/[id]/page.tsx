@@ -4,11 +4,14 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SpotCard } from "@/components/SpotCard";
+import { SaveHeartButton } from "@/components/SaveHeartButton";
+import { SaveSpotButton } from "@/components/SaveSpotButton";
 import {
   getRelatedSpots,
   getSpotDetail,
   type SpotDetail,
 } from "@/lib/queries";
+import { getSavedSpotIds } from "@/lib/profile";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
@@ -93,7 +96,10 @@ export default async function SpotDetailPage({
   } = await supabase.auth.getUser();
   const isOwner = Boolean(user && spot.contributor?.id === user.id);
 
-  const related = await getRelatedSpots(spot.id, spot.city, 4);
+  const [related, savedSpotIds] = await Promise.all([
+    getRelatedSpots(spot.id, spot.city, 4),
+    getSavedSpotIds(),
+  ]);
   const acceptedPayments = PAYMENT_OPTIONS.filter(({ key }) => spot[key]);
   const today = new Date().getDay();
 
@@ -183,14 +189,11 @@ export default async function SpotDetailPage({
                   {spot.name}
                 </h1>
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    aria-label="Save spot"
-                    disabled
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-navey-band text-lg disabled:cursor-not-allowed"
-                  >
-                    <span aria-hidden>♡</span>
-                  </button>
+                  <SaveHeartButton
+                    spotId={spot.id}
+                    initialSaved={savedSpotIds.has(spot.id)}
+                    variant="plain"
+                  />
                   <button
                     type="button"
                     aria-label="Share spot"
@@ -366,13 +369,10 @@ export default async function SpotDetailPage({
                     >
                       Get Directions
                     </a>
-                    <button
-                      type="button"
-                      disabled
-                      className="rounded-full bg-navey-band px-4 py-2 text-sm font-bold disabled:cursor-not-allowed"
-                    >
-                      Save
-                    </button>
+                    <SaveSpotButton
+                      spotId={spot.id}
+                      initialSaved={savedSpotIds.has(spot.id)}
+                    />
                   </div>
                 </div>
               </div>

@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SpotCard } from "@/components/SpotCard";
 import { getCollectionDetail, getOtherCollections } from "@/lib/queries";
+import { getSavedSpotIds } from "@/lib/profile";
 import { timeAgo } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
@@ -56,7 +57,10 @@ export default async function CollectionDetailPage({
   const collection = await getCollectionDetail(id, sort);
   if (!collection) notFound();
 
-  const otherCollections = await getOtherCollections(collection.id, 4);
+  const [otherCollections, savedSpotIds] = await Promise.all([
+    getOtherCollections(collection.id, 4),
+    getSavedSpotIds(),
+  ]);
   const createdAgo = timeAgo(collection.createdAt);
 
   return (
@@ -145,13 +149,14 @@ export default async function CollectionDetailPage({
               No spots in this collection yet.
             </p>
           ) : (
-            <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3">
               {collection.spots.map((spot, index) => (
                 <SpotCard
                   key={spot.id}
                   spot={spot}
                   rank={sort === "recommended" ? index + 1 : undefined}
                   showSaveButton
+                  saved={savedSpotIds.has(spot.id)}
                   showDescription
                 />
               ))}

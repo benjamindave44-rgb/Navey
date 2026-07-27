@@ -12,12 +12,14 @@ export function SpotCard({
   spot,
   trending = false,
   showSaveButton = false,
+  saved = false,
   rank,
   showDescription = false,
 }: {
   spot: SpotWithTags;
   trending?: boolean;
   showSaveButton?: boolean;
+  saved?: boolean;
   rank?: number;
   showDescription?: boolean;
 }) {
@@ -52,7 +54,9 @@ export function SpotCard({
             Trending
           </span>
         )}
-        {showSaveButton && <SaveHeartButton />}
+        {showSaveButton && (
+          <SaveHeartButton spotId={spot.id} initialSaved={saved} />
+        )}
       </div>
       <div className="flex flex-col gap-1.5 p-3 sm:gap-2 sm:p-4">
         <p className="font-heading text-sm font-bold sm:text-base">{spot.name}</p>

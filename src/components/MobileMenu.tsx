@@ -6,6 +6,7 @@ import { signOutAction } from "@/app/sign-in/actions";
 
 const NAV_LINKS = [
   { href: "/explore", label: "Explore", icon: "🔍" },
+  { href: "/collections", label: "Collections", icon: "🗂️" },
   { href: "/explore/map", label: "Map", icon: "🗺️" },
   { href: "/community", label: "Community", icon: "👥" },
   { href: "/leaderboard", label: "Leaderboard", icon: "🏆" },

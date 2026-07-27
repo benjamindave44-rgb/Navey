@@ -3,6 +3,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Hero } from "@/components/Hero";
 import { SpotCard } from "@/components/SpotCard";
+import { NewsletterForm } from "@/components/NewsletterForm";
 import { getApprovedSpots, getCollections, getTags } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -45,9 +46,12 @@ export default async function Home() {
                 Curated Collections
               </h2>
             </div>
-            <span className="text-sm font-semibold text-navey-ink/40">
+            <Link
+              href="/collections"
+              className="text-sm font-semibold hover:opacity-60"
+            >
               View all
-            </span>
+            </Link>
           </div>
           {collections.length === 0 ? (
             <p className="text-sm text-navey-ink/60">
@@ -82,19 +86,9 @@ export default async function Home() {
             <h2 className="font-heading text-2xl font-extrabold">
               Trending Nearby
             </h2>
-            <div className="flex items-center gap-4">
-              <Link href="/explore" className="text-sm font-semibold hover:opacity-60">
-                View all
-              </Link>
-              <button
-                type="button"
-                aria-label="Next"
-                disabled
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm disabled:cursor-not-allowed"
-              >
-                <span aria-hidden>→</span>
-              </button>
-            </div>
+            <Link href="/explore" className="text-sm font-semibold hover:opacity-60">
+              View all
+            </Link>
           </div>
           {spots.length === 0 ? (
             <p className="text-sm text-navey-ink/60">
@@ -123,13 +117,14 @@ export default async function Home() {
           </div>
           <div className="flex flex-wrap gap-3">
             {tags.map((tag) => (
-              <span
+              <Link
                 key={tag.id}
-                className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold"
+                href={`/explore?tags=${encodeURIComponent(tag.label)}`}
+                className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold transition-transform hover:-translate-y-0.5 hover:bg-navey-ink hover:text-navey-yellow active:scale-95"
               >
                 <span aria-hidden>{(tag.icon && TAG_ICON[tag.icon]) ?? "✨"}</span>
                 {tag.label}
-              </span>
+              </Link>
             ))}
             <Link
               href="/explore"
@@ -145,14 +140,9 @@ export default async function Home() {
             <h2 className="font-heading text-2xl font-extrabold">
               Community Picks
             </h2>
-            <button
-              type="button"
-              aria-label="Next"
-              disabled
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm disabled:cursor-not-allowed"
-            >
-              <span aria-hidden>→</span>
-            </button>
+            <Link href="/community" className="text-sm font-semibold hover:opacity-60">
+              View all
+            </Link>
           </div>
           <p className="text-sm text-navey-ink/60">
             No community picks yet — reviews and saves from real explorers
@@ -170,22 +160,7 @@ export default async function Home() {
                 New spots and hidden gems, straight to your inbox.
               </p>
             </div>
-            <div className="flex w-full max-w-md items-center gap-2 rounded-full bg-white px-3 py-2 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
-              <input
-                type="email"
-                placeholder="you@email.com"
-                className="flex-1 border-none bg-transparent text-sm outline-none"
-                disabled
-              />
-              <button
-                type="button"
-                className="flex items-center gap-2 rounded-full bg-navey-ink px-5 py-2 text-sm font-bold text-navey-yellow"
-                disabled
-              >
-                Subscribe
-                <span aria-hidden>✈️</span>
-              </button>
-            </div>
+            <NewsletterForm />
           </div>
         </section>
       </main>
