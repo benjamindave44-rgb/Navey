@@ -13,6 +13,7 @@ import {
   updatePayments,
 } from "@/app/owner/[spotId]/actions";
 import { PhotoPicker } from "@/components/PhotoPicker";
+import { LocationPicker } from "@/components/LocationPicker";
 import type { OwnerSpotDetail } from "@/lib/owner";
 
 const MAX_GALLERY_PHOTOS = 12;
@@ -256,6 +257,8 @@ export function OwnerSpotTabs({
                 />
               </div>
             </div>
+
+            <LocationPicker lat={spot.lat} lng={spot.lng} />
 
             <div>
               <p className="mb-2 text-sm font-semibold">Price range</p>

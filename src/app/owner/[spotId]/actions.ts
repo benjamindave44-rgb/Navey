@@ -43,6 +43,9 @@ export async function updateBasicInfo(formData: FormData) {
   const city = String(formData.get("city") ?? "").trim();
   const province = String(formData.get("province") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
+  const locationAdjusted = formData.get("locationAdjusted") === "true";
+  const manualLat = Number(formData.get("lat"));
+  const manualLng = Number(formData.get("lng"));
 
   if (!name || !address || !city) {
     redirect(
@@ -67,9 +70,12 @@ export async function updateBasicInfo(formData: FormData) {
       existing.city !== city ||
       existing.province !== (province || null));
 
-  const coords = addressChanged
-    ? await geocodeAddress({ address, city, province: province || null })
-    : null;
+  const coords =
+    locationAdjusted && Number.isFinite(manualLat) && Number.isFinite(manualLng)
+      ? { lat: manualLat, lng: manualLng }
+      : addressChanged
+        ? await geocodeAddress({ address, city, province: province || null })
+        : null;
 
   await supabase
     .from("spots")
@@ -82,7 +88,7 @@ export async function updateBasicInfo(formData: FormData) {
       province: province || null,
       description: description || null,
       needs_review: needsReview,
-      ...(addressChanged ? { lat: coords?.lat ?? null, lng: coords?.lng ?? null } : {}),
+      ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
     })
     .eq("id", spotId);
 
