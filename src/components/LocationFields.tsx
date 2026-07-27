@@ -236,6 +236,8 @@ export function LocationFields({
   const [loading, setLoading] = useState(false);
   const [noMatches, setNoMatches] = useState(false);
   const [searchBroken, setSearchBroken] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [locateError, setLocateError] = useState<string | null>(null);
 
   useEffect(() => {
     positionRef.current = position;
@@ -350,34 +352,65 @@ export function LocationFields({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
+  /** Single place that moves the pin, whatever set it: a suggestion, the
+   *  device's own location, or a tap on the map. */
+  function applyPosition(lat: number, lng: number, zoom = 16) {
+    setPosition({ lat, lng });
+    setPinSet(true);
+
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (markerRef.current) {
+      markerRef.current.setLngLat([lng, lat]);
+    } else {
+      const marker = new mapboxgl.Marker({ draggable: true, color: "#14120B" })
+        .setLngLat([lng, lat])
+        .addTo(map);
+      marker.on("dragend", () => {
+        const next = marker.getLngLat();
+        setPosition({ lat: next.lat, lng: next.lng });
+        setPinSet(true);
+      });
+      markerRef.current = marker;
+    }
+    map.flyTo({ center: [lng, lat], zoom });
+  }
+
+  function useCurrentLocation() {
+    if (!navigator.geolocation) {
+      setLocateError("This browser can't share your location.");
+      return;
+    }
+    setLocating(true);
+    setLocateError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (result) => {
+        applyPosition(result.coords.latitude, result.coords.longitude, 17);
+        setLocating(false);
+      },
+      (error) => {
+        setLocating(false);
+        setLocateError(
+          error.code === error.PERMISSION_DENIED
+            ? "Location permission was blocked. Allow it in your browser settings, or tap the map instead."
+            : "Couldn't get your location. Tap the map instead."
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }
+
   function choose(suggestion: Suggestion) {
     typingRef.current = false;
     setAddress(suggestion.addressLine);
     if (suggestion.city) setCity(suggestion.city);
     if (suggestion.province) setProvince(suggestion.province);
-    setPosition({ lat: suggestion.lat, lng: suggestion.lng });
-    setPinSet(true);
     setSuggestions([]);
     setOpen(false);
     setNoMatches(false);
-
-    const map = mapRef.current;
-    if (map) {
-      if (markerRef.current) {
-        markerRef.current.setLngLat([suggestion.lng, suggestion.lat]);
-      } else {
-        const marker = new mapboxgl.Marker({ draggable: true, color: "#14120B" })
-          .setLngLat([suggestion.lng, suggestion.lat])
-          .addTo(map);
-        marker.on("dragend", () => {
-          const next = marker.getLngLat();
-          setPosition({ lat: next.lat, lng: next.lng });
-          setPinSet(true);
-        });
-        markerRef.current = marker;
-      }
-      map.flyTo({ center: [suggestion.lng, suggestion.lat], zoom: 16 });
-    }
+    applyPosition(suggestion.lat, suggestion.lng, 16);
   }
 
   return (
@@ -484,11 +517,23 @@ export function LocationFields({
       </div>
 
       <div className="flex flex-col gap-2">
-        <div ref={containerRef} className="h-56 w-full rounded-2xl" />
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-semibold">Pin on the map</p>
+          <button
+            type="button"
+            onClick={useCurrentLocation}
+            disabled={locating}
+            className="rounded-full bg-navey-band px-4 py-2 text-xs font-bold hover:bg-navey-band/70 disabled:opacity-60"
+          >
+            {locating ? "Finding you…" : "📍 Use my current location"}
+          </button>
+        </div>
+        <div ref={containerRef} className="h-64 w-full rounded-2xl" />
+        {locateError && <p className="text-xs text-amber-700">{locateError}</p>}
         <p className="text-xs text-navey-ink/50">
           {position
             ? "Not exactly right? Tap the map or drag the pin to move it."
-            : "Tap the map to drop the pin on your spot."}
+            : "Tap the map where your spot is — or use the button above if you're there now."}
         </p>
       </div>
 
