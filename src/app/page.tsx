@@ -36,6 +36,12 @@ export default async function Home() {
     getSavedSpotIds(),
   ]);
 
+  // Only spots people have actually saved belong under "Community Picks";
+  // an empty box announcing it has nothing reads worse than no section.
+  const communityPicks = (
+    await getApprovedSpots({ sort: "most_saved", limit: 5 })
+  ).filter((spot) => spot.saveCount > 0);
+
   return (
     <>
       <Header />
@@ -141,20 +147,36 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="bg-navey-band px-4 py-10 sm:px-6 md:px-12 md:py-12">
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="font-heading text-2xl font-extrabold">
-              Community Picks
-            </h2>
-            <Link href="/community" className="text-sm font-semibold hover:opacity-60">
-              View all
-            </Link>
-          </div>
-          <p className="text-sm text-navey-ink/60">
-            No community picks yet — reviews and saves from real explorers
-            will show up here once accounts and reviews go live.
-          </p>
-        </section>
+        {communityPicks.length > 0 && (
+          <section className="bg-navey-band px-4 py-10 sm:px-6 md:px-12 md:py-12">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <p className="mb-1 text-xs font-bold uppercase tracking-wide text-navey-ink/50">
+                  Most saved by explorers
+                </p>
+                <h2 className="font-heading text-2xl font-extrabold">
+                  Community Picks
+                </h2>
+              </div>
+              <Link
+                href="/community"
+                className="text-sm font-semibold hover:opacity-60"
+              >
+                View all
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-5">
+              {communityPicks.map((spot) => (
+                <SpotCard
+                  key={spot.id}
+                  spot={spot}
+                  showSaveButton
+                  saved={savedSpotIds.has(spot.id)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="bg-navey-yellow px-4 py-10 sm:px-6 md:px-12 md:py-12">
           <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">

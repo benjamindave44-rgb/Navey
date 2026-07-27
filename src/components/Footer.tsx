@@ -12,12 +12,15 @@ const LINK_COLUMNS: { title: string; links: { label: string; href?: string }[] }
   },
   {
     title: "Collections",
-    links: [{ label: "Curated guides" }, { label: "Community picks" }],
+    links: [
+      { label: "Curated guides", href: "/collections" },
+      { label: "Community picks", href: "/community" },
+    ],
   },
   {
     title: "About",
     links: [
-      { label: "Our story" },
+      { label: "Our story", href: "/about" },
       { label: "Privacy policy", href: "/privacy" },
       { label: "Terms", href: "/terms" },
     ],
@@ -30,8 +33,6 @@ const LINK_COLUMNS: { title: string; links: { label: string; href?: string }[] }
     ],
   },
 ];
-
-const SOCIALS = ["IG", "FB", "TT", "YT"];
 
 export function Footer() {
   return (
@@ -53,17 +54,12 @@ export function Footer() {
           <p className="text-sm font-medium text-navey-ink/70">
             Navigate Good Spots Nearby
           </p>
-          <div className="mt-2 flex gap-2">
-            {SOCIALS.map((social) => (
-              <span
-                key={social}
-                aria-hidden
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/60 text-xs font-bold text-navey-ink/50"
-              >
-                {social}
-              </span>
-            ))}
-          </div>
+          <a
+            href="mailto:navey.ph@gmail.com"
+            className="mt-2 w-fit text-sm font-semibold underline hover:opacity-60"
+          >
+            navey.ph@gmail.com
+          </a>
         </div>
         {LINK_COLUMNS.map((column) => (
           <div key={column.title} className="flex flex-col gap-3">

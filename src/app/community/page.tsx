@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { NewsletterForm } from "@/components/NewsletterForm";
 import { SpotCard } from "@/components/SpotCard";
 import { getApprovedSpots } from "@/lib/queries";
 import {
@@ -127,20 +128,8 @@ export default async function CommunityPage() {
                 <p className="mt-1 text-sm text-navey-ink/60">
                   New spots and hidden gems, straight to your inbox.
                 </p>
-                <div className="mt-3 flex items-center gap-2 rounded-full bg-navey-band px-3 py-2">
-                  <input
-                    type="email"
-                    placeholder="you@email.com"
-                    disabled
-                    className="flex-1 bg-transparent text-sm outline-none"
-                  />
-                  <button
-                    type="button"
-                    disabled
-                    className="rounded-full bg-navey-ink px-3 py-1 text-xs font-bold text-navey-yellow disabled:cursor-not-allowed"
-                  >
-                    Subscribe
-                  </button>
+                <div className="mt-3">
+                  <NewsletterForm />
                 </div>
               </div>
             </aside>

@@ -105,13 +105,6 @@ export default async function CollectionDetailPage({
                   {collection.description}
                 </p>
               )}
-              <button
-                type="button"
-                disabled
-                className="mt-2 w-fit rounded-full bg-white px-5 py-2 text-sm font-bold text-navey-ink disabled:cursor-not-allowed"
-              >
-                Save Collection
-              </button>
             </div>
           </div>
 
