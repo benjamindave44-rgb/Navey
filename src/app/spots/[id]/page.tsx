@@ -141,8 +141,12 @@ export default async function SpotDetailPage({
   const mapsHref =
     spot.lat != null && spot.lng != null
       ? `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          `${spot.address}, ${spot.city}`
+      : // No pin yet: hand Google the business name too. Its own database of
+        // Philippine businesses resolves a named shop far more reliably than
+        // a bare street, which is what an unpinned listing would otherwise
+        // send people to.
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+          `${spot.name}, ${spot.address}, ${spot.city}`
         )}`;
 
   return (
