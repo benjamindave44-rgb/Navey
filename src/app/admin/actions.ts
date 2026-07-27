@@ -178,6 +178,8 @@ export async function createListingAsAdmin(formData: FormData) {
       ? { lat: manualLat, lng: manualLng }
       : await geocodeAddress({ address, city, province: province || null });
 
+  const featured = formData.get("featured") === "on";
+
   const { data: spot, error } = await supabase
     .from("spots")
     .insert({
@@ -191,6 +193,7 @@ export async function createListingAsAdmin(formData: FormData) {
       submitted_by: user.id,
       hidden_gem: isHiddenGem,
       status: "approved",
+      featured,
       lat: coords?.lat ?? null,
       lng: coords?.lng ?? null,
     })

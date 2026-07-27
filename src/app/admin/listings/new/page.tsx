@@ -81,6 +81,7 @@ export default async function AdminAddListingPage({
               action={createListingAsAdmin}
               submitLabel="Add Spot"
               footnote={null}
+              allowFeature
             />
           </div>
         </>

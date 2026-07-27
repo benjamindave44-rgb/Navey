@@ -33,12 +33,15 @@ export function SubmitSpotForm({
   action = submitSpot,
   submitLabel = "Submit Spot",
   footnote = "Submitted spots are reviewed by our team before they appear publicly. This usually takes a day or two.",
+  allowFeature = false,
 }: {
   tags: { id: number; label: string; icon: string | null }[];
   error?: string;
   action?: (formData: FormData) => void | Promise<void>;
   submitLabel?: string;
   footnote?: string | null;
+  /** Admin-only: regular submitters must not be able to feature themselves. */
+  allowFeature?: boolean;
 }) {
   const [category, setCategory] = useState("coffee_shop");
   const [price, setPrice] = useState("₱₱");
@@ -152,6 +155,16 @@ export function SubmitSpotForm({
           className="rounded-2xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
         />
       </div>
+
+      {allowFeature && (
+        <label className="flex items-center gap-3 rounded-2xl bg-white p-4 text-sm font-semibold shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
+          <input type="checkbox" name="featured" />
+          Feature on homepage
+          <span className="font-normal text-navey-ink/50">
+            — adds it to &quot;Our picks this week&quot;
+          </span>
+        </label>
+      )}
 
       {footnote && (
         <p className="text-xs text-navey-ink/50">{footnote}</p>
