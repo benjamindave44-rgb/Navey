@@ -40,7 +40,7 @@ export function LocationPicker({
     mapboxgl.accessToken = token;
     const map = new mapboxgl.Map({
       container: containerRef.current,
-      style: "mapbox://styles/mapbox/light-v11",
+      style: "mapbox://styles/mapbox/streets-v12",
       center: [position.lng, position.lat],
       zoom: lat != null && lng != null ? 14 : 11,
     });
@@ -114,9 +114,10 @@ export function LocationPicker({
     <div className="flex flex-col gap-2">
       <p className="text-sm font-semibold">Pin location</p>
       <p className="text-xs text-navey-ink/50">
-        Search a landmark to jump to the right area, then drag the pin onto
-        the exact spot. This is what shows on the Explore Map and powers
-        &quot;Get Directions.&quot;
+        Search a landmark to jump to the right area, then click and hold
+        directly on the black pin and drag it onto the exact building
+        (dragging anywhere else just pans the map). This is what shows on the
+        Explore Map and powers &quot;Get Directions.&quot;
       </p>
       <div className="flex gap-2">
         <input
@@ -143,6 +144,18 @@ export function LocationPicker({
       </div>
       {searchError && <p className="text-xs text-red-600">{searchError}</p>}
       <div ref={containerRef} className="h-56 w-full rounded-2xl" />
+      <p className="text-xs text-navey-ink/50">
+        Pin coordinates: {position.lat.toFixed(6)}, {position.lng.toFixed(6)}
+      </p>
+      {moved ? (
+        <p className="text-xs font-semibold text-green-700">
+          ✓ Pin moved — click &quot;Save Overview&quot; below to keep it.
+        </p>
+      ) : (
+        <p className="text-xs text-navey-ink/40">
+          Pin hasn&apos;t been moved yet — this is still the original location.
+        </p>
+      )}
       <input type="hidden" name="lat" value={position.lat} />
       <input type="hidden" name="lng" value={position.lng} />
       <input type="hidden" name="locationAdjusted" value={moved ? "true" : "false"} />

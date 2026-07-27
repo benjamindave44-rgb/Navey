@@ -77,7 +77,7 @@ export async function updateBasicInfo(formData: FormData) {
         ? await geocodeAddress({ address, city, province: province || null })
         : null;
 
-  await supabase
+  const { error: updateError } = await supabase
     .from("spots")
     .update({
       name,
@@ -92,9 +92,19 @@ export async function updateBasicInfo(formData: FormData) {
     })
     .eq("id", spotId);
 
+  if (updateError) {
+    redirect(
+      `/owner/${spotId}?tab=overview&error=${encodeURIComponent(
+        `Save failed: ${updateError.message}`
+      )}`
+    );
+  }
+
   const notice = needsReview
     ? `Saved and live, but flagged for admin review: ${issues.join(" ")}`
-    : "Saved.";
+    : locationAdjusted && coords
+      ? `Saved. Pin updated to ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}.`
+      : "Saved.";
   redirect(`/owner/${spotId}?tab=overview&notice=${encodeURIComponent(notice)}`);
 }
 
