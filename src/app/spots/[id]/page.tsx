@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { SpotCard } from "@/components/SpotCard";
 import { PhotoSlider } from "@/components/PhotoSlider";
 import { SaveHeartButton } from "@/components/SaveHeartButton";
+import { ShareSpotButton } from "@/components/ShareSpotButton";
 import { SaveSpotButton } from "@/components/SaveSpotButton";
 import {
   getRelatedSpots,
@@ -200,14 +201,7 @@ export default async function SpotDetailPage({
                     initialSaved={savedSpotIds.has(spot.id)}
                     variant="plain"
                   />
-                  <button
-                    type="button"
-                    aria-label="Share spot"
-                    disabled
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-navey-band text-lg disabled:cursor-not-allowed"
-                  >
-                    <span aria-hidden>↗</span>
-                  </button>
+                  <ShareSpotButton name={spot.name} city={spot.city} />
                 </div>
               </div>
               <p className="mt-1 text-sm text-navey-ink/70">
