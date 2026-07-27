@@ -4,7 +4,12 @@ import { Footer } from "@/components/Footer";
 import { Hero } from "@/components/Hero";
 import { SpotCard } from "@/components/SpotCard";
 import { NewsletterForm } from "@/components/NewsletterForm";
-import { getApprovedSpots, getCollections, getTags } from "@/lib/queries";
+import {
+  getApprovedSpots,
+  getCollections,
+  getFeaturedSpots,
+  getTags,
+} from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -22,13 +27,12 @@ const TAG_ICON: Record<string, string> = {
 };
 
 export default async function Home() {
-  const [spots, collections, tags] = await Promise.all([
+  const [spots, collections, tags, featured] = await Promise.all([
     getApprovedSpots({ limit: 8 }),
     getCollections(4),
     getTags(),
+    getFeaturedSpots(5),
   ]);
-
-  const featured = spots.find((spot) => spot.hidden_gem) ?? spots[0] ?? null;
 
   return (
     <>

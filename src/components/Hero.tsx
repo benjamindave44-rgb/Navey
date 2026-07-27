@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { FeaturedShowcase } from "@/components/FeaturedShowcase";
 import type { SpotWithTags } from "@/lib/queries";
 
 const CITIES = [
@@ -20,7 +21,7 @@ const CITIES = [
 
 const FILTER_CHIPS = ["WiFi", "24 Hours", "Hidden Gems", "Chill", "Date Spot", "Charging"];
 
-export function Hero({ featured }: { featured: SpotWithTags | null }) {
+export function Hero({ featured }: { featured: SpotWithTags[] }) {
   const [cityIndex, setCityIndex] = useState(0);
 
   useEffect(() => {
@@ -82,47 +83,7 @@ export function Hero({ featured }: { featured: SpotWithTags | null }) {
           </Link>
         </div>
       </div>
-      <div className="relative hidden items-center justify-center rounded-[260px_260px_40px_260px] bg-navey-band text-7xl md:flex">
-        📍
-        {featured && (
-          <Link
-            href={`/spots/${featured.id}`}
-            className="group absolute -bottom-6 left-8 flex w-64 items-center gap-3 rounded-2xl bg-white p-3 shadow-[0_16px_32px_rgba(20,18,11,0.16)] transition-transform hover:-translate-y-1"
-          >
-            <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-navey-band text-2xl">
-              {featured.coverPhoto ? (
-                // eslint-disable-next-line @next/next/no-img-element -- external Supabase Storage URL
-                <img
-                  src={featured.coverPhoto}
-                  alt={featured.name}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                "☕"
-              )}
-              {featured.hidden_gem && (
-                <span className="absolute -right-1 -top-1 text-base" aria-hidden>
-                  🔥
-                </span>
-              )}
-            </div>
-            <div className="flex min-w-0 flex-col gap-0.5 text-left">
-              <p className="truncate text-sm font-heading font-bold">
-                {featured.name}
-              </p>
-              <p className="truncate text-xs text-navey-ink/60">
-                {featured.city}
-              </p>
-            </div>
-            <span
-              aria-hidden
-              className="ml-auto text-lg opacity-0 transition-opacity group-hover:opacity-100"
-            >
-              →
-            </span>
-          </Link>
-        )}
-      </div>
+      <FeaturedShowcase spots={featured} />
     </section>
   );
 }

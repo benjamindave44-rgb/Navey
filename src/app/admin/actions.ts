@@ -240,6 +240,9 @@ export async function updateListing(formData: FormData) {
   const status = String(formData.get("status") ?? "approved");
   const hiddenGem = formData.get("hiddenGem") === "on";
   const needsReview = formData.get("needsReview") === "on";
+  const featured = formData.get("featured") === "on";
+  const featuredRankRaw = Number(formData.get("featuredRank"));
+  const featuredRank = Number.isFinite(featuredRankRaw) ? featuredRankRaw : 0;
 
   if (!name || !address || !city) {
     redirect(
@@ -285,6 +288,8 @@ export async function updateListing(formData: FormData) {
       status,
       hidden_gem: hiddenGem,
       needs_review: needsReview,
+      featured,
+      featured_rank: featuredRank,
       ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
     })
     .eq("id", id);

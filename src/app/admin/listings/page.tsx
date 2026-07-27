@@ -97,6 +97,11 @@ export default async function AdminListingsPage({
                 <p className="text-xs text-navey-ink/55">{spot.city}</p>
               </div>
               <div className="flex items-center gap-2">
+                {spot.featured && (
+                  <span className="rounded-full bg-navey-ink px-2.5 py-1 text-xs font-bold text-navey-yellow">
+                    Featured
+                  </span>
+                )}
                 {spot.needsReview && (
                   <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700">
                     Flagged

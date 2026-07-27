@@ -37,6 +37,7 @@ export function AdminListingForm({ spot }: { spot: AdminSpotDetail }) {
   const [category, setCategory] = useState(spot.category);
   const [priceRange, setPriceRange] = useState(spot.priceRange ?? "₱₱");
   const [status, setStatus] = useState(spot.status);
+  const [featured, setFeatured] = useState(spot.featured);
 
   return (
     <form action={updateListing} className="flex flex-col gap-4">
@@ -144,6 +145,40 @@ export function AdminListingForm({ spot }: { spot: AdminSpotDetail }) {
         <input type="checkbox" name="hiddenGem" defaultChecked={spot.hiddenGem} />
         Hidden Gem
       </label>
+
+      <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
+        <label className="flex items-center gap-3 text-sm font-semibold">
+          <input
+            type="checkbox"
+            name="featured"
+            checked={featured}
+            onChange={(event) => setFeatured(event.target.checked)}
+          />
+          Feature on homepage
+        </label>
+        <p className="mt-1 text-xs text-navey-ink/50">
+          Featured spots rotate through &quot;Our picks this week&quot; on the
+          homepage. Add a gallery photo so it looks its best.
+        </p>
+        {featured && (
+          <div className="mt-3 flex items-center gap-3">
+            <label htmlFor="featuredRank" className="text-sm font-semibold">
+              Order
+            </label>
+            <input
+              id="featuredRank"
+              name="featuredRank"
+              type="number"
+              min={0}
+              defaultValue={spot.featuredRank}
+              className="w-24 rounded-full border border-black/10 px-4 py-2 text-sm outline-none focus:border-navey-ink"
+            />
+            <span className="text-xs text-navey-ink/50">
+              Lower shows first.
+            </span>
+          </div>
+        )}
+      </div>
 
       <label className="flex items-center gap-3 rounded-2xl bg-white p-4 text-sm font-semibold shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
         <input

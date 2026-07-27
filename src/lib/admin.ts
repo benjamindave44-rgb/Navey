@@ -131,6 +131,7 @@ export type AdminSpotListItem = {
   category: string;
   status: string;
   needsReview: boolean;
+  featured: boolean;
   createdAt: string;
 };
 
@@ -141,7 +142,7 @@ export async function getAdminSpotList(filters: {
   const supabase = await createServerSupabaseClient();
   let query = supabase
     .from("spots")
-    .select("id, name, city, category, status, needs_review, created_at")
+    .select("id, name, city, category, status, needs_review, featured, created_at")
     .order("created_at", { ascending: false });
 
   if (filters.status) query = query.eq("status", filters.status);
@@ -160,6 +161,7 @@ export async function getAdminSpotList(filters: {
     category: spot.category,
     status: spot.status,
     needsReview: spot.needs_review,
+    featured: spot.featured,
     createdAt: spot.created_at,
   }));
 }
@@ -178,6 +180,8 @@ export type AdminSpotDetail = {
   status: string;
   hiddenGem: boolean;
   needsReview: boolean;
+  featured: boolean;
+  featuredRank: number;
   submitterName: string | null;
 };
 
@@ -186,7 +190,7 @@ export async function getAdminSpotDetail(spotId: string): Promise<AdminSpotDetai
   const { data, error } = await supabase
     .from("spots")
     .select(
-      "id, name, category, price_range, address, city, province, lat, lng, description, status, hidden_gem, needs_review, submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)"
+      "id, name, category, price_range, address, city, province, lat, lng, description, status, hidden_gem, needs_review, featured, featured_rank, submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)"
     )
     .eq("id", spotId)
     .maybeSingle();
@@ -207,6 +211,8 @@ export async function getAdminSpotDetail(spotId: string): Promise<AdminSpotDetai
     status: data.status,
     hiddenGem: data.hidden_gem,
     needsReview: data.needs_review,
+    featured: data.featured,
+    featuredRank: data.featured_rank,
     submitterName: data.submitted_by_profile?.display_name ?? null,
   };
 }

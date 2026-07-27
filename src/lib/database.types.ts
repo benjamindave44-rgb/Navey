@@ -449,6 +449,8 @@ export type Database = {
           city: string
           created_at: string
           description: string | null
+          featured: boolean
+          featured_rank: number
           hidden_gem: boolean
           id: string
           lat: number | null
@@ -476,6 +478,8 @@ export type Database = {
           city: string
           created_at?: string
           description?: string | null
+          featured?: boolean
+          featured_rank?: number
           hidden_gem?: boolean
           id?: string
           lat?: number | null
@@ -503,6 +507,8 @@ export type Database = {
           city?: string
           created_at?: string
           description?: string | null
+          featured?: boolean
+          featured_rank?: number
           hidden_gem?: boolean
           id?: string
           lat?: number | null

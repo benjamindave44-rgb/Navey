@@ -80,6 +80,45 @@ export async function getApprovedSpots(
   return typeof limit === "number" ? spots.slice(0, limit) : spots;
 }
 
+/**
+ * Admin-curated homepage picks. Falls back to hidden gems and then the
+ * newest spots so the hero is never empty before anything is featured.
+ */
+export async function getFeaturedSpots(limit = 5): Promise<SpotWithTags[]> {
+  const { data } = await supabase
+    .from("spots")
+    .select(
+      "id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label)), spot_photos(url, kind)"
+    )
+    .eq("status", "approved")
+    .eq("featured", true)
+    .order("featured_rank", { ascending: true })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  const featured = (data ?? []).map((spot) => ({
+    id: spot.id,
+    name: spot.name,
+    category: spot.category,
+    price_range: spot.price_range,
+    city: spot.city,
+    province: spot.province,
+    hidden_gem: spot.hidden_gem,
+    description: spot.description,
+    saveCount: spot.save_count,
+    tags: spot.spot_tags
+      .map((st) => st.tags?.label)
+      .filter((label): label is string => Boolean(label)),
+    coverPhoto: spot.spot_photos.find((p) => p.kind === "gallery")?.url ?? null,
+  }));
+
+  if (featured.length > 0) return featured;
+
+  const fallback = await getApprovedSpots({ limit });
+  const gems = fallback.filter((spot) => spot.hidden_gem);
+  return (gems.length > 0 ? gems : fallback).slice(0, limit);
+}
+
 export type MapSpot = {
   id: string;
   name: string;
