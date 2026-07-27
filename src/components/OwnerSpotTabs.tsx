@@ -258,7 +258,11 @@ export function OwnerSpotTabs({
               </div>
             </div>
 
-            <LocationPicker lat={spot.lat} lng={spot.lng} />
+            <LocationPicker
+              lat={spot.lat}
+              lng={spot.lng}
+              searchHint={[spot.address, spot.city, spot.province].filter(Boolean).join(", ")}
+            />
 
             <div>
               <p className="mb-2 text-sm font-semibold">Price range</p>
