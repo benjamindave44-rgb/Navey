@@ -4,6 +4,34 @@ import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
+const MANILA_CENTER: [number, number] = [121.0, 14.6];
+
+/**
+ * Philippine addresses are commonly written as intersections -- "7th Ave
+ * corner 25th St" -- which geocoders don't parse, returning nothing at all.
+ * Try the raw text first, then progressively simpler forms: "corner"
+ * rewritten as a separator, and finally just the first street plus the
+ * city/province tail.
+ */
+function queryVariants(term: string): string[] {
+  const variants = [term];
+
+  const decornered = term
+    .replace(/\s*\b(?:cor\.?|corner)\b\s*/gi, ", ")
+    .replace(/\s*,\s*,+/g, ", ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (decornered !== term) variants.push(decornered);
+
+  const parts = decornered.split(",").map((part) => part.trim()).filter(Boolean);
+  if (parts.length > 2) {
+    // Drop the second street, keep the first plus everything after it.
+    variants.push([parts[0], ...parts.slice(2)].join(", "));
+  }
+
+  return [...new Set(variants)];
+}
+
 type Suggestion = {
   id: string;
   title: string;
@@ -96,6 +124,7 @@ export function LocationFields({
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [noMatches, setNoMatches] = useState(false);
 
   // Debounced lookup as the person types, so suggestions appear on their own.
   useEffect(() => {
@@ -110,27 +139,37 @@ export function LocationFields({
       }
       setLoading(true);
       try {
-        const url = new URL(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(term)}.json`
-        );
-        url.searchParams.set("access_token", token);
-        url.searchParams.set("country", "PH");
-        url.searchParams.set("autocomplete", "true");
-        url.searchParams.set("limit", "6");
-        url.searchParams.set("types", "poi,address,place,locality,neighborhood");
+        let parsed: Suggestion[] = [];
 
-        const response = await fetch(url);
-        const data = await response.json();
-        const features: MapboxFeature[] = Array.isArray(data.features)
-          ? data.features
-          : [];
+        for (const variant of queryVariants(term)) {
+          const url = new URL(
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(variant)}.json`
+          );
+          url.searchParams.set("access_token", token);
+          url.searchParams.set("country", "PH");
+          url.searchParams.set("autocomplete", "true");
+          url.searchParams.set("limit", "6");
+          url.searchParams.set(
+            "types",
+            "poi,address,place,locality,neighborhood"
+          );
 
-        const parsed = features
-          .map(toSuggestion)
-          .filter((entry): entry is Suggestion => entry !== null);
+          const response = await fetch(url);
+          const data = await response.json();
+          const features: MapboxFeature[] = Array.isArray(data.features)
+            ? data.features
+            : [];
+
+          parsed = features
+            .map(toSuggestion)
+            .filter((entry): entry is Suggestion => entry !== null);
+
+          if (parsed.length > 0) break;
+        }
 
         setSuggestions(parsed);
         setOpen(parsed.length > 0);
+        setNoMatches(parsed.length === 0);
       } catch {
         setSuggestions([]);
       } finally {
@@ -141,32 +180,45 @@ export function LocationFields({
     return () => clearTimeout(timer);
   }, [address, token]);
 
+  // The map is always mounted, even before a location is chosen: when a
+  // search finds nothing, tapping the map is the only way to place the pin.
   useEffect(() => {
-    if (!token || !containerRef.current || !position) return;
+    if (!token || !containerRef.current) return;
 
     mapboxgl.accessToken = token;
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: "mapbox://styles/mapbox/streets-v12",
-      center: [position.lng, position.lat],
-      zoom: 16,
+      center: initialLat != null && initialLng != null
+        ? [initialLng, initialLat]
+        : MANILA_CENTER,
+      zoom: initialLat != null && initialLng != null ? 16 : 10,
     });
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
     mapRef.current = map;
 
-    const marker = new mapboxgl.Marker({ draggable: true, color: "#14120B" })
-      .setLngLat([position.lng, position.lat])
-      .addTo(map);
-    markerRef.current = marker;
+    function placeMarker(lat: number, lng: number) {
+      if (markerRef.current) {
+        markerRef.current.setLngLat([lng, lat]);
+        return;
+      }
+      const marker = new mapboxgl.Marker({ draggable: true, color: "#14120B" })
+        .setLngLat([lng, lat])
+        .addTo(map);
+      marker.on("dragend", () => {
+        const next = marker.getLngLat();
+        setPosition({ lat: next.lat, lng: next.lng });
+        setPinSet(true);
+      });
+      markerRef.current = marker;
+    }
 
-    marker.on("dragend", () => {
-      const next = marker.getLngLat();
-      setPosition({ lat: next.lat, lng: next.lng });
-      setPinSet(true);
-    });
+    if (initialLat != null && initialLng != null) {
+      placeMarker(initialLat, initialLng);
+    }
 
     map.on("click", (event) => {
-      marker.setLngLat(event.lngLat);
+      placeMarker(event.lngLat.lat, event.lngLat.lng);
       setPosition({ lat: event.lngLat.lat, lng: event.lngLat.lng });
       setPinSet(true);
     });
@@ -176,9 +228,9 @@ export function LocationFields({
       mapRef.current = null;
       markerRef.current = null;
     };
-    // Created once the first coordinates land; later moves use flyTo below.
+    // Built once on mount; later selections move the existing map via flyTo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, position !== null]);
+  }, [token]);
 
   function choose(suggestion: Suggestion) {
     typingRef.current = false;
@@ -189,9 +241,25 @@ export function LocationFields({
     setPinSet(true);
     setSuggestions([]);
     setOpen(false);
+    setNoMatches(false);
 
-    markerRef.current?.setLngLat([suggestion.lng, suggestion.lat]);
-    mapRef.current?.flyTo({ center: [suggestion.lng, suggestion.lat], zoom: 16 });
+    const map = mapRef.current;
+    if (map) {
+      if (markerRef.current) {
+        markerRef.current.setLngLat([suggestion.lng, suggestion.lat]);
+      } else {
+        const marker = new mapboxgl.Marker({ draggable: true, color: "#14120B" })
+          .setLngLat([suggestion.lng, suggestion.lat])
+          .addTo(map);
+        marker.on("dragend", () => {
+          const next = marker.getLngLat();
+          setPosition({ lat: next.lat, lng: next.lng });
+          setPinSet(true);
+        });
+        markerRef.current = marker;
+      }
+      map.flyTo({ center: [suggestion.lng, suggestion.lat], zoom: 16 });
+    }
   }
 
   return (
@@ -211,6 +279,7 @@ export function LocationFields({
             placeholder="Start typing the shop's address or name..."
             onChange={(event) => {
               typingRef.current = true;
+              setNoMatches(false);
               setAddress(event.target.value);
             }}
             onFocus={() => suggestions.length > 0 && setOpen(true)}
@@ -248,10 +317,16 @@ export function LocationFields({
             </ul>
           )}
         </div>
-        <p className="text-xs text-navey-ink/50">
+        <p
+          className={`text-xs ${
+            noMatches && !loading ? "text-amber-700" : "text-navey-ink/50"
+          }`}
+        >
           {loading
             ? "Looking up addresses…"
-            : "Pick your shop from the list so we can put it on the map correctly."}
+            : noMatches
+              ? "No match found — try a nearby landmark or mall name, or just tap the map below to drop the pin."
+              : "Pick your shop from the list so we can put it on the map correctly."}
         </p>
       </div>
 
@@ -285,14 +360,14 @@ export function LocationFields({
         </div>
       </div>
 
-      {position && (
-        <div className="flex flex-col gap-2">
-          <div ref={containerRef} className="h-56 w-full rounded-2xl" />
-          <p className="text-xs text-navey-ink/50">
-            Not exactly right? Tap the map or drag the pin to move it.
-          </p>
-        </div>
-      )}
+      <div className="flex flex-col gap-2">
+        <div ref={containerRef} className="h-56 w-full rounded-2xl" />
+        <p className="text-xs text-navey-ink/50">
+          {position
+            ? "Not exactly right? Tap the map or drag the pin to move it."
+            : "Tap the map to drop the pin on your spot."}
+        </p>
+      </div>
 
       <input type="hidden" name="lat" value={position?.lat ?? ""} />
       <input type="hidden" name="lng" value={position?.lng ?? ""} />
