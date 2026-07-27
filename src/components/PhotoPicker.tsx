@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { compressImage } from "@/lib/compress-image";
 
 export function PhotoPicker({
   name,
@@ -15,6 +16,7 @@ export function PhotoPicker({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
+  const [working, setWorking] = useState(false);
 
   function syncHiddenInput(list: File[]) {
     const dt = new DataTransfer();
@@ -22,12 +24,23 @@ export function PhotoPicker({
     if (inputRef.current) inputRef.current.files = dt.files;
   }
 
-  function handlePick(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handlePick(event: React.ChangeEvent<HTMLInputElement>) {
     const picked = Array.from(event.target.files ?? []);
-    const next = [...files, ...picked].slice(0, max);
-    setFiles(next);
-    syncHiddenInput(next);
     event.target.value = "";
+    if (picked.length === 0) return;
+
+    setWorking(true);
+    try {
+      const room = Math.max(0, max - files.length);
+      const shrunk = await Promise.all(
+        picked.slice(0, room).map((file) => compressImage(file))
+      );
+      const next = [...files, ...shrunk].slice(0, max);
+      setFiles(next);
+      syncHiddenInput(next);
+    } finally {
+      setWorking(false);
+    }
   }
 
   function remove(index: number) {
@@ -72,7 +85,7 @@ export function PhotoPicker({
             +
             <input
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/*"
               multiple
               className="hidden"
               onChange={handlePick}
@@ -82,7 +95,10 @@ export function PhotoPicker({
       </div>
       <input ref={inputRef} type="file" name={name} multiple hidden />
       <p className="mt-2 text-xs text-navey-ink/50">
-        {helpText ?? `Up to ${max} photos, 5MB each (JPEG, PNG, or WebP).`}
+        {working
+          ? "Preparing photos…"
+          : helpText ??
+            `Up to ${max} photos. Large photos are resized automatically.`}
       </p>
     </div>
   );
