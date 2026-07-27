@@ -10,7 +10,14 @@ export async function geocodeAddress(input: {
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   if (!token) return null;
 
-  const query = [input.address, input.city, input.province, "Philippines"]
+  // Unit/floor prefixes ("2/Flr,", "Unit 3B,") aren't street data and only
+  // degrade the match, which is how a BGC address once landed on an
+  // identically-named street kilometres away.
+  const street = input.address
+    .replace(/^\s*(?:\d+\s*\/\s*(?:f|flr|floor)|(?:g|ground|lower|upper)\s*\/?\s*(?:f|flr|floor)|unit\s+\S+|rm\.?\s+\S+|room\s+\S+|suite\s+\S+)\s*,?\s*/i, "")
+    .trim();
+
+  const query = [street || input.address, input.city, input.province, "Philippines"]
     .filter(Boolean)
     .join(", ");
   if (!query.trim()) return null;
