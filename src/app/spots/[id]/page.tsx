@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SpotCard } from "@/components/SpotCard";
+import { PhotoSlider } from "@/components/PhotoSlider";
 import { SaveHeartButton } from "@/components/SaveHeartButton";
 import { SaveSpotButton } from "@/components/SaveSpotButton";
 import {
@@ -173,12 +174,13 @@ export default async function SpotDetailPage({
             <span className="text-navey-ink">{spot.name}</span>
           </nav>
 
-          <div className="mt-4 grid gap-3 md:grid-cols-[1.5fr_1fr]">
-            <GalleryTile photo={spot.galleryPhotos[0]} name={spot.name} big />
-            <div className="grid grid-rows-2 gap-3">
-              <GalleryTile photo={spot.galleryPhotos[1]} name={spot.name} />
-              <GalleryTile photo={spot.galleryPhotos[2]} name={spot.name} />
-            </div>
+          <div className="mt-4">
+            <PhotoSlider
+              photos={spot.galleryPhotos}
+              name={spot.name}
+              aspect="aspect-[4/3] md:aspect-[16/9]"
+              priority
+            />
           </div>
 
           <div className="mt-8 grid gap-10 lg:grid-cols-[1.5fr_1fr]">
@@ -259,20 +261,15 @@ export default async function SpotDetailPage({
                     No menu photos uploaded yet.
                   </p>
                 ) : (
-                  <div className="mt-3 grid grid-cols-3 gap-3">
-                    {spot.menuPhotos.map((photo) => (
-                      <div
-                        key={photo.id}
-                        className="aspect-[3/4] overflow-hidden rounded-xl bg-navey-band"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={photo.url}
-                          alt={`${spot.name} menu`}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                    ))}
+                  <div className="mt-3">
+                    {/* One at a time: a menu is text, unreadable as a
+                        thumbnail in a three-column grid on a phone. */}
+                    <PhotoSlider
+                      photos={spot.menuPhotos}
+                      name={`${spot.name} menu`}
+                      aspect="aspect-[3/4] sm:aspect-[4/3]"
+                      emptyIcon="📋"
+                    />
                   </div>
                 )}
                 <p className="mt-2 text-xs text-navey-ink/50">
@@ -469,31 +466,6 @@ export default async function SpotDetailPage({
       </main>
       <Footer />
     </>
-  );
-}
-
-function GalleryTile({
-  photo,
-  name,
-  big = false,
-}: {
-  photo?: { id: string; url: string };
-  name: string;
-  big?: boolean;
-}) {
-  return (
-    <div
-      className={`flex items-center justify-center overflow-hidden rounded-[22px] bg-navey-band ${
-        big ? "aspect-[4/3] text-6xl md:aspect-auto md:h-full" : "text-4xl"
-      }`}
-    >
-      {photo ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={photo.url} alt={name} className="h-full w-full object-cover" />
-      ) : (
-        "☕"
-      )}
-    </div>
   );
 }
 
