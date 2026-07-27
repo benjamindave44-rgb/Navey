@@ -307,6 +307,10 @@ export function LocationFields({
         ? [initialLng, initialLat]
         : MANILA_CENTER,
       zoom: initialLat != null && initialLng != null ? 16 : 10,
+      // The map sits inside a form. Without this it swallows page scroll and
+      // one-finger drags, so scrolling past it pans the map instead of the
+      // page -- which makes the whole form feel stuck on a phone.
+      cooperativeGestures: true,
     });
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
     mapRef.current = map;
@@ -409,7 +413,7 @@ export function LocationFields({
             className="w-full rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
           />
           {open && suggestions.length > 0 && (
-            <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-auto rounded-2xl border border-black/10 bg-white py-1 shadow-[0_16px_32px_rgba(20,18,11,0.16)]">
+            <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-auto rounded-2xl border border-black/10 bg-white py-1 shadow-[0_16px_32px_rgba(20,18,11,0.16)]">
               {suggestions.map((suggestion) => (
                 <li key={suggestion.id}>
                   <button
