@@ -140,16 +140,14 @@ export default async function SpotDetailPage({
         }
       : {}),
   };
-  const mapsHref =
-    spot.lat != null && spot.lng != null
-      ? `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}`
-      : // No pin yet: hand Google the business name too. Its own database of
-        // Philippine businesses resolves a named shop far more reliably than
-        // a bare street, which is what an unpinned listing would otherwise
-        // send people to.
-        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          `${spot.name}, ${spot.address}, ${spot.city}`
-        )}`;
+  // Route by business name rather than by our stored pin. Our coordinates
+  // come from someone tapping a small map, so they land near the building at
+  // best; Google's own record of the shop is the more accurate destination,
+  // and a pin that is merely close sends people to the wrong door. The pin
+  // stays authoritative for the Explore Map, where approximate is fine.
+  const mapsHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+    `${spot.name}, ${spot.address}, ${spot.city}`
+  )}`;
 
   return (
     <>
