@@ -169,7 +169,14 @@ export async function createListingAsAdmin(formData: FormData) {
     .maybeSingle();
   const isHiddenGem = hiddenGemTag ? tagIds.includes(hiddenGemTag.id) : false;
 
-  const coords = await geocodeAddress({ address, city, province: province || null });
+  const locationAdjusted = formData.get("locationAdjusted") === "true";
+  const manualLat = Number(formData.get("lat"));
+  const manualLng = Number(formData.get("lng"));
+
+  const coords =
+    locationAdjusted && Number.isFinite(manualLat) && Number.isFinite(manualLng)
+      ? { lat: manualLat, lng: manualLng }
+      : await geocodeAddress({ address, city, province: province || null });
 
   const { data: spot, error } = await supabase
     .from("spots")

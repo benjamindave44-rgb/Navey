@@ -40,6 +40,9 @@ export function LocationPicker({
   });
   const [moved, setMoved] = useState(false);
   const [search, setSearch] = useState(searchHint ?? "");
+  // On the submit form the address is still being typed, so keep the search
+  // box mirroring it until the user types their own query.
+  const searchEdited = useRef(false);
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -85,6 +88,10 @@ export function LocationPicker({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- map is created once per mount
   }, [token]);
+
+  useEffect(() => {
+    if (!searchEdited.current) setSearch(searchHint ?? "");
+  }, [searchHint]);
 
   function applyPosition(nextLat: number, nextLng: number, zoom = 17) {
     setPosition({ lat: nextLat, lng: nextLng });
@@ -181,7 +188,10 @@ export function LocationPicker({
         <input
           type="text"
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
+          onChange={(event) => {
+            searchEdited.current = true;
+            setSearch(event.target.value);
+          }}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               event.preventDefault();
