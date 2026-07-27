@@ -84,6 +84,115 @@ function toSuggestion(feature: MapboxFeature): Suggestion | null {
   };
 }
 
+type MapboxV6Feature = {
+  id?: string;
+  properties?: {
+    mapbox_id?: string;
+    name?: string;
+    full_address?: string;
+    place_formatted?: string;
+    coordinates?: { longitude?: number; latitude?: number };
+    context?: {
+      place?: { name?: string };
+      locality?: { name?: string };
+      district?: { name?: string };
+      region?: { name?: string };
+      country?: { name?: string };
+    };
+  };
+  geometry?: { coordinates?: [number, number] };
+};
+
+function toSuggestionV6(feature: MapboxV6Feature): Suggestion | null {
+  const props = feature.properties;
+  const lng = props?.coordinates?.longitude ?? feature.geometry?.coordinates?.[0];
+  const lat = props?.coordinates?.latitude ?? feature.geometry?.coordinates?.[1];
+  if (typeof lat !== "number" || typeof lng !== "number") return null;
+
+  const context = props?.context ?? {};
+  const city =
+    context.place?.name ?? context.locality?.name ?? context.district?.name ?? "";
+  const province = context.region?.name ?? "";
+  const country = context.country?.name ?? "";
+
+  const full = props?.full_address ?? props?.name ?? "";
+  const addressLine =
+    full
+      .split(", ")
+      .filter((part) => part !== city && part !== province && part !== country)
+      .join(", ") || (props?.name ?? "");
+
+  return {
+    id: props?.mapbox_id ?? feature.id ?? `${lat},${lng}`,
+    title: props?.name ?? addressLine,
+    detail: full || props?.place_formatted || addressLine,
+    addressLine,
+    city,
+    province,
+    lat,
+    lng,
+  };
+}
+
+/** Returns null when the request itself failed, so a broken key or network
+ *  error can be reported differently from a genuine zero-result search. */
+async function fetchV5(
+  variant: string,
+  token: string,
+  near: { lat: number; lng: number } | null
+): Promise<Suggestion[] | null> {
+  try {
+    const url = new URL(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(variant)}.json`
+    );
+    url.searchParams.set("access_token", token);
+    url.searchParams.set("country", "PH");
+    url.searchParams.set("autocomplete", "true");
+    url.searchParams.set("limit", "6");
+    url.searchParams.set("types", "poi,address,place,locality,neighborhood");
+    if (near) url.searchParams.set("proximity", `${near.lng},${near.lat}`);
+
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const data = await response.json();
+    const features: MapboxFeature[] = Array.isArray(data.features) ? data.features : [];
+    return features
+      .map(toSuggestion)
+      .filter((entry): entry is Suggestion => entry !== null);
+  } catch {
+    return null;
+  }
+}
+
+/** v6 is queried alongside v5 because v5 has no `street` type -- its
+ *  `address` type needs a house number, so a bare street never matches. */
+async function fetchV6(
+  variant: string,
+  token: string,
+  near: { lat: number; lng: number } | null
+): Promise<Suggestion[] | null> {
+  try {
+    const url = new URL("https://api.mapbox.com/search/geocode/v6/forward");
+    url.searchParams.set("q", variant);
+    url.searchParams.set("access_token", token);
+    url.searchParams.set("country", "ph");
+    url.searchParams.set("autocomplete", "true");
+    url.searchParams.set("limit", "6");
+    url.searchParams.set("types", "street,address,place,locality,neighborhood,district");
+    if (near) url.searchParams.set("proximity", `${near.lng},${near.lat}`);
+
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const data = await response.json();
+    const features: MapboxV6Feature[] = Array.isArray(data.features) ? data.features : [];
+    return features
+      .map(toSuggestionV6)
+      .filter((entry): entry is Suggestion => entry !== null);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Airbnb-style location entry: the person types their address, picks a real
  * place from the dropdown, and the city, province and map pin all fill
@@ -121,10 +230,16 @@ export function LocationFields({
       : null
   );
   const [pinSet, setPinSet] = useState(false);
+  const positionRef = useRef(position);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [noMatches, setNoMatches] = useState(false);
+  const [searchBroken, setSearchBroken] = useState(false);
+
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
 
   // Debounced lookup as the person types, so suggestions appear on their own.
   useEffect(() => {
@@ -140,38 +255,37 @@ export function LocationFields({
       setLoading(true);
       try {
         let parsed: Suggestion[] = [];
+        let anyRequestSucceeded = false;
 
         for (const variant of queryVariants(term)) {
-          const url = new URL(
-            `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(variant)}.json`
-          );
-          url.searchParams.set("access_token", token);
-          url.searchParams.set("country", "PH");
-          url.searchParams.set("autocomplete", "true");
-          url.searchParams.set("limit", "6");
-          url.searchParams.set(
-            "types",
-            "poi,address,place,locality,neighborhood"
-          );
+          const [v5, v6] = await Promise.all([
+            fetchV5(variant, token, positionRef.current),
+            fetchV6(variant, token, positionRef.current),
+          ]);
 
-          const response = await fetch(url);
-          const data = await response.json();
-          const features: MapboxFeature[] = Array.isArray(data.features)
-            ? data.features
-            : [];
+          if (v5 !== null || v6 !== null) anyRequestSucceeded = true;
 
-          parsed = features
-            .map(toSuggestion)
-            .filter((entry): entry is Suggestion => entry !== null);
+          // v5 first: business names are the most specific match when they
+          // exist. v6 supplies streets, which v5 has no type for at all.
+          const merged = [...(v5 ?? []), ...(v6 ?? [])];
+          const seen = new Set<string>();
+          parsed = merged.filter((entry) => {
+            const key = `${entry.lat.toFixed(5)},${entry.lng.toFixed(5)}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          }).slice(0, 6);
 
           if (parsed.length > 0) break;
         }
 
         setSuggestions(parsed);
         setOpen(parsed.length > 0);
-        setNoMatches(parsed.length === 0);
+        setNoMatches(parsed.length === 0 && anyRequestSucceeded);
+        setSearchBroken(!anyRequestSucceeded);
       } catch {
         setSuggestions([]);
+        setSearchBroken(true);
       } finally {
         setLoading(false);
       }
@@ -280,6 +394,7 @@ export function LocationFields({
             onChange={(event) => {
               typingRef.current = true;
               setNoMatches(false);
+              setSearchBroken(false);
               setAddress(event.target.value);
             }}
             onFocus={() => suggestions.length > 0 && setOpen(true)}
@@ -319,14 +434,18 @@ export function LocationFields({
         </div>
         <p
           className={`text-xs ${
-            noMatches && !loading ? "text-amber-700" : "text-navey-ink/50"
+            (noMatches || searchBroken) && !loading
+              ? "text-amber-700"
+              : "text-navey-ink/50"
           }`}
         >
           {loading
             ? "Looking up addresses…"
-            : noMatches
-              ? "No match found — try a nearby landmark or mall name, or just tap the map below to drop the pin."
-              : "Pick your shop from the list so we can put it on the map correctly."}
+            : searchBroken
+              ? "Address search is unavailable right now — tap the map below to drop the pin instead."
+              : noMatches
+                ? "No match found — try a nearby landmark or mall name, or just tap the map below to drop the pin."
+                : "Pick your shop from the list so we can put it on the map correctly."}
         </p>
       </div>
 
