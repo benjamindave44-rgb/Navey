@@ -10,6 +10,7 @@ import {
   getFeaturedSpots,
   getTags,
 } from "@/lib/queries";
+import { getSavedSpotIds } from "@/lib/profile";
 
 export const dynamic = "force-dynamic";
 
@@ -27,18 +28,19 @@ const TAG_ICON: Record<string, string> = {
 };
 
 export default async function Home() {
-  const [spots, collections, tags, featured] = await Promise.all([
+  const [spots, collections, tags, featured, savedSpotIds] = await Promise.all([
     getApprovedSpots({ limit: 8 }),
     getCollections(4),
     getTags(),
     getFeaturedSpots(5),
+    getSavedSpotIds(),
   ]);
 
   return (
     <>
       <Header />
       <main className="flex-1">
-        <Hero featured={featured} />
+        <Hero featured={featured} savedSpotIds={[...savedSpotIds]} />
 
         <section className="px-4 py-10 sm:px-6 md:px-12 md:py-12">
           <div className="mb-6 flex items-center justify-between">

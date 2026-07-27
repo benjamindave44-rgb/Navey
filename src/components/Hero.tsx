@@ -21,7 +21,13 @@ const CITIES = [
 
 const FILTER_CHIPS = ["WiFi", "24 Hours", "Hidden Gems", "Chill", "Date Spot", "Charging"];
 
-export function Hero({ featured }: { featured: SpotWithTags[] }) {
+export function Hero({
+  featured,
+  savedSpotIds = [],
+}: {
+  featured: SpotWithTags[];
+  savedSpotIds?: string[];
+}) {
   const [cityIndex, setCityIndex] = useState(0);
 
   useEffect(() => {
@@ -83,7 +89,7 @@ export function Hero({ featured }: { featured: SpotWithTags[] }) {
           </Link>
         </div>
       </div>
-      <FeaturedShowcase spots={featured} />
+      <FeaturedShowcase spots={featured} savedSpotIds={savedSpotIds} />
     </section>
   );
 }
