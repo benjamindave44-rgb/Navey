@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { submitSpot } from "@/app/submit-a-spot/actions";
 import { PhotoPicker } from "@/components/PhotoPicker";
-import { LocationPicker } from "@/components/LocationPicker";
+import { LocationFields } from "@/components/LocationFields";
 
 const CATEGORIES = [
   { value: "coffee_shop", label: "Coffee Shop" },
@@ -43,9 +43,6 @@ export function SubmitSpotForm({
   const [category, setCategory] = useState("coffee_shop");
   const [price, setPrice] = useState("₱₱");
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
-  const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [province, setProvince] = useState("");
 
   function toggleTag(id: number) {
     setSelectedTags((current) =>
@@ -100,56 +97,7 @@ export function SubmitSpotForm({
         <input type="hidden" name="category" value={category} />
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="address" className="text-sm font-semibold">
-          Address
-        </label>
-        <input
-          id="address"
-          type="text"
-          name="address"
-          value={address}
-          onChange={(event) => setAddress(event.target.value)}
-          required
-          className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="city" className="text-sm font-semibold">
-            City
-          </label>
-          <input
-            id="city"
-            type="text"
-            name="city"
-            value={city}
-            onChange={(event) => setCity(event.target.value)}
-            required
-            className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="province" className="text-sm font-semibold">
-            Province (optional)
-          </label>
-          <input
-            id="province"
-            type="text"
-            name="province"
-            value={province}
-            onChange={(event) => setProvince(event.target.value)}
-            className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
-          />
-        </div>
-      </div>
-
-      <LocationPicker
-        lat={null}
-        lng={null}
-        searchHint={[address, city, province].filter(Boolean).join(", ")}
-      />
+      <LocationFields />
 
       <div>
         <p className="mb-2 text-sm font-semibold">Price range</p>

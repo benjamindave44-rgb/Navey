@@ -13,7 +13,7 @@ import {
   updatePayments,
 } from "@/app/owner/[spotId]/actions";
 import { PhotoPicker } from "@/components/PhotoPicker";
-import { LocationPicker } from "@/components/LocationPicker";
+import { LocationFields } from "@/components/LocationFields";
 import type { OwnerSpotDetail } from "@/lib/owner";
 
 const MAX_GALLERY_PHOTOS = 12;
@@ -216,52 +216,12 @@ export function OwnerSpotTabs({
               <input type="hidden" name="category" value={category} />
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label htmlFor="address" className="text-sm font-semibold">
-                Address
-              </label>
-              <input
-                id="address"
-                name="address"
-                type="text"
-                defaultValue={spot.address}
-                required
-                className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="city" className="text-sm font-semibold">
-                  City
-                </label>
-                <input
-                  id="city"
-                  name="city"
-                  type="text"
-                  defaultValue={spot.city}
-                  required
-                  className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label htmlFor="province" className="text-sm font-semibold">
-                  Province
-                </label>
-                <input
-                  id="province"
-                  name="province"
-                  type="text"
-                  defaultValue={spot.province ?? ""}
-                  className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
-                />
-              </div>
-            </div>
-
-            <LocationPicker
-              lat={spot.lat}
-              lng={spot.lng}
-              searchHint={[spot.address, spot.city, spot.province].filter(Boolean).join(", ")}
+            <LocationFields
+              initialAddress={spot.address}
+              initialCity={spot.city}
+              initialProvince={spot.province ?? ""}
+              initialLat={spot.lat}
+              initialLng={spot.lng}
             />
 
             <div>
