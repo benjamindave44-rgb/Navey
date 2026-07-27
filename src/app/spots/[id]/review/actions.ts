@@ -49,7 +49,7 @@ export async function submitReview(formData: FormData) {
   }
 
   if (reviewId) {
-    const photoUrls = await uploadPhotos(
+    const { urls: photoUrls } = await uploadPhotos(
       supabase,
       formData.getAll("photos"),
       `reviews/${reviewId}`

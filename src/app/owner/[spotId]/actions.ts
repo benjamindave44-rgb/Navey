@@ -196,9 +196,12 @@ async function addSpotPhotos(kind: PhotoKind, formData: FormData) {
     );
   }
 
-  const photoUrls = (
-    await uploadPhotos(supabase, formData.getAll("photos"), `spots/${spotId}/${kind}`)
-  ).slice(0, remaining);
+  const { urls, failed } = await uploadPhotos(
+    supabase,
+    formData.getAll("photos"),
+    `spots/${spotId}/${kind}`
+  );
+  const photoUrls = urls.slice(0, remaining);
 
   if (photoUrls.length > 0) {
     await supabase
@@ -206,7 +209,19 @@ async function addSpotPhotos(kind: PhotoKind, formData: FormData) {
       .insert(photoUrls.map((url) => ({ spot_id: spotId, url, kind })));
   }
 
-  redirect(`/owner/${spotId}?tab=${kind}&notice=${encodeURIComponent("Photos updated.")}`);
+  if (photoUrls.length === 0 && failed > 0) {
+    redirect(
+      `/owner/${spotId}?tab=${kind}&error=${encodeURIComponent(
+        "Upload failed. Make sure each photo is a JPEG, PNG, or WebP under 5MB, then try again."
+      )}`
+    );
+  }
+
+  const notice =
+    failed > 0
+      ? `${photoUrls.length} photo${photoUrls.length === 1 ? "" : "s"} added, ${failed} failed (check file type/size).`
+      : "Photos updated.";
+  redirect(`/owner/${spotId}?tab=${kind}&notice=${encodeURIComponent(notice)}`);
 }
 
 async function deleteSpotPhoto(kind: PhotoKind, formData: FormData) {

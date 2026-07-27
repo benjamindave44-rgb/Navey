@@ -17,27 +17,37 @@ export async function uploadPhotos(
   supabase: SupabaseClient<Database>,
   files: FormDataEntryValue[],
   pathPrefix: string
-): Promise<string[]> {
+): Promise<{ urls: string[]; failed: number }> {
   const urls: string[] = [];
+  let failed = 0;
 
   for (const entry of files) {
     if (!(entry instanceof File) || entry.size === 0) continue;
-    if (entry.size > MAX_FILE_BYTES) continue;
+    if (entry.size > MAX_FILE_BYTES) {
+      failed++;
+      continue;
+    }
     const extension = EXTENSION_BY_TYPE[entry.type];
-    if (!extension) continue;
+    if (!extension) {
+      failed++;
+      continue;
+    }
 
     const path = `${pathPrefix}/${crypto.randomUUID()}.${extension}`;
     const { error } = await supabase.storage.from("photos").upload(path, entry, {
       contentType: entry.type,
       upsert: false,
     });
-    if (error) continue;
+    if (error) {
+      failed++;
+      continue;
+    }
 
     const { data } = supabase.storage.from("photos").getPublicUrl(path);
     urls.push(data.publicUrl);
   }
 
-  return urls;
+  return { urls, failed };
 }
 
 /** Recovers the storage object path from a public URL for deletion. */

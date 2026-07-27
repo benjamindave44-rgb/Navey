@@ -204,7 +204,7 @@ export async function createListingAsAdmin(formData: FormData) {
       .insert(tagIds.map((tagId) => ({ spot_id: spot.id, tag_id: tagId })));
   }
 
-  const photoUrls = await uploadPhotos(
+  const { urls: photoUrls } = await uploadPhotos(
     supabase,
     formData.getAll("photos"),
     `spots/${spot.id}/gallery`
