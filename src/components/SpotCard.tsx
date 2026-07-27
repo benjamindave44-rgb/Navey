@@ -54,13 +54,13 @@ export function SpotCard({
         )}
         {showSaveButton && <SaveHeartButton />}
       </div>
-      <div className="flex flex-col gap-2 p-4">
-        <p className="font-heading text-base font-bold">{spot.name}</p>
-        <p className="text-sm text-navey-ink/70">
+      <div className="flex flex-col gap-1.5 p-3 sm:gap-2 sm:p-4">
+        <p className="font-heading text-sm font-bold sm:text-base">{spot.name}</p>
+        <p className="text-xs text-navey-ink/70 sm:text-sm">
           {spot.city}
           {spot.price_range ? ` · ${spot.price_range}` : ""}
         </p>
-        <p className="text-xs uppercase tracking-wide text-navey-ink/50">
+        <p className="text-[10px] uppercase tracking-wide text-navey-ink/50 sm:text-xs">
           {CATEGORY_LABEL[spot.category] ?? spot.category}
         </p>
         {showDescription && spot.description && (
@@ -69,11 +69,11 @@ export function SpotCard({
           </p>
         )}
         {spot.tags.length > 0 && (
-          <div className="mt-1 flex flex-wrap gap-2">
+          <div className="mt-1 flex flex-wrap gap-1.5 sm:gap-2">
             {spot.tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-navey-band px-3 py-1 text-xs font-semibold"
+                className="rounded-full bg-navey-band px-2 py-0.5 text-[10px] font-semibold sm:px-3 sm:py-1 sm:text-xs"
               >
                 {tag}
               </span>

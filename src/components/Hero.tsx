@@ -31,9 +31,9 @@ export function Hero({ featured }: { featured: SpotWithTags | null }) {
   }, []);
 
   return (
-    <section className="grid gap-10 px-6 py-16 md:grid-cols-2 md:px-12 md:py-24">
-      <div className="flex flex-col gap-6">
-        <h1 className="font-heading text-4xl font-extrabold leading-tight tracking-tight md:text-5xl">
+    <section className="grid gap-10 px-4 py-10 sm:px-6 md:grid-cols-2 md:px-12 md:py-24">
+      <div className="flex flex-col gap-5 md:gap-6">
+        <h1 className="font-heading text-[28px] font-extrabold leading-tight tracking-tight sm:text-4xl md:text-5xl">
           Navigate good spots in{" "}
           <span key={cityIndex} className="inline-block animate-[cityFade_0.4s_ease]">
             {CITIES[cityIndex]}
@@ -57,9 +57,10 @@ export function Hero({ featured }: { featured: SpotWithTags | null }) {
           />
           <button
             type="submit"
-            className="rounded-full bg-navey-ink px-5 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
+            className="shrink-0 rounded-full bg-navey-ink px-4 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80 sm:px-5"
           >
-            Let&apos;s explore
+            <span className="sm:hidden">Search</span>
+            <span className="hidden sm:inline">Let&apos;s explore</span>
           </button>
         </form>
         <div className="flex flex-wrap items-center gap-2">

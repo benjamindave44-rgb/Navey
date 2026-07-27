@@ -35,7 +35,7 @@ export default async function Home() {
       <main className="flex-1">
         <Hero featured={featured} />
 
-        <section className="px-6 py-12 md:px-12">
+        <section className="px-4 py-10 sm:px-6 md:px-12 md:py-12">
           <div className="mb-6 flex items-center justify-between">
             <div>
               <p className="mb-1 text-xs font-bold uppercase tracking-wide text-navey-ink/50">
@@ -54,7 +54,7 @@ export default async function Home() {
               No collections yet — check back soon.
             </p>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
               {collections.map((collection) => (
                 <Link
                   key={collection.id}
@@ -77,7 +77,7 @@ export default async function Home() {
           )}
         </section>
 
-        <section className="bg-navey-band px-6 py-12 md:px-12">
+        <section className="bg-navey-band px-4 py-10 sm:px-6 md:px-12 md:py-12">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="font-heading text-2xl font-extrabold">
               Trending Nearby
@@ -101,7 +101,7 @@ export default async function Home() {
               No approved spots yet — submit one to get started.
             </p>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-5">
               {spots.map((spot) => (
                 <SpotCard key={spot.id} spot={spot} trending />
               ))}
@@ -109,7 +109,7 @@ export default async function Home() {
           )}
         </section>
 
-        <section className="bg-navey-band px-6 py-12 md:px-12">
+        <section className="bg-navey-band px-4 py-10 sm:px-6 md:px-12 md:py-12">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-heading text-2xl font-extrabold">
               Browse by Vibe
@@ -140,7 +140,7 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="bg-navey-band px-6 py-12 md:px-12">
+        <section className="bg-navey-band px-4 py-10 sm:px-6 md:px-12 md:py-12">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="font-heading text-2xl font-extrabold">
               Community Picks
@@ -160,7 +160,7 @@ export default async function Home() {
           </p>
         </section>
 
-        <section className="bg-navey-yellow px-6 py-12 md:px-12">
+        <section className="bg-navey-yellow px-4 py-10 sm:px-6 md:px-12 md:py-12">
           <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="font-heading text-2xl font-extrabold">
