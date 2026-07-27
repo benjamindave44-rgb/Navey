@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { signIn, signUp } from "@/app/sign-in/actions";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -80,21 +81,10 @@ export function SignInForm({
           : "Join Navey to save spots, write reviews, and submit hidden gems."}
       </p>
 
+      {/* Apple sign-in needs a paid Apple Developer membership, so it is
+          left out rather than shown as a button that cannot work. */}
       <div className="mt-6 flex flex-col gap-2">
-        <button
-          type="button"
-          disabled
-          className="flex items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <span aria-hidden>G</span> Continue with Google
-        </button>
-        <button
-          type="button"
-          disabled
-          className="flex items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <span aria-hidden></span> Continue with Apple
-        </button>
+        <GoogleSignInButton />
       </div>
 
       <div className="my-6 flex items-center gap-3 text-xs text-navey-ink/40">
