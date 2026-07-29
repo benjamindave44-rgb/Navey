@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProfileInfoForm } from "@/components/ProfileInfoForm";
 import { ChangePasswordForm } from "@/components/ChangePasswordForm";
+import { DeleteAccountForm } from "@/components/DeleteAccountForm";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
@@ -75,12 +76,14 @@ export default async function SettingsPage({
             <p className="mt-1 text-sm text-navey-ink/60">
               Signed in as {user.email}
             </p>
-            <p className="mt-3 text-xs text-navey-ink/50">
-              Need to delete your account or export your data? Email us at{" "}
+            <DeleteAccountForm />
+
+            <p className="mt-4 text-xs text-navey-ink/50">
+              Want a copy of your data instead? Email{" "}
               <a href="mailto:navey.ph@gmail.com" className="font-semibold">
                 navey.ph@gmail.com
-              </a>{" "}
-              and we&apos;ll take care of it.
+              </a>
+              .
             </p>
           </section>
         </div>
