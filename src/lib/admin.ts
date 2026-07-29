@@ -422,3 +422,46 @@ export async function getFlaggedReviewCount(): Promise<number> {
     .eq("needs_review", true);
   return count ?? 0;
 }
+
+export type AdminUser = {
+  id: string;
+  email: string;
+  displayName: string | null;
+  role: string;
+  createdAt: string;
+  provider: string | null;
+  spotCount: number;
+  reviewCount: number;
+};
+
+export async function getAdminUsers(): Promise<AdminUser[]> {
+  const supabase = await createServerSupabaseClient();
+
+  // Emails come through a definer function; auth.users isn't readable here.
+  const [{ data: users }, { data: spots }, { data: reviews }] = await Promise.all([
+    supabase.rpc("admin_list_users"),
+    supabase.from("spots").select("submitted_by"),
+    supabase.from("reviews").select("user_id"),
+  ]);
+
+  const spotsBy = new Map<string, number>();
+  for (const spot of spots ?? []) {
+    if (!spot.submitted_by) continue;
+    spotsBy.set(spot.submitted_by, (spotsBy.get(spot.submitted_by) ?? 0) + 1);
+  }
+  const reviewsBy = new Map<string, number>();
+  for (const review of reviews ?? []) {
+    reviewsBy.set(review.user_id, (reviewsBy.get(review.user_id) ?? 0) + 1);
+  }
+
+  return (users ?? []).map((user) => ({
+    id: user.id,
+    email: user.email,
+    displayName: user.display_name,
+    role: user.role,
+    createdAt: user.created_at,
+    provider: user.provider,
+    spotCount: spotsBy.get(user.id) ?? 0,
+    reviewCount: reviewsBy.get(user.id) ?? 0,
+  }));
+}

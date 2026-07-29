@@ -44,6 +44,9 @@ export default async function AdminLayout({
           <Link href="/admin/collections" className="hover:opacity-60">
             Collections
           </Link>
+          <Link href="/admin/users" className="hover:opacity-60">
+            Users
+          </Link>
           <Link href="/admin/claims" className="hover:opacity-60">
             Claims
           </Link>

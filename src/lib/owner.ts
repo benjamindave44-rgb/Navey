@@ -114,3 +114,59 @@ export async function getOwnerSpotDetail(
       .map((photo) => ({ id: photo.id, url: photo.url })),
   };
 }
+
+export type OwnerSpotStats = {
+  spotId: string;
+  saveCount: number;
+  reviewCount: number;
+  averageRating: number | null;
+  galleryPhotos: number;
+  hasHours: boolean;
+  hasPin: boolean;
+  /** Things an owner can act on, worth more than a number they can't move. */
+  missing: string[];
+};
+
+export async function getOwnerSpotStats(
+  userId: string
+): Promise<Map<string, OwnerSpotStats>> {
+  const supabase = await createServerSupabaseClient();
+
+  const { data } = await supabase
+    .from("spots")
+    .select(
+      "id, save_count, lat, description, reviews(rating), spot_photos(kind), spot_hours(day_of_week), spot_tags(tag_id)"
+    )
+    .eq("submitted_by", userId);
+
+  const stats = new Map<string, OwnerSpotStats>();
+
+  for (const spot of data ?? []) {
+    const ratings = spot.reviews.map((review) => review.rating);
+    const gallery = spot.spot_photos.filter((p) => p.kind === "gallery").length;
+    const hasHours = spot.spot_hours.length > 0;
+    const hasPin = spot.lat !== null;
+
+    const missing: string[] = [];
+    if (gallery === 0) missing.push("photos");
+    if (!hasHours) missing.push("opening hours");
+    if (spot.spot_tags.length === 0) missing.push("tags");
+    if (!spot.description) missing.push("a description");
+    if (!hasPin) missing.push("a map pin");
+
+    stats.set(spot.id, {
+      spotId: spot.id,
+      saveCount: spot.save_count,
+      reviewCount: ratings.length,
+      averageRating: ratings.length
+        ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
+        : null,
+      galleryPhotos: gallery,
+      hasHours,
+      hasPin,
+      missing,
+    });
+  }
+
+  return stats;
+}

@@ -598,6 +598,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_list_users: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          email: string
+          display_name: string | null
+          role: string
+          created_at: string
+          provider: string | null
+        }[]
+      }
       delete_own_account: {
         Args: Record<PropertyKey, never>
         Returns: undefined
