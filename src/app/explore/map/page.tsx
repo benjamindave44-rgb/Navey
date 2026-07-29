@@ -4,6 +4,15 @@ import { Footer } from "@/components/Footer";
 import { ExploreMap } from "@/components/ExploreMap";
 import { getMapSpots } from "@/lib/queries";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Map",
+  description:
+    "Browse coffee shops and restaurants across the Philippines on a map.",
+  alternates: { canonical: "/explore/map" },
+};
+
 export const dynamic = "force-dynamic";
 
 export default async function ExploreMapPage() {

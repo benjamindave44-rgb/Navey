@@ -61,6 +61,17 @@ const CATEGORY_LABEL: Record<string, string> = {
   both: "Coffee Shop & Restaurant",
 };
 
+// schema.org expects its own day URIs, not the display labels below.
+const SCHEMA_DAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
 const DAY_LABELS = [
   "Sunday",
   "Monday",
@@ -135,6 +146,21 @@ export default async function SpotDetailPage({
       ? { image: spot.galleryPhotos.map((photo) => photo.url) }
       : {}),
     ...(spot.price_range ? { priceRange: spot.price_range } : {}),
+    // Hours are already on the page; declaring them is what lets Google show
+    // "Open now" or "Closes 9 PM" beside the result.
+    ...(spot.hours.some((hour) => !hour.is_closed && hour.open_time)
+      ? {
+          openingHoursSpecification: spot.hours
+            .filter((hour) => !hour.is_closed && hour.open_time && hour.close_time)
+            .map((hour) => ({
+              "@type": "OpeningHoursSpecification",
+              dayOfWeek: `https://schema.org/${SCHEMA_DAYS[hour.day_of_week]}`,
+              opens: hour.open_time,
+              closes: hour.close_time,
+            })),
+        }
+      : {}),
+    url: `https://www.navey.co/spots/${spot.id}`,
     ...(spot.averageRating != null && spot.reviews.length > 0
       ? {
           aggregateRating: {
@@ -145,6 +171,33 @@ export default async function SpotDetailPage({
         }
       : {}),
   };
+  // Produces the Home › City › Spot trail in search results, in place of a
+  // bare URL. It has to mirror the on-page breadcrumb exactly.
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://www.navey.co",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: spot.city,
+        item: `https://www.navey.co/explore?city=${encodeURIComponent(spot.city)}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: spot.name,
+        item: `https://www.navey.co/spots/${spot.id}`,
+      },
+    ],
+  };
+
   // Route by business name rather than by our stored pin. Our coordinates
   // come from someone tapping a small map, so they land near the building at
   // best; Google's own record of the shop is the more accurate destination,
@@ -159,6 +212,10 @@ export default async function SpotDetailPage({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <Header />
       <main id="main" className="flex-1">

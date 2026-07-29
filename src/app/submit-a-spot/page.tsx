@@ -6,6 +6,15 @@ import { SubmitSpotForm } from "@/components/SubmitSpotForm";
 import { getTags } from "@/lib/queries";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Submit a Spot",
+  description:
+    "Know a coffee shop or restaurant worth the trip? Add it to Navey so others can find it.",
+  alternates: { canonical: "/submit-a-spot" },
+};
+
 export const dynamic = "force-dynamic";
 
 export default async function SubmitASpotPage({

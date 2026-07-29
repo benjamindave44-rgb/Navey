@@ -22,6 +22,9 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.navey.co"),
+  // The bare domain redirects here; naming the canonical stops the two
+  // being treated as competing copies of the same page.
+  alternates: { canonical: "/" },
   title: {
     default: "Navey — Navigate Good Spots Nearby",
     template: "%s | Navey",

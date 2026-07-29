@@ -3,6 +3,16 @@ import Link from "next/link";
 import { ResetPasswordForm } from "@/components/ResetPasswordForm";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
+import type { Metadata } from "next";
+
+// Account and form pages carry no search value, and some expose a person's
+// own data. robots.txt only asks crawlers to skip a path; this is what keeps
+// the page out of results if it is ever linked from elsewhere.
+export const metadata: Metadata = {
+  title: "Reset password",
+  robots: { index: false, follow: false },
+};
+
 export const dynamic = "force-dynamic";
 
 export default async function ResetPasswordPage({

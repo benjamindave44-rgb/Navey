@@ -2,6 +2,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { confirmRecovery } from "./actions";
 
+import type { Metadata } from "next";
+
+// Account and form pages carry no search value, and some expose a person's
+// own data. robots.txt only asks crawlers to skip a path; this is what keeps
+// the page out of results if it is ever linked from elsewhere.
+export const metadata: Metadata = {
+  title: "Confirm password reset",
+  robots: { index: false, follow: false },
+};
+
 export const dynamic = "force-dynamic";
 
 // This interstitial exists so the actual token-verifying request only

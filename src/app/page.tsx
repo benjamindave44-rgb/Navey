@@ -42,8 +42,50 @@ export default async function Home() {
     await getApprovedSpots({ sort: "most_saved", limit: 5 })
   ).filter((spot) => spot.saveCount > 0);
 
+
+  // Tells Google what Navey is as an organisation, not just what each spot
+  // is. This is what lets a brand search show a logo and sitelinks rather
+  // than a bare blue link, and it can only be declared on the homepage.
+  const siteJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://www.navey.co/#organization",
+        name: "Navey",
+        url: "https://www.navey.co",
+        logo: "https://www.navey.co/navey-icon.png",
+        description:
+          "A guide to coffee shops and restaurants worth the trip across the Philippines.",
+        email: "navey.ph@gmail.com",
+        areaServed: { "@type": "Country", name: "Philippines" },
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://www.navey.co/#website",
+        url: "https://www.navey.co",
+        name: "Navey",
+        publisher: { "@id": "https://www.navey.co/#organization" },
+        inLanguage: "en-PH",
+        // Lets Google offer a search box for Navey directly in results.
+        potentialAction: {
+          "@type": "SearchAction",
+          target: {
+            "@type": "EntryPoint",
+            urlTemplate: "https://www.navey.co/explore?q={search_term_string}",
+          },
+          "query-input": "required name=search_term_string",
+        },
+      },
+    ],
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
+      />
       <Header />
       <main id="main" className="flex-1">
         <Hero featured={featured} savedSpotIds={[...savedSpotIds]} />
