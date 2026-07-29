@@ -103,6 +103,9 @@ export default async function SpotDetailPage({
     getSavedSpotIds(),
   ]);
   const acceptedPayments = PAYMENT_OPTIONS.filter(({ key }) => spot[key]);
+  const isPdf = (url: string) => url.toLowerCase().endsWith(".pdf");
+  const menuImages = spot.menuPhotos.filter((photo) => !isPdf(photo.url));
+  const menuPdfs = spot.menuPhotos.filter((photo) => isPdf(photo.url));
   const today = new Date().getDay();
 
   const schemaType =
@@ -250,18 +253,48 @@ export default async function SpotDetailPage({
                 <h2 className="font-heading text-lg font-bold">Menu</h2>
                 {spot.menuPhotos.length === 0 ? (
                   <p className="mt-3 text-sm text-navey-ink/60">
-                    No menu photos uploaded yet.
+                    No menu uploaded yet.
                   </p>
                 ) : (
-                  <div className="mt-3">
-                    {/* One at a time: a menu is text, unreadable as a
-                        thumbnail in a three-column grid on a phone. */}
-                    <PhotoSlider
-                      photos={spot.menuPhotos}
-                      name={`${spot.name} menu`}
-                      aspect="aspect-[3/4] sm:aspect-[4/3]"
-                      emptyIcon="📋"
-                    />
+                  <div className="mt-3 flex flex-col gap-3">
+                    {menuImages.length > 0 && (
+                      /* One at a time: a menu is text, unreadable as a
+                         thumbnail in a three-column grid on a phone. */
+                      <PhotoSlider
+                        photos={menuImages}
+                        name={`${spot.name} menu`}
+                        aspect="aspect-[3/4] sm:aspect-[4/3]"
+                        emptyIcon="📋"
+                      />
+                    )}
+                    {/* A PDF can't be rendered inline, so hand it to the
+                        device's own viewer, where it stays zoomable. */}
+                    {menuPdfs.map((pdf, position) => (
+                      <a
+                        key={pdf.id}
+                        href={pdf.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)] transition-transform hover:-translate-y-0.5"
+                      >
+                        <span aria-hidden className="text-2xl">
+                          📄
+                        </span>
+                        <span className="flex-1">
+                          <span className="block text-sm font-bold">
+                            {menuPdfs.length > 1
+                              ? `Menu ${position + 1} (PDF)`
+                              : "View full menu (PDF)"}
+                          </span>
+                          <span className="block text-xs text-navey-ink/55">
+                            Opens in a new tab
+                          </span>
+                        </span>
+                        <span aria-hidden className="text-lg">
+                          ↗
+                        </span>
+                      </a>
+                    ))}
                   </div>
                 )}
                 <p className="mt-2 text-xs text-navey-ink/50">

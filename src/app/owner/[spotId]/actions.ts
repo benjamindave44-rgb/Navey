@@ -215,7 +215,8 @@ async function addSpotPhotos(kind: PhotoKind, formData: FormData) {
   const { urls, failed } = await uploadPhotos(
     supabase,
     formData.getAll("photos"),
-    `spots/${spotId}/${kind}`
+    `spots/${spotId}/${kind}`,
+    { allowPdf: kind === "menu" }
   );
   const photoUrls = urls.slice(0, remaining);
 
@@ -228,7 +229,9 @@ async function addSpotPhotos(kind: PhotoKind, formData: FormData) {
   if (photoUrls.length === 0 && failed > 0) {
     redirect(
       `/owner/${spotId}?tab=${kind}&error=${encodeURIComponent(
-        "Upload failed. Make sure each photo is a JPEG, PNG, or WebP under 5MB, then try again."
+        kind === "menu"
+          ? "Upload failed. Menus can be JPEG, PNG, WebP or PDF — images under 5MB, PDFs under 10MB."
+          : "Upload failed. Make sure each photo is a JPEG, PNG, or WebP under 5MB, then try again."
       )}`
     );
   }

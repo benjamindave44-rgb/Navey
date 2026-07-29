@@ -59,6 +59,8 @@ function PhotoManager({
   deleteAction,
   emptyLabel,
   addLabel,
+  accept,
+  helpText,
 }: {
   spotId: string;
   photos: { id: string; url: string }[];
@@ -68,6 +70,8 @@ function PhotoManager({
   deleteAction: (formData: FormData) => Promise<void>;
   emptyLabel: string;
   addLabel: string;
+  accept?: string;
+  helpText?: string;
 }) {
   return (
     <div className="flex flex-col gap-6">
@@ -82,12 +86,28 @@ function PhotoManager({
                 key={photo.id}
                 className={`relative ${aspect} overflow-hidden rounded-xl bg-navey-band`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element -- external Supabase Storage URL */}
-                <img
-                  src={photo.url}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
+                {photo.url.toLowerCase().endsWith(".pdf") ? (
+                  <a
+                    href={photo.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex h-full w-full flex-col items-center justify-center gap-1 p-2 text-center hover:bg-navey-band/60"
+                  >
+                    <span aria-hidden className="text-2xl">
+                      📄
+                    </span>
+                    <span className="text-[10px] font-semibold text-navey-ink/70">
+                      PDF menu
+                    </span>
+                  </a>
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element -- external Supabase Storage URL */
+                  <img
+                    src={photo.url}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                )}
                 <form action={deleteAction} className="absolute right-1 top-1">
                   <input type="hidden" name="spotId" value={spotId} />
                   <input type="hidden" name="photoId" value={photo.id} />
@@ -110,7 +130,13 @@ function PhotoManager({
           <input type="hidden" name="spotId" value={spotId} />
           <div>
             <p className="mb-2 text-sm font-semibold">{addLabel}</p>
-            <PhotoPicker name="photos" max={max - photos.length} aspect={aspect} />
+            <PhotoPicker
+              name="photos"
+              max={max - photos.length}
+              aspect={aspect}
+              accept={accept}
+              helpText={helpText}
+            />
           </div>
           <SaveButton label="Upload Photos" />
         </form>
@@ -438,8 +464,10 @@ export function OwnerSpotTabs({
             aspect="aspect-[3/4]"
             addAction={addMenuPhotos}
             deleteAction={deleteMenuPhoto}
-            emptyLabel="No menu photos uploaded yet."
-            addLabel="Add menu photos"
+            emptyLabel="No menu uploaded yet."
+            addLabel="Add menu photos or a PDF"
+            accept="image/*,application/pdf"
+            helpText={`Up to ${MAX_MENU_PHOTOS} files. Photos or a PDF menu (PDFs up to 10MB).`}
           />
         )}
       </div>

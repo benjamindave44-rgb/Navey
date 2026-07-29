@@ -2,11 +2,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
+// PDFs skip the browser-side resizing photos get, so they need more room.
+const MAX_PDF_BYTES = 10 * 1024 * 1024;
 const EXTENSION_BY_TYPE: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
 };
+const PDF_TYPE = "application/pdf";
 
 /**
  * Uploads valid image files to the `photos` bucket under `pathPrefix/` and
@@ -16,19 +19,23 @@ const EXTENSION_BY_TYPE: Record<string, string> = {
 export async function uploadPhotos(
   supabase: SupabaseClient<Database>,
   files: FormDataEntryValue[],
-  pathPrefix: string
+  pathPrefix: string,
+  /** Menus are often published as a PDF; galleries stay images-only. */
+  { allowPdf = false }: { allowPdf?: boolean } = {}
 ): Promise<{ urls: string[]; failed: number }> {
   const urls: string[] = [];
   let failed = 0;
 
   for (const entry of files) {
     if (!(entry instanceof File) || entry.size === 0) continue;
-    if (entry.size > MAX_FILE_BYTES) {
+
+    const isPdf = allowPdf && entry.type === PDF_TYPE;
+    const extension = isPdf ? "pdf" : EXTENSION_BY_TYPE[entry.type];
+    if (!extension) {
       failed++;
       continue;
     }
-    const extension = EXTENSION_BY_TYPE[entry.type];
-    if (!extension) {
+    if (entry.size > (isPdf ? MAX_PDF_BYTES : MAX_FILE_BYTES)) {
       failed++;
       continue;
     }

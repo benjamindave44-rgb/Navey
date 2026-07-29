@@ -8,11 +8,14 @@ export function PhotoPicker({
   max,
   aspect = "aspect-square",
   helpText,
+  accept = "image/*",
 }: {
   name: string;
   max: number;
   aspect?: string;
   helpText?: string;
+  /** Menus also take PDFs; galleries stay images-only. */
+  accept?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
@@ -62,12 +65,23 @@ export function PhotoPicker({
             key={`${file.name}-${index}`}
             className={`relative ${aspect} overflow-hidden rounded-xl bg-navey-band`}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element -- local blob preview, not a served asset */}
-            <img
-              src={previews[index]}
-              alt=""
-              className="h-full w-full object-cover"
-            />
+            {file.type === "application/pdf" ? (
+              <span className="flex h-full w-full flex-col items-center justify-center gap-1 p-2 text-center">
+                <span aria-hidden className="text-2xl">
+                  📄
+                </span>
+                <span className="line-clamp-2 text-[10px] font-semibold text-navey-ink/70">
+                  {file.name}
+                </span>
+              </span>
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element -- local blob preview, not a served asset */
+              <img
+                src={previews[index]}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            )}
             <button
               type="button"
               onClick={() => remove(index)}
@@ -85,7 +99,7 @@ export function PhotoPicker({
             +
             <input
               type="file"
-              accept="image/*"
+              accept={accept}
               multiple
               className="hidden"
               onChange={handlePick}
