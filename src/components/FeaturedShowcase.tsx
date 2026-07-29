@@ -29,6 +29,7 @@ export function FeaturedShowcase({
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const reducedMotion = useRef(false);
+  const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saved = new Set(savedSpotIds);
 
   useEffect(() => {
@@ -36,6 +37,21 @@ export function FeaturedShowcase({
       "(prefers-reduced-motion: reduce)"
     ).matches;
   }, []);
+
+  useEffect(() => () => {
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
+  }, []);
+
+  /**
+   * Touch has no equivalent of the mouse leaving, so a touch pause has to
+   * lift itself. Without this, a finger landing on the hero while scrolling
+   * past stopped the rotation for the rest of the visit.
+   */
+  function pauseBriefly() {
+    setPaused(true);
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    resumeTimer.current = setTimeout(() => setPaused(false), 10000);
+  }
 
   useEffect(() => {
     if (paused || reducedMotion.current || spots.length < 2) return;
@@ -65,7 +81,7 @@ export function FeaturedShowcase({
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={() => setPaused(false)}
-      onTouchStart={() => setPaused(true)}
+      onTouchStart={pauseBriefly}
     >
       <p className="mb-3 text-xs font-bold uppercase tracking-wide text-navey-ink/50">
         Our picks this week
@@ -173,7 +189,10 @@ export function FeaturedShowcase({
               type="button"
               aria-label={`Show ${spot.name}`}
               aria-current={position === index}
-              onClick={() => setIndex(position)}
+              onClick={() => {
+                setIndex(position);
+                pauseBriefly();
+              }}
               className={`h-2 overflow-hidden rounded-full transition-all ${
                 position === index
                   ? "w-6 bg-navey-ink"
