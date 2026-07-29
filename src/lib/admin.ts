@@ -289,3 +289,82 @@ export async function getAdminOverviewStats(): Promise<AdminOverviewStats> {
     spotsByCity,
   };
 }
+
+export type AdminCollectionListItem = {
+  id: string;
+  title: string;
+  description: string | null;
+  spotCount: number;
+  createdAt: string;
+};
+
+export async function getAdminCollections(): Promise<AdminCollectionListItem[]> {
+  const supabase = await createServerSupabaseClient();
+  const { data } = await supabase
+    .from("collections")
+    .select("id, title, description, created_at, collection_spots(spot_id)")
+    .order("created_at", { ascending: false });
+
+  return (data ?? []).map((collection) => ({
+    id: collection.id,
+    title: collection.title,
+    description: collection.description,
+    spotCount: collection.collection_spots.length,
+    createdAt: collection.created_at,
+  }));
+}
+
+export type AdminCollectionDetail = {
+  id: string;
+  title: string;
+  description: string | null;
+  spots: { id: string; name: string; city: string; rank: number }[];
+};
+
+export async function getAdminCollectionDetail(
+  collectionId: string
+): Promise<AdminCollectionDetail | null> {
+  const supabase = await createServerSupabaseClient();
+  const { data } = await supabase
+    .from("collections")
+    .select(
+      "id, title, description, collection_spots(rank, spots(id, name, city))"
+    )
+    .eq("id", collectionId)
+    .maybeSingle();
+
+  if (!data) return null;
+
+  return {
+    id: data.id,
+    title: data.title,
+    description: data.description,
+    spots: data.collection_spots
+      .filter((entry) => entry.spots)
+      .map((entry) => ({
+        id: entry.spots!.id,
+        name: entry.spots!.name,
+        city: entry.spots!.city,
+        rank: entry.rank,
+      }))
+      .sort((a, b) => a.rank - b.rank),
+  };
+}
+
+/** Approved spots not already in the collection, for the add picker. */
+export async function getSpotsAvailableForCollection(
+  collectionId: string
+): Promise<{ id: string; name: string; city: string }[]> {
+  const supabase = await createServerSupabaseClient();
+  const [{ data: spots }, { data: existing }] = await Promise.all([
+    supabase
+      .from("spots")
+      .select("id, name, city")
+      .eq("status", "approved")
+      .order("name"),
+    supabase.from("collection_spots").select("spot_id").eq("collection_id", collectionId),
+  ]);
+
+  const taken = new Set((existing ?? []).map((row) => row.spot_id));
+  return (spots ?? []).filter((spot) => !taken.has(spot.id));
+}
