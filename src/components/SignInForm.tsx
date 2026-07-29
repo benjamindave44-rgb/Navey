@@ -141,9 +141,9 @@ export function SignInForm({
           <input
             type={showPassword ? "text" : "password"}
             name="password"
-            placeholder="Password"
+            placeholder={mode === "signup" ? "Password (8+ characters)" : "Password"}
             required
-            minLength={6}
+            minLength={mode === "signup" ? 8 : undefined}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             className="w-full rounded-full border border-black/10 px-4 py-3 pr-16 text-sm outline-none focus:border-navey-ink"
