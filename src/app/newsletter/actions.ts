@@ -1,5 +1,6 @@
 "use server";
 
+import { withinRateLimit } from "@/lib/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export type SubscribeResult = {
@@ -14,6 +15,13 @@ export async function subscribeToNewsletter(
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
     return { status: "invalid", message: "Enter a valid email address." };
+  }
+
+  if (!(await withinRateLimit("newsletter", { limit: 5, windowSeconds: 3600 }))) {
+    return {
+      status: "error",
+      message: "Too many attempts. Try again in a little while.",
+    };
   }
 
   const supabase = await createServerSupabaseClient();

@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { withinRateLimit } from "@/lib/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 /**
@@ -54,6 +55,14 @@ export async function signUp(formData: FormData) {
   // Normalised so Ben@x.com and ben@x.com can't become two accounts.
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+
+  if (!(await withinRateLimit("signup", { limit: 5, windowSeconds: 3600 }))) {
+    redirect(
+      `/sign-in?mode=signup&error=${encodeURIComponent(
+        "Too many sign-up attempts. Try again in a little while."
+      )}`
+    );
+  }
 
   const problem = signUpProblem(email, password, name);
   if (problem) {

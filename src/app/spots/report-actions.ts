@@ -1,5 +1,6 @@
 "use server";
 
+import { withinRateLimit } from "@/lib/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export type ReportResult = { status: "ok" | "duplicate" | "unauthenticated" | "error" };
@@ -19,6 +20,10 @@ export async function reportReview(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { status: "unauthenticated" };
+
+  if (!(await withinRateLimit("report_review", { limit: 20, windowSeconds: 3600 }))) {
+    return { status: "error" };
+  }
 
   const { error } = await supabase.from("review_reports").insert({
     review_id: reviewId,

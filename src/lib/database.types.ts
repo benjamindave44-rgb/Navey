@@ -240,6 +240,24 @@ export type Database = {
           },
         ]
       }
+      rate_limit_hits: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: number
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
       review_reports: {
         Row: {
           created_at: string
@@ -598,6 +616,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: { p_bucket: string; p_limit: number; p_window: string }
+        Returns: boolean
+      }
       admin_list_users: {
         Args: Record<PropertyKey, never>
         Returns: {

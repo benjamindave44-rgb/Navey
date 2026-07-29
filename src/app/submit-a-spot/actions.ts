@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { withinRateLimit } from "@/lib/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { uploadPhotos } from "@/lib/photo-upload";
 import { geocodeAddress } from "@/lib/geocode";
@@ -29,6 +30,15 @@ export async function submitSpot(formData: FormData) {
     redirect(
       `/submit-a-spot?error=${encodeURIComponent(
         "Spot name, address, and city are required."
+      )}`
+    );
+  }
+
+  // Generous for a person adding places they know; useless to a script.
+  if (!(await withinRateLimit("submit_spot", { limit: 10, windowSeconds: 3600 }))) {
+    redirect(
+      `/submit-a-spot?error=${encodeURIComponent(
+        "You've submitted a lot of spots just now. Try again in an hour."
       )}`
     );
   }

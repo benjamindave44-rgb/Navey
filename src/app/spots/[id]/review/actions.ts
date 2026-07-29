@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { checkContentGuidelines } from "@/lib/content-guidelines";
+import { withinRateLimit } from "@/lib/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { uploadPhotos } from "@/lib/photo-upload";
 
@@ -22,6 +23,14 @@ export async function submitReview(formData: FormData) {
     redirect(
       `/spots/${spotId}/review?error=${encodeURIComponent(
         "Please select a rating from 1 to 5."
+      )}`
+    );
+  }
+
+  if (!(await withinRateLimit("review", { limit: 15, windowSeconds: 3600 }))) {
+    redirect(
+      `/spots/${spotId}/review?error=${encodeURIComponent(
+        "That's a lot of reviews at once. Try again in an hour."
       )}`
     );
   }
