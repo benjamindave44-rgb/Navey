@@ -45,10 +45,10 @@ export async function changePassword(formData: FormData) {
       )}`
     );
   }
-  if (newPassword.length < 6) {
+  if (newPassword.length < 8) {
     redirect(
       `/settings?error=${encodeURIComponent(
-        "New password must be at least 6 characters."
+        "New password must be at least 8 characters."
       )}`
     );
   }

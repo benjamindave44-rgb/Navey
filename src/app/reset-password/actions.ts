@@ -20,10 +20,10 @@ export async function updatePassword(formData: FormData) {
     );
   }
 
-  if (password.length < 6) {
+  if (password.length < 8) {
     redirect(
       `/reset-password?error=${encodeURIComponent(
-        "Password must be at least 6 characters."
+        "Password must be at least 8 characters."
       )}`
     );
   }

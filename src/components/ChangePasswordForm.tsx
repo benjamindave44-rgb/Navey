@@ -48,7 +48,7 @@ export function ChangePasswordForm() {
           name="newPassword"
           type={showPasswords ? "text" : "password"}
           required
-          minLength={6}
+          minLength={8}
           value={newPassword}
           onChange={(event) => setNewPassword(event.target.value)}
           className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
@@ -64,7 +64,7 @@ export function ChangePasswordForm() {
           name="confirmPassword"
           type={showPasswords ? "text" : "password"}
           required
-          minLength={6}
+          minLength={8}
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
           className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"

@@ -42,9 +42,9 @@ export function ResetPasswordForm({ error }: { error?: string }) {
             id="password"
             type={showPassword ? "text" : "password"}
             name="password"
-            placeholder="At least 6 characters"
+            placeholder="At least 8 characters"
             required
-            minLength={6}
+            minLength={8}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             className="w-full rounded-xl border border-black/10 px-4 py-3 pr-16 text-sm outline-none focus:border-navey-ink"
@@ -68,7 +68,7 @@ export function ResetPasswordForm({ error }: { error?: string }) {
             name="confirm"
             placeholder="Re-enter new password"
             required
-            minLength={6}
+            minLength={8}
             value={confirm}
             onChange={(event) => setConfirm(event.target.value)}
             className="w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
