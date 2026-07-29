@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { SpotWithTags } from "@/lib/queries";
 import { SaveHeartButton } from "@/components/SaveHeartButton";
@@ -30,11 +31,14 @@ export function SpotCard({
     >
       <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-navey-band text-4xl">
         {spot.coverPhoto ? (
-          // eslint-disable-next-line @next/next/no-img-element -- external Supabase Storage URL
-          <img
+          <Image
             src={spot.coverPhoto}
             alt={spot.name}
-            className="h-full w-full object-cover"
+            fill
+            // Cards sit two-up on phones and up to five-up on wide screens;
+            // without this every grid downloads full-size originals.
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+            className="object-cover"
           />
         ) : (
           "☕"

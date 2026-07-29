@@ -6,7 +6,7 @@ export default function PrivacyPage() {
   return (
     <>
       <Header />
-      <main className="flex-1 px-6 py-12 md:px-12">
+      <main id="main" className="flex-1 px-6 py-12 md:px-12">
         <LegalPage
           title="Privacy Policy"
           lastUpdated="July 2026"

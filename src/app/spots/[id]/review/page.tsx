@@ -43,7 +43,7 @@ export default async function WriteReviewPage({
   return (
     <>
       <Header />
-      <main className="flex-1 px-6 py-10 md:px-12">
+      <main id="main" className="flex-1 px-6 py-10 md:px-12">
         <div className="mx-auto max-w-xl">
           <h1 className="font-heading text-3xl font-extrabold">
             {existingReview ? "Edit your review" : "Write a Review"}

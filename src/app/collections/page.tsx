@@ -18,7 +18,7 @@ export default async function CollectionsPage() {
   return (
     <>
       <Header />
-      <main className="flex-1 px-4 py-10 sm:px-6 md:px-12 md:py-12">
+      <main id="main" className="flex-1 px-4 py-10 sm:px-6 md:px-12 md:py-12">
         <h1 className="font-heading text-3xl font-extrabold">Collections</h1>
         <p className="mt-2 text-sm text-navey-ink/60">
           Curated guides to spots worth the trip.

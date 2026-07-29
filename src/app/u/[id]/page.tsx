@@ -56,7 +56,7 @@ export default async function PublicProfilePage({
   return (
     <>
       <Header />
-      <main className="flex-1 px-6 py-10 md:px-12">
+      <main id="main" className="flex-1 px-6 py-10 md:px-12">
         <div className="mx-auto max-w-3xl">
           <div className="flex flex-wrap items-center gap-5">
             <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-4 border-white bg-navey-ink text-2xl font-bold text-navey-yellow shadow-[0_6px_16px_rgba(20,18,11,0.1)]">

@@ -33,7 +33,7 @@ export default async function SettingsPage({
   return (
     <>
       <Header />
-      <main className="flex-1 px-6 py-10 md:px-12">
+      <main id="main" className="flex-1 px-6 py-10 md:px-12">
         <div className="mx-auto max-w-xl">
           <Link href="/profile" className="text-sm font-semibold hover:opacity-60">
             ← Back to Profile

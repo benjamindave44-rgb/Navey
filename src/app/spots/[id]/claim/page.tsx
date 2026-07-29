@@ -49,7 +49,7 @@ export default async function ClaimBusinessPage({
   return (
     <>
       <Header />
-      <main className="flex-1 px-6 py-12 md:px-12">
+      <main id="main" className="flex-1 px-6 py-12 md:px-12">
         <div className="mx-auto max-w-xl">
           {existingClaim?.status === "pending" ? (
             <div className="rounded-2xl bg-white p-8 text-center shadow-[0_8px_24px_rgba(20,18,11,0.08)]">

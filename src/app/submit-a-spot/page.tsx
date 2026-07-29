@@ -29,7 +29,7 @@ export default async function SubmitASpotPage({
   return (
     <>
       <Header />
-      <main className="flex-1 px-6 py-10 md:px-12">
+      <main id="main" className="flex-1 px-6 py-10 md:px-12">
         <div className="mx-auto max-w-2xl">
           {success ? (
             <div className="flex flex-col items-center gap-4 rounded-2xl bg-white p-10 text-center shadow-[0_8px_24px_rgba(20,18,11,0.08)]">

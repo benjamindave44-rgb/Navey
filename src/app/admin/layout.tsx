@@ -52,7 +52,7 @@ export default async function AdminLayout({
           </Link>
         </nav>
       </div>
-      <main className="flex-1 px-6 py-10 md:px-12">{children}</main>
+      <main id="main" className="flex-1 px-6 py-10 md:px-12">{children}</main>
       <Footer />
     </>
   );

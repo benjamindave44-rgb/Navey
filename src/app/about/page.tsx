@@ -13,7 +13,7 @@ export default function AboutPage() {
   return (
     <>
       <Header />
-      <main className="flex-1 px-4 py-10 sm:px-6 md:px-12 md:py-14">
+      <main id="main" className="flex-1 px-4 py-10 sm:px-6 md:px-12 md:py-14">
         <div className="mx-auto max-w-2xl">
           <h1 className="font-heading text-3xl font-extrabold md:text-4xl">
             About Navey

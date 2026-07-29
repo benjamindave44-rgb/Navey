@@ -26,7 +26,7 @@ export default async function OnboardingResultsPage({
   return (
     <>
       <Header />
-      <main className="flex-1 px-6 py-12 md:px-12">
+      <main id="main" className="flex-1 px-6 py-12 md:px-12">
         <div className="mx-auto max-w-4xl text-center">
           <div className="mb-2 text-4xl" aria-hidden>
             🧭

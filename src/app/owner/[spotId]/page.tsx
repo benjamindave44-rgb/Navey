@@ -39,7 +39,7 @@ export default async function OwnerSpotPage({
   return (
     <>
       <Header />
-      <main className="flex-1 px-6 py-10 md:px-12">
+      <main id="main" className="flex-1 px-6 py-10 md:px-12">
         <div className="mx-auto max-w-3xl">
           <Link href="/owner" className="text-sm font-semibold hover:opacity-60">
             ← My Spots

@@ -62,3 +62,46 @@ body {
     animation: none;
   }
 }
+
+/* There were no focus styles anywhere: anyone navigating by keyboard, or with
+   a switch device, had no way to see what was selected. Applied globally so
+   every control gets it rather than each needing to remember.
+   :focus-visible, not :focus, so it doesn't fire on mouse clicks. */
+:focus-visible {
+  outline: 3px solid var(--foreground);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Lets a keyboard user jump past the header nav straight to the page, instead
+   of tabbing through every link on every page. Hidden until focused. */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 200;
+  background: var(--foreground);
+  color: var(--background);
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* Anyone who asks for less motion gets it, including the showcase fade and
+   the photo sliders' smooth scrolling. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

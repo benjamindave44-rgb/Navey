@@ -6,7 +6,7 @@ export default function TermsPage() {
   return (
     <>
       <Header />
-      <main className="flex-1 px-6 py-12 md:px-12">
+      <main id="main" className="flex-1 px-6 py-12 md:px-12">
         <LegalPage
           title="Terms of Service"
           lastUpdated="July 2026"

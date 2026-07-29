@@ -19,7 +19,7 @@ export default function NotFound() {
         </Link>
       </header>
 
-      <main className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
+      <main id="main" className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
         <div className="mb-4 text-5xl" aria-hidden>
           🧭
         </div>

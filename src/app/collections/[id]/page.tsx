@@ -66,7 +66,7 @@ export default async function CollectionDetailPage({
   return (
     <>
       <Header />
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <div className="mx-auto max-w-6xl px-6 py-6 md:px-12">
           <nav className="flex items-center gap-2 text-xs font-semibold text-navey-ink/50">
             <Link href="/" className="hover:opacity-60">

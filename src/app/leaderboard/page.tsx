@@ -30,7 +30,7 @@ export default async function LeaderboardPage() {
   return (
     <>
       <Header />
-      <main className="flex-1 px-6 py-12 md:px-12">
+      <main id="main" className="flex-1 px-6 py-12 md:px-12">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs font-bold uppercase tracking-wide text-navey-ink/50">
             Community

@@ -28,7 +28,7 @@ export default async function SignInPage({
   return (
     <>
       <Header />
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <div className="grid md:grid-cols-2">
           <div className="flex flex-col justify-center px-6 py-12 md:px-16 md:py-20">
             <Link href="/" className="mb-10 inline-flex items-center gap-2">

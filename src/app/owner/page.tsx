@@ -37,7 +37,7 @@ export default async function OwnerPage() {
   return (
     <>
       <Header />
-      <main className="flex-1 px-6 py-10 md:px-12">
+      <main id="main" className="flex-1 px-6 py-10 md:px-12">
         <div className="mx-auto max-w-3xl">
           <h1 className="font-heading text-3xl font-extrabold">
             Owner Dashboard

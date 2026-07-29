@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -160,7 +161,7 @@ export default async function SpotDetailPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <Header />
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <div className="mx-auto max-w-6xl px-6 py-6 md:px-12">
           <nav className="flex items-center gap-2 text-xs font-semibold text-navey-ink/50">
             <Link href="/" className="hover:opacity-60">
@@ -358,13 +359,14 @@ export default async function SpotDetailPage({
                             {review.photos.map((url) => (
                               <div
                                 key={url}
-                                className="h-16 w-16 overflow-hidden rounded-lg bg-navey-band"
+                                className="relative h-16 w-16 overflow-hidden rounded-lg bg-navey-band"
                               >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
+                                <Image
                                   src={url}
                                   alt="From a visitor's review"
-                                  className="h-full w-full object-cover"
+                                  fill
+                                  sizes="64px"
+                                  className="object-cover"
                                 />
                               </div>
                             ))}

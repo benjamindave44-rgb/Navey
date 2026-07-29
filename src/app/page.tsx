@@ -45,7 +45,7 @@ export default async function Home() {
   return (
     <>
       <Header />
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <Hero featured={featured} savedSpotIds={[...savedSpotIds]} />
 
         <section className="px-4 py-10 sm:px-6 md:px-12 md:py-12">

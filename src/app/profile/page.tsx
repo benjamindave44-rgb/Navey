@@ -42,7 +42,7 @@ export default async function ProfilePage({
   return (
     <>
       <Header />
-      <main className="flex-1 px-6 py-10 md:px-12">
+      <main id="main" className="flex-1 px-6 py-10 md:px-12">
         <div className="mx-auto max-w-5xl">
           {error && (
             <p className="mb-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">

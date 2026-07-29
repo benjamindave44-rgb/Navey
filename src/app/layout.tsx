@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Sora, Manrope } from "next/font/google";
 import "./globals.css";
 
@@ -13,6 +13,12 @@ const manrope = Manrope({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
 });
+
+// Colours the browser chrome on Android and the status bar area on iOS,
+// so the app doesn't sit inside a stark white frame.
+export const viewport: Viewport = {
+  themeColor: "#ffde00",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.navey.co"),
@@ -55,7 +61,12 @@ export default function RootLayout({
       lang="en"
       className={`${sora.variable} ${manrope.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">
+        <a href="#main" className="skip-link">
+          Skip to content
+        </a>
+        {children}
+      </body>
     </html>
   );
 }
