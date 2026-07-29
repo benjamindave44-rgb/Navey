@@ -368,3 +368,57 @@ export async function getSpotsAvailableForCollection(
   const taken = new Set((existing ?? []).map((row) => row.spot_id));
   return (spots ?? []).filter((spot) => !taken.has(spot.id));
 }
+
+export type AdminReview = {
+  id: string;
+  rating: number;
+  body: string | null;
+  createdAt: string;
+  needsReview: boolean;
+  reportCount: number;
+  reportReasons: string[];
+  authorName: string | null;
+  spotId: string;
+  spotName: string;
+};
+
+export async function getAdminReviews(
+  onlyFlagged = false
+): Promise<AdminReview[]> {
+  const supabase = await createServerSupabaseClient();
+
+  let query = supabase
+    .from("reviews")
+    .select(
+      "id, rating, body, created_at, needs_review, profiles(display_name), spots(id, name), review_reports(reason)"
+    )
+    .order("created_at", { ascending: false });
+
+  if (onlyFlagged) query = query.eq("needs_review", true);
+
+  const { data } = await query;
+
+  return (data ?? []).map((review) => ({
+    id: review.id,
+    rating: review.rating,
+    body: review.body,
+    createdAt: review.created_at,
+    needsReview: review.needs_review,
+    reportCount: review.review_reports.length,
+    reportReasons: review.review_reports
+      .map((report) => report.reason)
+      .filter((reason): reason is string => Boolean(reason)),
+    authorName: review.profiles?.display_name ?? null,
+    spotId: review.spots?.id ?? "",
+    spotName: review.spots?.name ?? "Unknown spot",
+  }));
+}
+
+export async function getFlaggedReviewCount(): Promise<number> {
+  const supabase = await createServerSupabaseClient();
+  const { count } = await supabase
+    .from("reviews")
+    .select("id", { count: "exact", head: true })
+    .eq("needs_review", true);
+  return count ?? 0;
+}

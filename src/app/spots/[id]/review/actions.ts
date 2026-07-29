@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { checkContentGuidelines } from "@/lib/content-guidelines";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { uploadPhotos } from "@/lib/photo-upload";
 
@@ -25,6 +26,11 @@ export async function submitReview(formData: FormData) {
     );
   }
 
+  // Same keyword screen the spot forms use: it doesn't block anything, it
+  // just routes the obviously bad to an admin for a human look.
+  const needsReview =
+    checkContentGuidelines({ name: "", description: body || null }).length > 0;
+
   const { data: existing } = await supabase
     .from("reviews")
     .select("id")
@@ -37,12 +43,18 @@ export async function submitReview(formData: FormData) {
   if (existing) {
     await supabase
       .from("reviews")
-      .update({ rating, body: body || null })
+      .update({ rating, body: body || null, needs_review: needsReview })
       .eq("id", existing.id);
   } else {
     const { data: inserted } = await supabase
       .from("reviews")
-      .insert({ spot_id: spotId, user_id: user.id, rating, body: body || null })
+      .insert({
+        spot_id: spotId,
+        user_id: user.id,
+        rating,
+        body: body || null,
+        needs_review: needsReview,
+      })
       .select("id")
       .single();
     reviewId = inserted?.id;

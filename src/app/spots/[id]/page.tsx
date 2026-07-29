@@ -7,6 +7,7 @@ import { SpotCard } from "@/components/SpotCard";
 import { PhotoSlider } from "@/components/PhotoSlider";
 import { SaveHeartButton } from "@/components/SaveHeartButton";
 import { ShareSpotButton } from "@/components/ShareSpotButton";
+import { ReportReviewButton } from "@/components/ReportReviewButton";
 import { SaveSpotButton } from "@/components/SaveSpotButton";
 import {
   getRelatedSpots,
@@ -369,6 +370,7 @@ export default async function SpotDetailPage({
                             ))}
                           </div>
                         )}
+                        <ReportReviewButton reviewId={review.id} />
                       </li>
                     ))}
                   </ul>

@@ -240,11 +240,48 @@ export type Database = {
           },
         ]
       }
+      review_reports: {
+        Row: {
+          created_at: string
+          reason: string | null
+          reporter_id: string
+          review_id: string
+        }
+        Insert: {
+          created_at?: string
+          reason?: string | null
+          reporter_id: string
+          review_id: string
+        }
+        Update: {
+          created_at?: string
+          reason?: string | null
+          reporter_id?: string
+          review_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_reports_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           body: string | null
           created_at: string
           id: string
+          needs_review: boolean
           rating: number
           spot_id: string
           user_id: string
@@ -253,6 +290,7 @@ export type Database = {
           body?: string | null
           created_at?: string
           id?: string
+          needs_review?: boolean
           rating: number
           spot_id: string
           user_id: string
@@ -261,6 +299,7 @@ export type Database = {
           body?: string | null
           created_at?: string
           id?: string
+          needs_review?: boolean
           rating?: number
           spot_id?: string
           user_id?: string

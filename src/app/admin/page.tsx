@@ -3,6 +3,7 @@ import { backfillCoordinates } from "@/app/admin/actions";
 import {
   getAdminOverviewStats,
   getMissingCoordinatesCount,
+  getFlaggedReviewCount,
   getPendingClaimsCount,
 } from "@/lib/admin";
 
@@ -16,10 +17,11 @@ export default async function AdminOverviewPage({
   const query = await searchParams;
   const notice = typeof query.notice === "string" ? query.notice : undefined;
 
-  const [stats, missingCoords, pendingClaims] = await Promise.all([
+  const [stats, missingCoords, pendingClaims, flaggedReviews] = await Promise.all([
     getAdminOverviewStats(),
     getMissingCoordinatesCount(),
     getPendingClaimsCount(),
+    getFlaggedReviewCount(),
   ]);
   const needsAttention = stats.pendingSpots + stats.flaggedSpots;
   const maxCityCount = Math.max(...stats.spotsByCity.map((c) => c.count), 1);
@@ -32,6 +34,22 @@ export default async function AdminOverviewPage({
         <p className="mt-4 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
           {notice}
         </p>
+      )}
+
+      {flaggedReviews > 0 && (
+        <Link
+          href="/admin/reviews?filter=flagged"
+          className="mt-4 flex items-center justify-between gap-4 rounded-2xl bg-amber-100 px-5 py-4 text-sm font-semibold text-amber-900 hover:bg-amber-200"
+        >
+          <span>
+            {flaggedReviews} review{flaggedReviews === 1 ? "" : "s"} need
+            {flaggedReviews === 1 ? "s" : ""} a look — reported by readers or
+            caught by the content check.
+          </span>
+          <span aria-hidden className="shrink-0 text-lg">
+            →
+          </span>
+        </Link>
       )}
 
       {missingCoords > 0 && (
