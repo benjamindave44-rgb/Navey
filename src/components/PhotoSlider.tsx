@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useRef, useState } from "react";
+import { PhotoLightbox } from "@/components/PhotoLightbox";
 
 /**
  * Swipeable photo strip.
@@ -26,6 +27,7 @@ export function PhotoSlider({
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
+  const [lightboxAt, setLightboxAt] = useState<number | null>(null);
 
   if (photos.length === 0) {
     return (
@@ -57,8 +59,11 @@ export function PhotoSlider({
         className={`flex ${aspect} snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-[22px] bg-navey-band [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}
       >
         {photos.map((photo, position) => (
-          <div
+          <button
             key={photo.id}
+            type="button"
+            onClick={() => setLightboxAt(position)}
+            aria-label={`View photo ${position + 1} of ${photos.length} full screen`}
             className="relative h-full w-full shrink-0 snap-center"
           >
             <Image
@@ -69,7 +74,7 @@ export function PhotoSlider({
               priority={priority && position === 0}
               className="object-cover"
             />
-          </div>
+          </button>
         ))}
       </div>
 
@@ -116,6 +121,14 @@ export function PhotoSlider({
             ))}
           </div>
         </>
+      )}
+      {lightboxAt !== null && (
+        <PhotoLightbox
+          photos={photos}
+          name={name}
+          startIndex={lightboxAt}
+          onClose={() => setLightboxAt(null)}
+        />
       )}
     </div>
   );
