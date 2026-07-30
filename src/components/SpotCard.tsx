@@ -27,7 +27,7 @@ export function SpotCard({
   return (
     <Link
       href={`/spots/${spot.id}`}
-      className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_rgba(20,18,11,0.08)] transition-transform hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(20,18,11,0.14)]"
+      className="navey-arch-card group flex flex-col overflow-hidden bg-white shadow-[0_8px_24px_rgba(20,18,11,0.08)] transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(20,18,11,0.14)] active:scale-[0.98]"
     >
       <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-navey-band text-4xl">
         {spot.coverPhoto ? (
@@ -38,10 +38,14 @@ export function SpotCard({
             // Cards sit two-up on phones and up to five-up on wide screens;
             // without this every grid downloads full-size originals.
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-            className="object-cover"
+            // The photo drifts in slightly on hover -- enough to feel alive
+            // under the cursor without moving anything the eye is reading.
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          "☕"
+          <span className="transition-transform duration-500 group-hover:scale-110">
+            ☕
+          </span>
         )}
         {typeof rank === "number" && (
           <span className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-navey-ink text-xs font-bold text-navey-yellow">

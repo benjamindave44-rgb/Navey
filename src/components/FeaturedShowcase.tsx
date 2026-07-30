@@ -64,7 +64,7 @@ export function FeaturedShowcase({
 
   if (spots.length === 0) {
     return (
-      <div className="flex aspect-[4/3] items-center justify-center rounded-[40px] bg-navey-band text-center md:aspect-auto md:min-h-[420px] md:rounded-[260px_260px_40px_260px]">
+      <div className="navey-arch flex aspect-[4/3] items-center justify-center bg-navey-band text-center md:aspect-auto md:min-h-[420px]">
         <p className="max-w-[220px] px-6 text-sm font-semibold text-navey-ink/45">
           This week&apos;s picks land here once spots are featured.
         </p>
@@ -87,7 +87,7 @@ export function FeaturedShowcase({
         Our picks this week
       </p>
 
-      <div className="relative aspect-[4/3] overflow-hidden rounded-[40px] bg-navey-band md:aspect-auto md:min-h-[420px] md:rounded-[260px_260px_40px_260px]">
+      <div className="navey-arch relative aspect-[4/3] overflow-hidden bg-navey-band md:aspect-auto md:min-h-[420px]">
         {spots.map((spot, position) => (
           <div
             key={spot.id}

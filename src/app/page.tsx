@@ -117,10 +117,12 @@ export default async function Home() {
                 <Link
                   key={collection.id}
                   href={`/collections/${collection.id}`}
-                  className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_rgba(20,18,11,0.08)] transition-transform hover:-translate-y-1"
+                  className="navey-arch-card group flex flex-col overflow-hidden bg-white shadow-[0_8px_24px_rgba(20,18,11,0.08)] transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(20,18,11,0.14)] active:scale-[0.98]"
                 >
                   <div className="relative flex aspect-[4/3] items-center justify-center bg-navey-band text-4xl">
-                    🗺️
+                    <span className="transition-transform duration-500 group-hover:scale-110">
+                      🗺️
+                    </span>
                     <span className="absolute bottom-3 left-3 rounded-full bg-navey-ink px-3 py-1 text-xs font-bold text-navey-yellow">
                       {collection.spotCount} spots
                     </span>

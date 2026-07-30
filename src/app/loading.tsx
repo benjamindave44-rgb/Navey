@@ -11,7 +11,7 @@ export default function Loading() {
       <div className="mt-3 h-4 w-72 max-w-full animate-pulse rounded-full bg-navey-band/70" />
       <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
         {[0, 1, 2, 3, 4, 5, 6, 7].map((tile) => (
-          <div key={tile} className="overflow-hidden rounded-2xl bg-white">
+          <div key={tile} className="navey-arch-card overflow-hidden bg-white">
             <div className="aspect-[4/3] animate-pulse bg-navey-band" />
             <div className="flex flex-col gap-2 p-3">
               <div className="h-4 w-3/4 animate-pulse rounded-full bg-navey-band" />
