@@ -50,6 +50,9 @@ export default async function AdminLayout({
           <Link href="/admin/claims" className="hover:opacity-60">
             Claims
           </Link>
+          <Link href="/admin/diagnostics" className="hover:opacity-60">
+            Diagnostics
+          </Link>
         </nav>
       </div>
       <main id="main" className="flex-1 px-6 py-10 md:px-12">{children}</main>
