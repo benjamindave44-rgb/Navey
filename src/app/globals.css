@@ -22,28 +22,33 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
-/* Navey's silhouette: three generously rounded corners with the bottom-right
-   cut short, like an archway. Defined once so the whole site can be retuned
-   from here rather than hunting down radius values card by card.
-   The hero wears it at full strength; cards echo it at a smaller radius so a
-   dense grid reads as the same family without competing with the hero. */
+/* Navey's silhouette: a domed top over a level base, like an archway.
+   Defined once so the whole site can be retuned from here rather than hunting
+   down radius values card by card. The hero wears it at full strength; cards
+   echo it at a smaller radius so a dense grid reads as the same family
+   without competing with the hero.
+
+   The base stays shallow on purpose. Captions sit in the bottom corners, and
+   a curve there clips them: at 24px above the base, a 260px radius bites
+   151px off the left of every line, taking the dark scrim with it and
+   stranding white text on a bright photo. A 40px radius bites 3px. */
 .navey-arch {
-  border-radius: 40px 40px 12px 40px;
+  border-radius: 40px 40px 16px 16px;
 }
 
 @media (min-width: 768px) {
   .navey-arch {
-    border-radius: 260px 260px 40px 260px;
+    border-radius: 260px 260px 40px 40px;
   }
 }
 
 .navey-arch-card {
-  border-radius: 26px 26px 8px 26px;
+  border-radius: 26px 26px 8px 8px;
 }
 
 @media (min-width: 640px) {
   .navey-arch-card {
-    border-radius: 36px 36px 10px 36px;
+    border-radius: 36px 36px 10px 10px;
   }
 }
 
