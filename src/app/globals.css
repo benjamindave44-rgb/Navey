@@ -22,34 +22,20 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
-/* Navey's silhouette: a domed top over a level base, like an archway.
-   Defined once so the whole site can be retuned from here rather than hunting
-   down radius values card by card. The hero wears it at full strength; cards
-   echo it at a smaller radius so a dense grid reads as the same family
-   without competing with the hero.
+/* Every photo surface on the site -- the homepage hero, spot and collection
+   cards, the spot page's photo slider, the loading skeleton -- takes its
+   corners from here, so the whole site can be reshaped from two values
+   instead of hunting down radii component by component.
 
-   The base stays shallow on purpose. Captions sit in the bottom corners, and
-   a curve there clips them: at 24px above the base, a 260px radius bites
-   151px off the left of every line, taking the dark scrim with it and
-   stranding white text on a bright photo. A 40px radius bites 3px. */
+   Square: the photo runs edge to edge and nothing gets clipped. Corner
+   rounding is what previously ate the hero caption, so if these are ever
+   raised again, check that text sitting in the bottom corners survives it. */
 .navey-arch {
-  border-radius: 40px 40px 16px 16px;
-}
-
-@media (min-width: 768px) {
-  .navey-arch {
-    border-radius: 260px 260px 40px 40px;
-  }
+  border-radius: 0;
 }
 
 .navey-arch-card {
-  border-radius: 26px 26px 8px 8px;
-}
-
-@media (min-width: 640px) {
-  .navey-arch-card {
-    border-radius: 36px 36px 10px 10px;
-  }
+  border-radius: 0;
 }
 
 @keyframes cityFade {

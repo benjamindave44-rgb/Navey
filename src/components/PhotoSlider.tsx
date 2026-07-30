@@ -32,7 +32,7 @@ export function PhotoSlider({
   if (photos.length === 0) {
     return (
       <div
-        className={`flex ${aspect} items-center justify-center rounded-[22px] bg-navey-band text-6xl`}
+        className={`flex ${aspect} items-center justify-center navey-arch-card bg-navey-band text-6xl`}
       >
         <span aria-hidden>{emptyIcon}</span>
       </div>
@@ -56,7 +56,7 @@ export function PhotoSlider({
           const next = Math.round(track.scrollLeft / track.clientWidth);
           if (next !== index) setIndex(next);
         }}
-        className={`flex ${aspect} snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-[22px] bg-navey-band [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}
+        className={`flex ${aspect} snap-x snap-mandatory overflow-x-auto overscroll-x-contain navey-arch-card bg-navey-band [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}
       >
         {photos.map((photo, position) => (
           <button
