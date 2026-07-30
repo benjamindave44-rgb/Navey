@@ -8,12 +8,36 @@ import { getSavedSpotIds } from "@/lib/profile";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Explore Coffee Shops & Restaurants in the Philippines",
-  description:
-    "Search and filter coffee shops and restaurants across the Philippines by city, vibe, and price. Find your next favorite spot on Navey.",
-  alternates: { canonical: "/explore" },
-};
+/**
+ * robots.txt already keeps well-behaved crawlers off filtered URLs, but not
+ * every bot honours it. A filtered view is the same spots in a different
+ * order, so it points search engines back at the unfiltered page rather than
+ * competing with it -- and asks not to be indexed in its own right, while
+ * still letting crawlers follow through to the individual spot pages.
+ */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  // Repeated keys arrive as arrays (?tags=a&tags=b), so this cannot just read
+  // the first value -- a multi-tag filter would look unfiltered.
+  const isFiltered = ["q", "category", "city", "tags", "sort", "page"].some(
+    (key) => {
+      const value = params[key];
+      return Array.isArray(value) ? value.length > 0 : Boolean(value);
+    }
+  );
+
+  return {
+    title: "Explore Coffee Shops & Restaurants in the Philippines",
+    description:
+      "Search and filter coffee shops and restaurants across the Philippines by city, vibe, and price. Find your next favorite spot on Navey.",
+    alternates: { canonical: "/explore" },
+    ...(isFiltered ? { robots: { index: false, follow: true } } : {}),
+  };
+}
 
 const CATEGORIES = [
   { value: "", label: "All categories" },
