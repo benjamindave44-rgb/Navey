@@ -10,6 +10,12 @@ create index reviews_needs_review_idx on public.reviews (created_at desc)
 
 -- Readers are the ones who find bad content; a keyword check never will.
 -- One report per person per review, enforced by the primary key.
+--
+-- Careful: holding a foreign key to both reviews and profiles makes this a
+-- join table between them, so PostgREST sees two ways to get from a review to
+-- a profile and refuses to guess (PGRST201). Every embed of profiles under
+-- reviews must name the constraint -- profiles!reviews_user_id_fkey -- or the
+-- whole query fails, not just the author's name.
 create table public.review_reports (
   review_id uuid not null references public.reviews (id) on delete cascade,
   reporter_id uuid not null references public.profiles (id) on delete cascade,

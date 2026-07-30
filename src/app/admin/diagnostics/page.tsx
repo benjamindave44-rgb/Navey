@@ -17,7 +17,7 @@ const FULL_SELECT = `id, name, category, price_range, city, province, address, l
    spot_tags(tags(label)),
    spot_photos(id, url, kind),
    spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours),
-   reviews(id, rating, body, created_at, user_id, profiles(display_name), review_photos(url)),
+   reviews(id, rating, body, created_at, user_id, profiles!reviews_user_id_fkey(display_name), review_photos(url)),
    submitted_by, submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)`;
 
 // Narrowing one piece at a time is what turns "the page is broken" into a
@@ -28,7 +28,7 @@ const PROBES: { label: string; select: string }[] = [
   { label: "+ hours (with the 24-hour column)", select: "id, spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours)" },
   { label: "+ tags", select: "id, spot_tags(tags(label))" },
   { label: "+ photos", select: "id, spot_photos(id, url, kind)" },
-  { label: "+ reviews", select: "id, reviews(id, rating, body, created_at, user_id, profiles(display_name), review_photos(url))" },
+  { label: "+ reviews", select: "id, reviews(id, rating, body, created_at, user_id, profiles!reviews_user_id_fkey(display_name), review_photos(url))" },
   { label: "+ contributor profile", select: "id, submitted_by, submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)" },
   { label: "Everything (what the spot page runs)", select: FULL_SELECT },
 ];

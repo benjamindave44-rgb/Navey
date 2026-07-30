@@ -390,7 +390,7 @@ export async function getAdminReviews(
   let query = supabase
     .from("reviews")
     .select(
-      "id, rating, body, created_at, needs_review, profiles(display_name), spots(id, name), review_reports(reason)"
+      "id, rating, body, created_at, needs_review, profiles!reviews_user_id_fkey(display_name), spots(id, name), review_reports(reason)"
     )
     .order("created_at", { ascending: false });
 
