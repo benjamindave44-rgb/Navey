@@ -324,6 +324,7 @@ export type SpotDetail = SpotWithTags & {
     open_time: string | null;
     close_time: string | null;
     is_closed: boolean;
+    is_24_hours: boolean;
   }[];
   reviews: SpotReview[];
   averageRating: number | null;
@@ -340,7 +341,7 @@ export async function getSpotDetail(id: string): Promise<SpotDetail | null> {
        accepts_cash, accepts_qr_ph, accepts_cards, accepts_bank_transfer,
        spot_tags(tags(label)),
        spot_photos(id, url, kind),
-       spot_hours(day_of_week, open_time, close_time, is_closed),
+       spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours),
        reviews(id, rating, body, created_at, user_id, profiles(display_name), review_photos(url)),
        submitted_by, submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)`
     )

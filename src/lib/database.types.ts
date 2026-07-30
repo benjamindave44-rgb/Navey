@@ -405,6 +405,7 @@ export type Database = {
         Row: {
           close_time: string | null
           day_of_week: number
+          is_24_hours: boolean
           is_closed: boolean
           open_time: string | null
           spot_id: string
@@ -412,6 +413,7 @@ export type Database = {
         Insert: {
           close_time?: string | null
           day_of_week: number
+          is_24_hours?: boolean
           is_closed?: boolean
           open_time?: string | null
           spot_id: string
@@ -419,6 +421,7 @@ export type Database = {
         Update: {
           close_time?: string | null
           day_of_week?: number
+          is_24_hours?: boolean
           is_closed?: boolean
           open_time?: string | null
           spot_id?: string

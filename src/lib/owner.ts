@@ -51,6 +51,7 @@ export type OwnerSpotDetail = {
     openTime: string | null;
     closeTime: string | null;
     isClosed: boolean;
+    is24Hours: boolean;
   }[];
   tagIds: number[];
   galleryPhotos: { id: string; url: string }[];
@@ -68,7 +69,7 @@ export async function getOwnerSpotDetail(
       `id, name, category, price_range, address, city, province, lat, lng, description, status, needs_review,
        noise_level, music_style, lighting, seating_style,
        accepts_cash, accepts_qr_ph, accepts_cards, accepts_bank_transfer,
-       spot_hours(day_of_week, open_time, close_time, is_closed),
+       spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours),
        spot_tags(tag_id),
        spot_photos(id, url, kind)`
     )
@@ -104,6 +105,7 @@ export async function getOwnerSpotDetail(
       openTime: hour.open_time,
       closeTime: hour.close_time,
       isClosed: hour.is_closed,
+      is24Hours: hour.is_24_hours,
     })),
     tagIds: data.spot_tags.map((tag) => tag.tag_id),
     galleryPhotos: data.spot_photos

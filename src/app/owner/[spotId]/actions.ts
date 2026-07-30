@@ -117,18 +117,31 @@ export async function updateHours(formData: FormData) {
   const rows = [];
   for (let day = 0; day < 7; day++) {
     const isClosed = formData.get(`closed_${day}`) === "on";
+    // "Closed" wins if both somehow arrive -- a shop that is shut cannot also
+    // be open around the clock.
+    const is24Hours = !isClosed && formData.get(`hours24_${day}`) === "on";
+    const keepsTimes = !isClosed && !is24Hours;
     const openTime = String(formData.get(`open_${day}`) ?? "").trim();
     const closeTime = String(formData.get(`close_${day}`) ?? "").trim();
     rows.push({
       spot_id: spotId,
       day_of_week: day,
       is_closed: isClosed,
-      open_time: isClosed ? null : openTime || null,
-      close_time: isClosed ? null : closeTime || null,
+      is_24_hours: is24Hours,
+      open_time: keepsTimes ? openTime || null : null,
+      close_time: keepsTimes ? closeTime || null : null,
     });
   }
 
-  await supabase.from("spot_hours").insert(rows);
+  const { error } = await supabase.from("spot_hours").insert(rows);
+
+  if (error) {
+    redirect(
+      `/owner/${spotId}?tab=hours&error=${encodeURIComponent(
+        `Save failed: ${error.message}`
+      )}`
+    );
+  }
 
   redirect(`/owner/${spotId}?tab=hours&notice=${encodeURIComponent("Hours updated.")}`);
 }

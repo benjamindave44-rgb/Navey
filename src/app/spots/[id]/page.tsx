@@ -15,6 +15,7 @@ import {
   getSpotDetail,
   type SpotDetail,
 } from "@/lib/queries";
+import { describeHours, toIso24 } from "@/lib/hours";
 import { getSavedSpotIds } from "@/lib/profile";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
@@ -121,6 +122,26 @@ export default async function SpotDetailPage({
   const menuPdfs = spot.menuPhotos.filter((photo) => isPdf(photo.url));
   const today = new Date().getDay();
 
+  // Hours are already on the page; declaring them is what lets Google show
+  // "Open now" or "Closes 9 PM" beside the result. Owners type times freely,
+  // so anything that won't normalise to ISO 24-hour is left out rather than
+  // published as junk Google would discard wholesale.
+  const openingHours = spot.hours.flatMap((hour) => {
+    if (hour.is_closed) return [];
+    const [opens, closes] = hour.is_24_hours
+      ? ["00:00", "23:59"]
+      : [toIso24(hour.open_time), toIso24(hour.close_time)];
+    if (!opens || !closes) return [];
+    return [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: `https://schema.org/${SCHEMA_DAYS[hour.day_of_week]}`,
+        opens,
+        closes,
+      },
+    ];
+  });
+
   const schemaType =
     spot.category === "restaurant"
       ? "Restaurant"
@@ -146,19 +167,8 @@ export default async function SpotDetailPage({
       ? { image: spot.galleryPhotos.map((photo) => photo.url) }
       : {}),
     ...(spot.price_range ? { priceRange: spot.price_range } : {}),
-    // Hours are already on the page; declaring them is what lets Google show
-    // "Open now" or "Closes 9 PM" beside the result.
-    ...(spot.hours.some((hour) => !hour.is_closed && hour.open_time)
-      ? {
-          openingHoursSpecification: spot.hours
-            .filter((hour) => !hour.is_closed && hour.open_time && hour.close_time)
-            .map((hour) => ({
-              "@type": "OpeningHoursSpecification",
-              dayOfWeek: `https://schema.org/${SCHEMA_DAYS[hour.day_of_week]}`,
-              opens: hour.open_time,
-              closes: hour.close_time,
-            })),
-        }
+    ...(openingHours.length > 0
+      ? { openingHoursSpecification: openingHours }
       : {}),
     url: `https://www.navey.co/spots/${spot.id}`,
     ...(spot.averageRating != null && spot.reviews.length > 0
@@ -496,11 +506,7 @@ export default async function SpotDetailPage({
                         }`}
                       >
                         <span>{DAY_LABELS[hour.day_of_week]}</span>
-                        <span>
-                          {hour.is_closed
-                            ? "Closed"
-                            : `${hour.open_time ?? "?"} – ${hour.close_time ?? "?"}`}
-                        </span>
+                        <span>{describeHours(hour)}</span>
                       </li>
                     ))}
                   </ul>

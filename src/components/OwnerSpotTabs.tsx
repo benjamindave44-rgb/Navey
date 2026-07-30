@@ -12,6 +12,7 @@ import {
   updateHours,
   updatePayments,
 } from "@/app/owner/[spotId]/actions";
+import { OwnerHoursEditor } from "@/components/OwnerHoursEditor";
 import { PhotoPicker } from "@/components/PhotoPicker";
 import { LocationFields } from "@/components/LocationFields";
 import type { OwnerSpotDetail } from "@/lib/owner";
@@ -26,16 +27,6 @@ const CATEGORIES = [
 ];
 
 const PRICES = ["₱", "₱₱", "₱₱₱"];
-
-const DAY_LABELS = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
 
 function SaveButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -173,8 +164,6 @@ export function OwnerSpotTabs({
     );
   }
 
-  const hourByDay = new Map(spot.hours.map((h) => [h.dayOfWeek, h]));
-
   const tabs: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview" },
     { id: "hours", label: "Hours" },
@@ -291,39 +280,7 @@ export function OwnerSpotTabs({
         {tab === "hours" && (
           <form action={updateHours} className="flex flex-col gap-4">
             <input type="hidden" name="spotId" value={spot.id} />
-            {DAY_LABELS.map((label, day) => {
-              const existing = hourByDay.get(day);
-              return (
-                <div
-                  key={day}
-                  className="flex flex-wrap items-center gap-3 rounded-2xl bg-white p-3 shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
-                >
-                  <span className="w-24 text-sm font-semibold">{label}</span>
-                  <label className="flex items-center gap-2 text-xs text-navey-ink/70">
-                    <input
-                      type="checkbox"
-                      name={`closed_${day}`}
-                      defaultChecked={existing?.isClosed ?? false}
-                    />
-                    Closed
-                  </label>
-                  <input
-                    type="text"
-                    name={`open_${day}`}
-                    placeholder="Open (e.g. 8:00 AM)"
-                    defaultValue={existing?.openTime ?? ""}
-                    className="min-w-[140px] flex-1 rounded-full border border-black/10 px-3 py-2 text-xs outline-none focus:border-navey-ink"
-                  />
-                  <input
-                    type="text"
-                    name={`close_${day}`}
-                    placeholder="Close (e.g. 9:00 PM)"
-                    defaultValue={existing?.closeTime ?? ""}
-                    className="min-w-[140px] flex-1 rounded-full border border-black/10 px-3 py-2 text-xs outline-none focus:border-navey-ink"
-                  />
-                </div>
-              );
-            })}
+            <OwnerHoursEditor hours={spot.hours} />
             <SaveButton label="Save Hours" />
           </form>
         )}
