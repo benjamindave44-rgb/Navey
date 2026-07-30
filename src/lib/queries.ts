@@ -1,4 +1,15 @@
+import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+
+/**
+ * A query that fails is not a query that found nothing, and the two must not
+ * look the same. Silently returning an empty result hides real breakage --
+ * a schema change the API layer hasn't picked up yet turns every listing
+ * page into "no spots yet" with nothing in the logs to explain it.
+ */
+function logQueryError(where: string, error: PostgrestError | null) {
+  if (error) console.error(`[queries] ${where} failed:`, error.message, error.code);
+}
 
 export type SpotWithTags = {
   id: string;
@@ -55,6 +66,7 @@ export async function getApprovedSpots(
   if (city) query = query.eq("city", city);
 
   const { data, error } = await query;
+  logQueryError("getApprovedSpots", error);
   if (error || !data) return [];
 
   let spots = data.map((spot) => ({
@@ -138,6 +150,7 @@ export async function getMapSpots(): Promise<MapSpot[]> {
     .not("lat", "is", null)
     .not("lng", "is", null);
 
+  logQueryError("getMapSpots", error);
   if (error || !data) return [];
 
   return data
@@ -180,6 +193,7 @@ export async function getCities(): Promise<string[]> {
     .select("city")
     .eq("status", "approved");
 
+  logQueryError("getCities", error);
   if (error || !data) return [];
   return Array.from(new Set(data.map((spot) => spot.city))).sort();
 }
@@ -198,6 +212,7 @@ export async function getCollections(limit = 4): Promise<CollectionWithSpots[]> 
     .order("created_at", { ascending: false })
     .limit(limit);
 
+  logQueryError("getCollections", error);
   if (error || !data) return [];
 
   return data.map((collection) => ({
@@ -214,6 +229,7 @@ export async function getTags() {
     .select("id, label, icon")
     .order("id");
 
+  logQueryError("getTags", error);
   if (error || !data) return [];
   return data;
 }
@@ -245,6 +261,7 @@ export async function getCollectionDetail(
     .eq("id", id)
     .maybeSingle();
 
+  logQueryError("getCollectionDetail", error);
   if (error || !data) return null;
 
   let spots: CollectionSpot[] = data.collection_spots
@@ -349,7 +366,16 @@ export async function getSpotDetail(id: string): Promise<SpotDetail | null> {
     .eq("status", "approved")
     .maybeSingle();
 
-  if (error || !data) return null;
+  // A broken query must not be reported as a missing spot. Returning null here
+  // makes the page 404, which tells visitors the shop was removed and tells
+  // Google to drop it from the index -- over what may be a passing fault.
+  // Throwing surfaces the real error page instead, and leaves the listing
+  // indexed once the fault clears.
+  if (error) {
+    logQueryError(`getSpotDetail(${id})`, error);
+    throw new Error(`Could not load spot ${id}: ${error.message}`);
+  }
+  if (!data) return null;
 
   const reviews: SpotReview[] = data.reviews.map((review) => ({
     id: review.id,
