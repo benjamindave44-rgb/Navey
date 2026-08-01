@@ -2,6 +2,11 @@
 
 import { useMemo, useRef, useState } from "react";
 import { compressImage } from "@/lib/compress-image";
+import {
+  UPLOAD_LIMIT_LABEL,
+  formatBytes,
+  withinUploadBudget,
+} from "@/lib/upload-limits";
 
 export function PhotoPicker({
   name,
@@ -20,6 +25,7 @@ export function PhotoPicker({
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [working, setWorking] = useState(false);
+  const [tooLarge, setTooLarge] = useState<string | null>(null);
 
   function syncHiddenInput(list: File[]) {
     const dt = new DataTransfer();
@@ -33,12 +39,27 @@ export function PhotoPicker({
     if (picked.length === 0) return;
 
     setWorking(true);
+    setTooLarge(null);
     try {
       const room = Math.max(0, max - files.length);
       const shrunk = await Promise.all(
         picked.slice(0, room).map((file) => compressImage(file))
       );
-      const next = [...files, ...shrunk].slice(0, max);
+
+      // Checked after resizing, so a big photo is judged on what will actually
+      // be sent rather than what came off the camera. PDFs are unchanged by
+      // that step, which is why they are the ones that hit this.
+      const { accepted, rejected } = withinUploadBudget(files, shrunk);
+      if (rejected.length > 0) {
+        setTooLarge(
+          rejected
+            .map((file) => `${file.name} (${formatBytes(file.size)})`)
+            .join(", ")
+        );
+      }
+      if (accepted.length === 0) return;
+
+      const next = [...files, ...accepted].slice(0, max);
       setFiles(next);
       syncHiddenInput(next);
     } finally {
@@ -50,6 +71,7 @@ export function PhotoPicker({
     const next = files.filter((_, i) => i !== index);
     setFiles(next);
     syncHiddenInput(next);
+    setTooLarge(null);
   }
 
   const previews = useMemo(
@@ -108,6 +130,16 @@ export function PhotoPicker({
         )}
       </div>
       <input ref={inputRef} type="file" name={name} multiple hidden />
+      {tooLarge && (
+        <p
+          role="alert"
+          className="mt-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"
+        >
+          Too big to upload: {tooLarge}. Everything here has to fit in{" "}
+          {UPLOAD_LIMIT_LABEL} altogether. For a large PDF menu, take photos of
+          the menu instead, or shrink the PDF first.
+        </p>
+      )}
       <p className="mt-2 text-xs text-navey-ink/50">
         {working
           ? "Preparing photos…"

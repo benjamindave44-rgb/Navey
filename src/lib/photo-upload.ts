@@ -1,15 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 
-const MAX_FILE_BYTES = 5 * 1024 * 1024;
-// PDFs skip the browser-side resizing photos get, so they need more room.
-const MAX_PDF_BYTES = 10 * 1024 * 1024;
+import {
+  MAX_IMAGE_BYTES,
+  MAX_UPLOAD_TOTAL_BYTES,
+  PDF_TYPE,
+} from "@/lib/upload-limits";
 const EXTENSION_BY_TYPE: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
 };
-const PDF_TYPE = "application/pdf";
 
 /**
  * Uploads valid image files to the `photos` bucket under `pathPrefix/` and
@@ -35,7 +36,7 @@ export async function uploadPhotos(
       failed++;
       continue;
     }
-    if (entry.size > (isPdf ? MAX_PDF_BYTES : MAX_FILE_BYTES)) {
+    if (entry.size > (isPdf ? MAX_UPLOAD_TOTAL_BYTES : MAX_IMAGE_BYTES)) {
       failed++;
       continue;
     }
@@ -65,7 +66,8 @@ export function storagePathFromPublicUrl(url: string): string | null {
   return url.slice(index + marker.length);
 }
 
-const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
+// Same platform ceiling as everything else posted through a form.
+const MAX_DOCUMENT_BYTES = MAX_UPLOAD_TOTAL_BYTES;
 const DOCUMENT_EXTENSION_BY_TYPE: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",

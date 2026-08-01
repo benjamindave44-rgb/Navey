@@ -5,6 +5,7 @@ import { checkContentGuidelines } from "@/lib/content-guidelines";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { storagePathFromPublicUrl, uploadPhotos } from "@/lib/photo-upload";
 import { geocodeAddress } from "@/lib/geocode";
+import { UPLOAD_LIMIT_LABEL } from "@/lib/upload-limits";
 
 type PhotoKind = "gallery" | "menu";
 
@@ -243,7 +244,7 @@ async function addSpotPhotos(kind: PhotoKind, formData: FormData) {
     redirect(
       `/owner/${spotId}?tab=${kind}&error=${encodeURIComponent(
         kind === "menu"
-          ? "Upload failed. Menus can be JPEG, PNG, WebP or PDF — images under 5MB, PDFs under 10MB."
+          ? `Upload failed. Menus can be JPEG, PNG, WebP or PDF, up to ${UPLOAD_LIMIT_LABEL} altogether.`
           : "Upload failed. Make sure each photo is a JPEG, PNG, or WebP under 5MB, then try again."
       )}`
     );

@@ -1,7 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { submitBusinessClaim } from "@/app/spots/[id]/claim/actions";
+import {
+  MAX_UPLOAD_TOTAL_BYTES,
+  UPLOAD_LIMIT_LABEL,
+  formatBytes,
+} from "@/lib/upload-limits";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -29,6 +35,21 @@ export function ClaimBusinessForm({
   defaultEmail: string;
   error?: string;
 }) {
+  // A scanned permit is routinely larger than a request is allowed to be, and
+  // going over kills the page rather than returning an error. Clearing the
+  // input keeps the form submittable -- proof is optional anyway.
+  const [tooLarge, setTooLarge] = useState<string | null>(null);
+
+  function checkProof(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (file && file.size > MAX_UPLOAD_TOTAL_BYTES) {
+      setTooLarge(formatBytes(file.size));
+      event.target.value = "";
+      return;
+    }
+    setTooLarge(null);
+  }
+
   return (
     <form
       action={submitBusinessClaim}
@@ -80,11 +101,22 @@ export function ClaimBusinessForm({
           name="proof"
           type="file"
           accept="image/jpeg,image/png,application/pdf"
+          onChange={checkProof}
           className="w-full rounded-xl border-2 border-dashed border-black/20 px-4 py-3 text-sm outline-none"
         />
+        {tooLarge && (
+          <p
+            role="alert"
+            className="mt-1.5 rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"
+          >
+            That file is {tooLarge} — the limit is {UPLOAD_LIMIT_LABEL}. Send a
+            photo of the document instead, or submit without it and we&apos;ll
+            ask for proof by email.
+          </p>
+        )}
         <p className="mt-1.5 text-xs text-navey-ink/50">
           DTI/SEC registration, business permit, or a utility bill. Speeds up
-          review, but not required to submit.
+          review, but not required to submit. Max {UPLOAD_LIMIT_LABEL}.
         </p>
       </div>
 

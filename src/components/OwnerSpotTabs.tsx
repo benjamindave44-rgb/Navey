@@ -14,6 +14,7 @@ import {
 } from "@/app/owner/[spotId]/actions";
 import { OwnerHoursEditor } from "@/components/OwnerHoursEditor";
 import { PhotoPicker } from "@/components/PhotoPicker";
+import { UPLOAD_LIMIT_LABEL } from "@/lib/upload-limits";
 import { LocationFields } from "@/components/LocationFields";
 import type { OwnerSpotDetail } from "@/lib/owner";
 
@@ -424,7 +425,7 @@ export function OwnerSpotTabs({
             emptyLabel="No menu uploaded yet."
             addLabel="Add menu photos or a PDF"
             accept="image/*,application/pdf"
-            helpText={`Up to ${MAX_MENU_PHOTOS} files. Photos or a PDF menu (PDFs up to 10MB).`}
+            helpText={`Up to ${MAX_MENU_PHOTOS} files. Photos or a PDF menu, ${UPLOAD_LIMIT_LABEL} altogether.`}
           />
         )}
       </div>
