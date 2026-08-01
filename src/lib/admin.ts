@@ -183,6 +183,13 @@ export type AdminSpotDetail = {
   featured: boolean;
   featuredRank: number;
   submitterName: string | null;
+  hours: {
+    dayOfWeek: number;
+    openTime: string | null;
+    closeTime: string | null;
+    isClosed: boolean;
+    is24Hours: boolean;
+  }[];
 };
 
 export async function getAdminSpotDetail(spotId: string): Promise<AdminSpotDetail | null> {
@@ -190,7 +197,7 @@ export async function getAdminSpotDetail(spotId: string): Promise<AdminSpotDetai
   const { data, error } = await supabase
     .from("spots")
     .select(
-      "id, name, category, price_range, address, city, province, lat, lng, description, status, hidden_gem, needs_review, featured, featured_rank, submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)"
+      "id, name, category, price_range, address, city, province, lat, lng, description, status, hidden_gem, needs_review, featured, featured_rank, spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours), submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)"
     )
     .eq("id", spotId)
     .maybeSingle();
@@ -214,6 +221,13 @@ export async function getAdminSpotDetail(spotId: string): Promise<AdminSpotDetai
     featured: data.featured,
     featuredRank: data.featured_rank,
     submitterName: data.submitted_by_profile?.display_name ?? null,
+    hours: data.spot_hours.map((hour) => ({
+      dayOfWeek: hour.day_of_week,
+      openTime: hour.open_time,
+      closeTime: hour.close_time,
+      isClosed: hour.is_closed,
+      is24Hours: hour.is_24_hours,
+    })),
   };
 }
 

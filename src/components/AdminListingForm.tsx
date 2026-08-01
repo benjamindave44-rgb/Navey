@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { updateListing } from "@/app/admin/actions";
 import { LocationFields } from "@/components/LocationFields";
+import { OwnerHoursEditor } from "@/components/OwnerHoursEditor";
 import type { AdminSpotDetail } from "@/lib/admin";
 
 const CATEGORIES = [
@@ -106,6 +107,11 @@ export function AdminListingForm({ spot }: { spot: AdminSpotDetail }) {
         initialLat={spot.lat}
         initialLng={spot.lng}
       />
+
+      <div>
+        <p className="mb-2 text-sm font-semibold">Opening hours</p>
+        <OwnerHoursEditor hours={spot.hours} />
+      </div>
 
       <div>
         <p className="mb-2 text-sm font-semibold">Price range</p>

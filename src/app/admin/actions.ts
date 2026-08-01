@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { geocodeAddress } from "@/lib/geocode";
+import { hasAnyHours, spotHoursRowsFromForm } from "@/lib/hours";
 import { uploadPhotos } from "@/lib/photo-upload";
 
 async function requireAdmin() {
@@ -214,6 +215,13 @@ export async function createListingAsAdmin(formData: FormData) {
       .insert(tagIds.map((tagId) => ({ spot_id: spot.id, tag_id: tagId })));
   }
 
+  // The admin form posts the same hour fields as the public one; without this
+  // they were read by nobody and silently dropped.
+  const newHours = spotHoursRowsFromForm(formData, spot.id);
+  if (hasAnyHours(newHours)) {
+    await supabase.from("spot_hours").insert(newHours);
+  }
+
   const { urls: photoUrls } = await uploadPhotos(
     supabase,
     formData.getAll("photos"),
@@ -305,9 +313,24 @@ export async function updateListing(formData: FormData) {
     );
   }
 
+  await replaceHours(supabase, id, formData);
+
   redirect(
     `/admin/listings/${id}?notice=${encodeURIComponent("Listing updated.")}`
   );
+}
+
+async function replaceHours(
+  supabase: Awaited<ReturnType<typeof requireAdmin>>,
+  spotId: string,
+  formData: FormData
+) {
+  const rows = spotHoursRowsFromForm(formData, spotId);
+  // Nothing filled in means the form was left alone, not that the shop should
+  // lose the hours it already had.
+  if (!hasAnyHours(rows)) return;
+  await supabase.from("spot_hours").delete().eq("spot_id", spotId);
+  await supabase.from("spot_hours").insert(rows);
 }
 
 export async function deleteListing(formData: FormData) {

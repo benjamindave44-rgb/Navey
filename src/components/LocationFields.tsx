@@ -233,6 +233,10 @@ export function LocationFields({
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const typingRef = useRef(false);
+  // A pasted address is already the answer -- the person is not browsing
+  // options, they are handing us one. Remembered so the first result can be
+  // applied without making them tap a dropdown they did not ask for.
+  const pastedRef = useRef(false);
   const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [address, setAddress] = useState(initialAddress);
@@ -256,6 +260,13 @@ export function LocationFields({
   useEffect(() => {
     positionRef.current = position;
   }, [position]);
+
+  // choose() is redefined each render; holding it in a ref lets the search
+  // effect call the current one without listing it as a dependency.
+  const chooseRef = useRef<(suggestion: Suggestion) => void>(() => {});
+  useEffect(() => {
+    chooseRef.current = choose;
+  });
 
   // Debounced lookup as the person types, so suggestions appear on their own.
   useEffect(() => {
@@ -293,6 +304,16 @@ export function LocationFields({
           }).slice(0, 6);
 
           if (parsed.length > 0) break;
+        }
+
+        if (pastedRef.current) {
+          pastedRef.current = false;
+          if (parsed.length > 0) {
+            // choose() clears typingRef, so the address it writes back does
+            // not start this search over.
+            chooseRef.current(parsed[0]);
+            return;
+          }
         }
 
         setSuggestions(parsed);
@@ -449,6 +470,9 @@ export function LocationFields({
             required
             autoComplete="off"
             placeholder="Start typing the shop's address or name..."
+            onPaste={() => {
+              pastedRef.current = true;
+            }}
             onChange={(event) => {
               typingRef.current = true;
               setNoMatches(false);
