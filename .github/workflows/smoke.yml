@@ -1,0 +1,33 @@
+name: Smoke check
+
+# Runs against the live site rather than a build, so it catches faults that
+# only show up with real data. A failed run emails the repository owner, which
+# is the point: nobody should have to click a link to discover an outage.
+on:
+  schedule:
+    # Every 15 minutes. GitHub queues cron generously, so treat this as
+    # "roughly every 15 minutes" rather than a guarantee.
+    - cron: "*/15 * * * *"
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Site to check"
+        required: false
+        default: "https://www.navey.co"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # No install step: the check uses only Node built-ins, so it cannot be
+      # broken by a dependency and takes seconds to run.
+      - name: Check the live site
+        run: node scripts/smoke.mjs "${{ inputs.base_url || 'https://www.navey.co' }}"
