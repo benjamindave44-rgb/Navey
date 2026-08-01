@@ -27,7 +27,10 @@ jobs:
         with:
           node-version: "22"
 
-      # No install step: the check uses only Node built-ins, so it cannot be
-      # broken by a dependency and takes seconds to run.
+      # No install step: both checks use only Node built-ins, so neither can be
+      # broken by a dependency and both take seconds to run.
+      - name: Opening hours rules
+        run: npm test
+
       - name: Check the live site
         run: node scripts/smoke.mjs "${{ inputs.base_url || 'https://www.navey.co' }}"

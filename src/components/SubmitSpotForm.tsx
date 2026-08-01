@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { submitSpot } from "@/app/submit-a-spot/actions";
 import { PhotoPicker } from "@/components/PhotoPicker";
 import { LocationFields } from "@/components/LocationFields";
+import { HoursQuickPicker } from "@/components/HoursQuickPicker";
 
 const CATEGORIES = [
   { value: "coffee_shop", label: "Coffee Shop" },
@@ -46,6 +47,19 @@ export function SubmitSpotForm({
   const [category, setCategory] = useState("coffee_shop");
   const [price, setPrice] = useState("₱₱");
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
+  const [name, setName] = useState("");
+  const [nameFromSearch, setNameFromSearch] = useState(false);
+
+  // Filled from the address search, but never over something already typed --
+  // the person's own wording wins, and Mapbox's name for a place is sometimes
+  // the mall rather than the shop.
+  function handleLocationPick(picked: { name: string }) {
+    setName((current) => {
+      if (current.trim().length > 0) return current;
+      setNameFromSearch(Boolean(picked.name));
+      return picked.name;
+    });
+  }
 
   function toggleTag(id: number) {
     setSelectedTags((current) =>
@@ -75,8 +89,19 @@ export function SubmitSpotForm({
           type="text"
           name="name"
           required
+          value={name}
+          onChange={(event) => {
+            setName(event.target.value);
+            setNameFromSearch(false);
+          }}
+          placeholder="Fills in when you pick the shop below"
           className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
         />
+        {nameFromSearch && (
+          <p className="text-xs text-navey-ink/50">
+            Filled from your search — edit it if the shop goes by another name.
+          </p>
+        )}
       </div>
 
       <div>
@@ -100,7 +125,9 @@ export function SubmitSpotForm({
         <input type="hidden" name="category" value={category} />
       </div>
 
-      <LocationFields />
+      <LocationFields onPick={handleLocationPick} />
+
+      <HoursQuickPicker />
 
       <div>
         <p className="mb-2 text-sm font-semibold">Price range</p>

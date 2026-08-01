@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { TIME_OPTIONS } from "@/lib/hours";
 
 /**
  * A day is one of three things, never a combination — so it's a single choice,
@@ -32,6 +33,42 @@ const MODES: { value: DayMode; label: string }[] = [
   { value: "always", label: "24 hours" },
   { value: "closed", label: "Closed" },
 ];
+
+/**
+ * Hours typed by hand before this change are not always on the half hour, so
+ * an existing value that is not in the list is offered alongside it. Without
+ * that, opening the tab would silently round someone's hours to the nearest
+ * option the moment they saved anything else.
+ */
+function TimeSelect({
+  name,
+  label,
+  current,
+}: {
+  name: string;
+  label: string;
+  current: string | null;
+}) {
+  const options =
+    current && !TIME_OPTIONS.includes(current)
+      ? [current, ...TIME_OPTIONS]
+      : TIME_OPTIONS;
+
+  return (
+    <select
+      name={name}
+      aria-label={label}
+      defaultValue={current ?? "9:00 AM"}
+      className="min-w-[140px] flex-1 rounded-full border border-black/10 px-3 py-2 text-xs outline-none focus:border-navey-ink"
+    >
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 function modeOf(hour: EditorHour | undefined): DayMode {
   if (!hour) return "open";
@@ -143,21 +180,15 @@ export function OwnerHoursEditor({ hours }: { hours: EditorHour[] }) {
 
             {mode === "open" ? (
               <div className="flex flex-wrap items-center gap-3">
-                <input
-                  type="text"
+                <TimeSelect
                   name={`open_${day}`}
-                  placeholder="Open (e.g. 8:00 AM)"
-                  defaultValue={existing?.openTime ?? ""}
-                  aria-label={`${label} opening time`}
-                  className="min-w-[140px] flex-1 rounded-full border border-black/10 px-3 py-2 text-xs outline-none focus:border-navey-ink"
+                  label={`${label} opening time`}
+                  current={existing?.openTime ?? null}
                 />
-                <input
-                  type="text"
+                <TimeSelect
                   name={`close_${day}`}
-                  placeholder="Close (e.g. 9:00 PM)"
-                  defaultValue={existing?.closeTime ?? ""}
-                  aria-label={`${label} closing time`}
-                  className="min-w-[140px] flex-1 rounded-full border border-black/10 px-3 py-2 text-xs outline-none focus:border-navey-ink"
+                  label={`${label} closing time`}
+                  current={existing?.closeTime ?? null}
                 />
               </div>
             ) : (

@@ -5,6 +5,7 @@ import { withinRateLimit } from "@/lib/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { uploadPhotos } from "@/lib/photo-upload";
 import { geocodeAddress } from "@/lib/geocode";
+import { hasAnyHours, spotHoursRowsFromForm } from "@/lib/hours";
 
 export async function submitSpot(formData: FormData) {
   const supabase = await createServerSupabaseClient();
@@ -89,6 +90,13 @@ export async function submitSpot(formData: FormData) {
     await supabase
       .from("spot_tags")
       .insert(tagIds.map((tagId) => ({ spot_id: spot.id, tag_id: tagId })));
+  }
+
+  // Captured here rather than on a second screen: a listing with no hours is
+  // half a listing, and most people never went back to add them.
+  const hourRows = spotHoursRowsFromForm(formData, spot.id);
+  if (hasAnyHours(hourRows)) {
+    await supabase.from("spot_hours").insert(hourRows);
   }
 
   const { urls: photoUrls } = await uploadPhotos(

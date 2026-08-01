@@ -206,12 +206,19 @@ export function LocationFields({
   initialProvince = "",
   initialLat = null,
   initialLng = null,
+  onPick,
 }: {
   initialAddress?: string;
   initialCity?: string;
   initialProvince?: string;
   initialLat?: number | null;
   initialLng?: number | null;
+  /**
+   * The search already knows what the business is called -- picking a shop
+   * hands back its name along with the address. Passing it up lets the form
+   * fill the name field instead of asking for something we were told.
+   */
+  onPick?: (picked: { name: string; city: string; province: string }) => void;
 }) {
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? null;
 
@@ -411,6 +418,11 @@ export function LocationFields({
     setOpen(false);
     setNoMatches(false);
     applyPosition(suggestion.lat, suggestion.lng, 16);
+    onPick?.({
+      name: suggestion.title,
+      city: suggestion.city,
+      province: suggestion.province,
+    });
   }
 
   return (
