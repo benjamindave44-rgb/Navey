@@ -11,6 +11,10 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    // scripts/*.mts run straight through Node's type stripping, which needs the
+    // real ".ts" on the import. Permitted rather than excluding the folder, so
+    // the tests stay type-checked. Safe here because noEmit is on.
+    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
