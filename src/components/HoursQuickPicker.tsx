@@ -9,6 +9,13 @@ import { TIME_OPTIONS } from "@/lib/hours";
  * hours off most listings. The common cases are one choice and two dropdowns;
  * the per-day grid is still there for the shops that need it.
  */
+/**
+ * `null` until the person chooses, and nothing is submitted until they do.
+ * A preselected mode with sensible-looking default times would publish
+ * opening hours nobody entered -- and a listing that confidently states the
+ * wrong hours is worse than one that states none, because someone travels
+ * there on the strength of it.
+ */
 type Mode = "skip" | "same" | "split" | "always" | "custom";
 
 const MODES: { value: Mode; label: string; hint: string }[] = [
@@ -92,7 +99,7 @@ function DayFields({
 }
 
 export function HoursQuickPicker() {
-  const [mode, setMode] = useState<Mode>("same");
+  const [mode, setMode] = useState<Mode | null>(null);
 
   const [open, setOpen] = useState(DEFAULT_OPEN);
   const [close, setClose] = useState(DEFAULT_CLOSE);
@@ -120,7 +127,12 @@ export function HoursQuickPicker() {
 
   return (
     <div>
-      <p className="mb-2 text-sm font-semibold">Opening hours</p>
+      <p className="mb-1 text-sm font-semibold">Opening hours</p>
+      <p className="mb-2 text-xs text-navey-ink/55">
+        {mode === null
+          ? "How is it open? Nothing is saved until you choose."
+          : "Change your answer any time before saving."}
+      </p>
 
       <div className="flex flex-wrap gap-2">
         {MODES.map((option) => (

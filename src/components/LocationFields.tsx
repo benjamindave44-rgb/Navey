@@ -35,6 +35,9 @@ function queryVariants(term: string): string[] {
 type Suggestion = {
   id: string;
   title: string;
+  /** True only for an actual business. A street result's "title" is the street
+   *  name, which must never be offered as a shop name. */
+  isBusiness: boolean;
   detail: string;
   addressLine: string;
   city: string;
@@ -46,6 +49,7 @@ type Suggestion = {
 type MapboxContext = { id: string; text: string };
 type MapboxFeature = {
   id: string;
+  place_type?: string[];
   text?: string;
   place_name?: string;
   center: [number, number];
@@ -75,6 +79,7 @@ function toSuggestion(feature: MapboxFeature): Suggestion | null {
   return {
     id: feature.id,
     title: feature.text ?? addressLine,
+    isBusiness: feature.place_type?.includes("poi") ?? false,
     detail: placeName,
     addressLine,
     city,
@@ -88,6 +93,7 @@ type MapboxV6Feature = {
   id?: string;
   properties?: {
     mapbox_id?: string;
+    feature_type?: string;
     name?: string;
     full_address?: string;
     place_formatted?: string;
@@ -125,6 +131,7 @@ function toSuggestionV6(feature: MapboxV6Feature): Suggestion | null {
   return {
     id: props?.mapbox_id ?? feature.id ?? `${lat},${lng}`,
     title: props?.name ?? addressLine,
+    isBusiness: props?.feature_type === "poi",
     detail: full || props?.place_formatted || addressLine,
     addressLine,
     city,
@@ -419,7 +426,9 @@ export function LocationFields({
     setNoMatches(false);
     applyPosition(suggestion.lat, suggestion.lng, 16);
     onPick?.({
-      name: suggestion.title,
+      // Only a real business has a usable name; a street result would put
+      // "9th Avenue" in the shop-name box.
+      name: suggestion.isBusiness ? suggestion.title : "",
       city: suggestion.city,
       province: suggestion.province,
     });

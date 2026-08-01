@@ -51,14 +51,13 @@ export function SubmitSpotForm({
   const [nameFromSearch, setNameFromSearch] = useState(false);
 
   // Filled from the address search, but never over something already typed --
-  // the person's own wording wins, and Mapbox's name for a place is sometimes
-  // the mall rather than the shop.
+  // the person's own wording wins, and the search names the mall rather than
+  // the shop often enough to matter. Street results arrive with no name at
+  // all, since their title is the street.
   function handleLocationPick(picked: { name: string }) {
-    setName((current) => {
-      if (current.trim().length > 0) return current;
-      setNameFromSearch(Boolean(picked.name));
-      return picked.name;
-    });
+    if (!picked.name || name.trim().length > 0) return;
+    setName(picked.name);
+    setNameFromSearch(true);
   }
 
   function toggleTag(id: number) {
