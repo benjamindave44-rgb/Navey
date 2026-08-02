@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { geocodeAddress } from "@/lib/geocode";
 import { hasAnyHours, spotHoursRowsFromForm } from "@/lib/hours";
+import { findDuplicateSpot } from "@/lib/duplicates";
 import { uploadPhotos } from "@/lib/photo-upload";
 
 async function requireAdmin() {
@@ -180,6 +181,20 @@ export async function createListingAsAdmin(formData: FormData) {
       : await geocodeAddress({ address, city, province: province || null });
 
   const featured = formData.get("featured") === "on";
+
+  const duplicate = await findDuplicateSpot(supabase, {
+    name,
+    city,
+    lat: coords?.lat ?? null,
+    lng: coords?.lng ?? null,
+  });
+  if (duplicate) {
+    redirect(
+      `/admin/listings/new?error=${encodeURIComponent(
+        `"${duplicate.name}" is already listed at this address in ${city}. Edit that listing instead of adding it twice.`
+      )}`
+    );
+  }
 
   const { data: spot, error } = await supabase
     .from("spots")

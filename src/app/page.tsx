@@ -11,6 +11,7 @@ import {
   getTags,
 } from "@/lib/queries";
 import { getSavedSpotIds } from "@/lib/profile";
+import { getCityDirectory } from "@/lib/cities";
 
 export const dynamic = "force-dynamic";
 
@@ -28,13 +29,15 @@ const TAG_ICON: Record<string, string> = {
 };
 
 export default async function Home() {
-  const [spots, collections, tags, featured, savedSpotIds] = await Promise.all([
-    getApprovedSpots({ limit: 8 }),
-    getCollections(4),
-    getTags(),
-    getFeaturedSpots(5),
-    getSavedSpotIds(),
-  ]);
+  const [spots, collections, tags, featured, savedSpotIds, cities] =
+    await Promise.all([
+      getApprovedSpots({ limit: 8 }),
+      getCollections(4),
+      getTags(),
+      getFeaturedSpots(5),
+      getSavedSpotIds(),
+      getCityDirectory(),
+    ]);
 
   // Only spots people have actually saved belong under "Community Picks";
   // an empty box announcing it has nothing reads worse than no section.
@@ -220,6 +223,33 @@ export default async function Home() {
                   showSaveButton
                   saved={savedSpotIds.has(spot.id)}
                 />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Every city page needs a real link from the site, not just a line in
+            the sitemap -- crawlers weight what is linked, and so do people. */}
+        {cities.length > 0 && (
+          <section className="bg-navey-band px-4 py-10 sm:px-6 md:px-12 md:py-12">
+            <div className="mb-6">
+              <p className="mb-1 text-xs font-bold uppercase tracking-wide text-navey-ink/50">
+                Where to look
+              </p>
+              <h2 className="font-heading text-2xl font-extrabold">
+                Browse by City
+              </h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {cities.map((city) => (
+                <Link
+                  key={city.slug}
+                  href={`/city/${city.slug}`}
+                  className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold transition-transform hover:-translate-y-0.5 hover:bg-navey-ink hover:text-navey-yellow active:scale-95"
+                >
+                  {city.city}
+                  <span className="opacity-45">{city.count}</span>
+                </Link>
               ))}
             </div>
           </section>

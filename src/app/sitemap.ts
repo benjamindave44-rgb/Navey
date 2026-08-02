@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { supabase } from "@/lib/supabase";
+import { getCityDirectory } from "@/lib/cities";
 
 const SITE_URL = "https://www.navey.co";
 
@@ -18,9 +19,10 @@ const STATIC_ROUTES: { path: string; priority: number }[] = [
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [{ data: spots }, { data: collections }] = await Promise.all([
+  const [{ data: spots }, { data: collections }, cities] = await Promise.all([
     supabase.from("spots").select("id, created_at").eq("status", "approved"),
     supabase.from("collections").select("id, created_at"),
+    getCityDirectory(),
   ]);
 
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((route) => ({
@@ -42,5 +44,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   );
 
-  return [...staticEntries, ...spotEntries, ...collectionEntries];
+  // Ranked above collections: a city page is what someone searching
+  // "coffee shops in Taguig" is actually looking for.
+  const cityEntries: MetadataRoute.Sitemap = cities.map((city) => ({
+    url: `${SITE_URL}/city/${city.slug}`,
+    priority: 0.8,
+  }));
+
+  return [...staticEntries, ...cityEntries, ...spotEntries, ...collectionEntries];
 }

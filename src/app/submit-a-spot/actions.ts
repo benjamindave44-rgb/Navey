@@ -6,6 +6,7 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { uploadPhotos } from "@/lib/photo-upload";
 import { geocodeAddress } from "@/lib/geocode";
 import { hasAnyHours, spotHoursRowsFromForm } from "@/lib/hours";
+import { findDuplicateSpot } from "@/lib/duplicates";
 
 export async function submitSpot(formData: FormData) {
   const supabase = await createServerSupabaseClient();
@@ -59,6 +60,21 @@ export async function submitSpot(formData: FormData) {
     locationAdjusted && Number.isFinite(manualLat) && Number.isFinite(manualLng)
       ? { lat: manualLat, lng: manualLng }
       : await geocodeAddress({ address, city, province: province || null });
+
+
+  const duplicate = await findDuplicateSpot(supabase, {
+    name,
+    city,
+    lat: coords?.lat ?? null,
+    lng: coords?.lng ?? null,
+  });
+  if (duplicate) {
+    redirect(
+      `/submit-a-spot?error=${encodeURIComponent(
+        `"${duplicate.name}" is already listed at this address in ${city}. Edit that listing instead of adding it twice.`
+      )}`
+    );
+  }
 
   const { data: spot, error } = await supabase
     .from("spots")

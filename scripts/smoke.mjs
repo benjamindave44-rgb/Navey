@@ -67,8 +67,27 @@ async function spotChecks() {
   }
 }
 
+/** City pages are new and search-facing; a broken one is invisible until
+ *  someone notices traffic has gone. Taken from the sitemap like the spots. */
+async function cityChecks() {
+  try {
+    const { status, body } = await get(`${BASE}/sitemap.xml`);
+    if (status !== 200) return [];
+    return [...body.matchAll(/<loc>([^<]*\/city\/[^<]+)<\/loc>/g)]
+      .map((match) => new URL(match[1]).pathname)
+      .slice(0, 2)
+      .map((path, index) => ({
+        name: `City page ${index + 1}`,
+        path,
+        expect: ["Coffee Shops"],
+      }));
+  } catch {
+    return [];
+  }
+}
+
 async function run() {
-  const checks = [...CHECKS, ...(await spotChecks())];
+  const checks = [...CHECKS, ...(await spotChecks()), ...(await cityChecks())];
   const failures = [];
 
   for (const check of checks) {
