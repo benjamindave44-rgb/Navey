@@ -14,14 +14,12 @@ import {
 } from "@/app/owner/[spotId]/actions";
 import { OwnerHoursEditor } from "@/components/OwnerHoursEditor";
 import { PhotoPicker } from "@/components/PhotoPicker";
-import { UPLOAD_LIMIT_LABEL } from "@/lib/upload-limits";
+import { PHOTO_LIMITS, UPLOAD_LIMIT_LABEL } from "@/lib/upload-limits";
 import { LocationFields } from "@/components/LocationFields";
 import type { OwnerSpotDetail } from "@/lib/owner";
 import type { Tag } from "@/lib/queries";
 import { TagPicker } from "@/components/TagPicker";
 
-const MAX_GALLERY_PHOTOS = 12;
-const MAX_MENU_PHOTOS = 9;
 
 const CATEGORIES = [
   { value: "coffee_shop", label: "Coffee Shop" },
@@ -383,7 +381,7 @@ export function OwnerSpotTabs({
           <PhotoManager
             spotId={spot.id}
             photos={spot.galleryPhotos}
-            max={MAX_GALLERY_PHOTOS}
+            max={PHOTO_LIMITS.gallery}
             aspect="aspect-square"
             addAction={addGalleryPhotos}
             deleteAction={deleteGalleryPhoto}
@@ -396,14 +394,14 @@ export function OwnerSpotTabs({
           <PhotoManager
             spotId={spot.id}
             photos={spot.menuPhotos}
-            max={MAX_MENU_PHOTOS}
+            max={PHOTO_LIMITS.menu}
             aspect="aspect-[3/4]"
             addAction={addMenuPhotos}
             deleteAction={deleteMenuPhoto}
             emptyLabel="No menu uploaded yet."
             addLabel="Add menu photos or a PDF"
             accept="image/*,application/pdf"
-            helpText={`Up to ${MAX_MENU_PHOTOS} files. Photos or a PDF menu, ${UPLOAD_LIMIT_LABEL} altogether.`}
+            helpText={`Up to ${PHOTO_LIMITS.menu} pages. A long menu goes up a few at a time — upload, save, then add more. One PDF covers the whole thing if it fits ${UPLOAD_LIMIT_LABEL}.`}
           />
         )}
       </div>

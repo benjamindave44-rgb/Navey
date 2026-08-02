@@ -19,6 +19,21 @@ export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 export const PDF_TYPE = "application/pdf";
 
+/**
+ * How many files a listing may hold, per kind. Defined once because the form
+ * and the server both enforce it: if they drift, the picker lets someone
+ * attach files the server then silently drops.
+ *
+ * Menus are the generous one. A cafe fits on a board, but a restaurant menu
+ * runs to a dozen pages, and being told to leave half of it out is the point
+ * where an owner gives up. A single PDF still counts as one file, which is
+ * the better answer for anything long.
+ */
+export const PHOTO_LIMITS = {
+  gallery: 12,
+  menu: 20,
+} as const;
+
 export function formatBytes(bytes: number): string {
   const mb = bytes / (1024 * 1024);
   return mb >= 10 ? `${Math.round(mb)}MB` : `${mb.toFixed(1)}MB`;

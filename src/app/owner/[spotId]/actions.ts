@@ -5,15 +5,10 @@ import { checkContentGuidelines } from "@/lib/content-guidelines";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { storagePathFromPublicUrl, uploadPhotos } from "@/lib/photo-upload";
 import { geocodeAddress } from "@/lib/geocode";
-import { UPLOAD_LIMIT_LABEL } from "@/lib/upload-limits";
+import { PHOTO_LIMITS, UPLOAD_LIMIT_LABEL } from "@/lib/upload-limits";
 import { spotHoursRowsFromForm } from "@/lib/hours";
 
 type PhotoKind = "gallery" | "menu";
-
-const PHOTO_LIMITS: Record<PhotoKind, number> = {
-  gallery: 12,
-  menu: 9,
-};
 
 async function requireOwnerAccess(spotId: string) {
   const supabase = await createServerSupabaseClient();
