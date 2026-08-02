@@ -159,7 +159,10 @@ export default async function Home() {
           )}
         </section>
 
-        <section className="bg-navey-band px-4 py-10 sm:px-6 md:px-12 md:py-12">
+        {/* Left on the canvas so the cream bands either side of it stay
+            distinct. Three banded sections running together read as one long
+            block once the page behind them is no longer yellow. */}
+        <section className="px-4 py-10 sm:px-6 md:px-12 md:py-12">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-heading text-2xl font-extrabold">
               Browse by Vibe

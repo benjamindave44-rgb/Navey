@@ -14,10 +14,18 @@
    * header and footer, the newsletter band, the sign-in and quiz screens, and
    * every button. Set this back to #ffde00 to return to the old look.
    */
-  --background: #fcf9f0;
+  --background: #faf5ec;
   --foreground: #14120b;
   --brand-yellow: #ffde00;
 }
+
+/*
+ * Three warm tones, deliberately spaced so each does one job:
+ *   #faf5ec  the canvas -- warm enough to read as cream, not white
+ *   #ffffff  cards, which need to lift off that canvas
+ *   #fdf2be  section bands, clearly more yellow than either
+ * A near-white canvas would have left white cards floating on shadow alone.
+ */
 
 @theme inline {
   --color-background: var(--background);
@@ -50,6 +58,13 @@ body {
 
 .navey-arch-card {
   border-radius: 0;
+}
+
+/* Highlighting text is a small moment, and it is the kind of detail that makes
+   a site feel like it belongs to somebody. Free brand recall on every page. */
+::selection {
+  background: var(--brand-yellow);
+  color: var(--foreground);
 }
 
 @keyframes cityFade {
