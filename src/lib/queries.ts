@@ -209,18 +209,25 @@ export async function getCollections(limit = 4): Promise<CollectionWithSpots[]> 
   const { data, error } = await supabase
     .from("collections")
     .select("id, title, description, collection_spots(spot_id)")
-    .order("created_at", { ascending: false })
-    .limit(limit);
+    .order("created_at", { ascending: false });
 
   logQueryError("getCollections", error);
   if (error || !data) return [];
 
-  return data.map((collection) => ({
-    id: collection.id,
-    title: collection.title,
-    description: collection.description,
-    spotCount: collection.collection_spots.length,
-  }));
+  // A collection empties itself whenever its spots are removed, and a card
+  // advertising "0 spots" is worse than no card. Filtered after fetching
+  // rather than limited in the query, so an empty one does not take a slot
+  // from a collection that has something in it. Admin has its own query and
+  // still sees every collection.
+  return data
+    .map((collection) => ({
+      id: collection.id,
+      title: collection.title,
+      description: collection.description,
+      spotCount: collection.collection_spots.length,
+    }))
+    .filter((collection) => collection.spotCount > 0)
+    .slice(0, limit);
 }
 
 export async function getTags() {
