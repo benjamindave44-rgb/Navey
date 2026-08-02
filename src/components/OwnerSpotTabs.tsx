@@ -17,6 +17,8 @@ import { PhotoPicker } from "@/components/PhotoPicker";
 import { UPLOAD_LIMIT_LABEL } from "@/lib/upload-limits";
 import { LocationFields } from "@/components/LocationFields";
 import type { OwnerSpotDetail } from "@/lib/owner";
+import type { Tag } from "@/lib/queries";
+import { TagPicker } from "@/components/TagPicker";
 
 const MAX_GALLERY_PHOTOS = 12;
 const MAX_MENU_PHOTOS = 9;
@@ -145,7 +147,7 @@ export function OwnerSpotTabs({
   initialTab,
 }: {
   spot: OwnerSpotDetail;
-  tags: { id: number; label: string }[];
+  tags: Tag[];
   initialTab: string;
 }) {
   const [tab, setTab] = useState<Tab>(
@@ -157,13 +159,7 @@ export function OwnerSpotTabs({
   );
   const [category, setCategory] = useState(spot.category);
   const [priceRange, setPriceRange] = useState(spot.priceRange ?? "₱₱");
-  const [selectedTags, setSelectedTags] = useState<number[]>(spot.tagIds);
 
-  function toggleTag(id: number) {
-    setSelectedTags((current) =>
-      current.includes(id) ? current.filter((t) => t !== id) : [...current, id]
-    );
-  }
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview" },
@@ -321,25 +317,7 @@ export function OwnerSpotTabs({
 
             <div>
               <p className="mb-2 text-sm font-semibold">Amenities</p>
-              <div className="flex flex-wrap gap-2">
-                {tags.map((option) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => toggleTag(option.id)}
-                    className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                      selectedTags.includes(option.id)
-                        ? "bg-navey-ink text-navey-yellow"
-                        : "bg-navey-band"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-              {selectedTags.map((id) => (
-                <input key={id} type="hidden" name="tagIds" value={id} />
-              ))}
+              <TagPicker tags={tags} initialSelected={spot.tagIds} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">

@@ -230,15 +230,29 @@ export async function getCollections(limit = 4): Promise<CollectionWithSpots[]> 
     .slice(0, limit);
 }
 
-export async function getTags() {
+export type Tag = {
+  id: number;
+  label: string;
+  icon: string | null;
+  group: string;
+};
+
+/** Ordered by sort_order so groups arrive together and in a deliberate
+ *  sequence, rather than in whatever order the rows were created. */
+export async function getTags(): Promise<Tag[]> {
   const { data, error } = await supabase
     .from("tags")
-    .select("id, label, icon")
-    .order("id");
+    .select("id, label, icon, tag_group, sort_order")
+    .order("sort_order");
 
   logQueryError("getTags", error);
   if (error || !data) return [];
-  return data;
+  return data.map((tag) => ({
+    id: tag.id,
+    label: tag.label,
+    icon: tag.icon,
+    group: tag.tag_group,
+  }));
 }
 
 export type CollectionSpot = SpotWithTags & { rank: number };

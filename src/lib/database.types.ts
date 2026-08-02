@@ -601,16 +601,22 @@ export type Database = {
           icon: string | null
           id: number
           label: string
+          sort_order: number
+          tag_group: string
         }
         Insert: {
           icon?: string | null
           id?: number
           label: string
+          sort_order?: number
+          tag_group?: string
         }
         Update: {
           icon?: string | null
           id?: number
           label?: string
+          sort_order?: number
+          tag_group?: string
         }
         Relationships: []
       }

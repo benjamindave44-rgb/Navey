@@ -15,18 +15,6 @@ import { getCityDirectory } from "@/lib/cities";
 
 export const dynamic = "force-dynamic";
 
-const TAG_ICON: Record<string, string> = {
-  wifi: "📶",
-  clock: "🕐",
-  gem: "💎",
-  sofa: "🛋️",
-  heart: "❤️",
-  plug: "🔌",
-  laptop: "💻",
-  paw: "🐾",
-  restroom: "🚻",
-  accessibility: "♿",
-};
 
 export default async function Home() {
   const [spots, collections, tags, featured, savedSpotIds, cities] =
@@ -177,23 +165,31 @@ export default async function Home() {
               Take the Vibe Quiz →
             </Link>
           </div>
-          <div className="flex flex-wrap gap-3">
-            {tags.map((tag) => (
-              <Link
-                key={tag.id}
-                href={`/explore?tags=${encodeURIComponent(tag.label)}`}
-                className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold transition-transform hover:-translate-y-0.5 hover:bg-navey-ink hover:text-navey-yellow active:scale-95"
-              >
-                <span aria-hidden>{(tag.icon && TAG_ICON[tag.icon]) ?? "✨"}</span>
-                {tag.label}
-              </Link>
-            ))}
-            <Link
-              href="/explore"
-              className="flex items-center gap-2 rounded-full bg-navey-ink px-4 py-2 text-sm font-semibold text-navey-yellow hover:bg-navey-ink/80"
-            >
-              View All
-            </Link>
+          {/* Grouped rather than one long row: thirty-odd chips in a single
+              line is a wall people skim past, and the group names tell you
+              what kind of thing you are choosing between. */}
+          <div className="flex flex-col gap-5">
+            {[...new Map(tags.map((tag) => [tag.group, tags.filter((t) => t.group === tag.group)])).entries()].map(
+              ([group, list]) => (
+                <div key={group}>
+                  <p className="mb-2 text-xs font-bold uppercase tracking-wide text-navey-ink/45">
+                    {group}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {list.map((tag) => (
+                      <Link
+                        key={tag.id}
+                        href={`/explore?tags=${encodeURIComponent(tag.label)}`}
+                        className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold shadow-[0_4px_12px_rgba(20,18,11,0.05)] transition-transform hover:-translate-y-0.5 hover:bg-navey-ink hover:text-navey-yellow active:scale-95"
+                      >
+                        {tag.icon && <span aria-hidden>{tag.icon}</span>}
+                        {tag.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )
+            )}
           </div>
         </section>
 

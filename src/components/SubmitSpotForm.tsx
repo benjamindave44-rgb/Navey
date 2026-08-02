@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { submitSpot } from "@/app/submit-a-spot/actions";
+import type { Tag } from "@/lib/queries";
 import { PhotoPicker } from "@/components/PhotoPicker";
 import { LocationFields } from "@/components/LocationFields";
 import { HoursQuickPicker } from "@/components/HoursQuickPicker";
+import { TagPicker } from "@/components/TagPicker";
 
 const CATEGORIES = [
   { value: "coffee_shop", label: "Coffee Shop" },
@@ -36,7 +38,7 @@ export function SubmitSpotForm({
   footnote = "Submitted spots are reviewed by our team before they appear publicly. This usually takes a day or two.",
   allowFeature = false,
 }: {
-  tags: { id: number; label: string; icon: string | null }[];
+  tags: Tag[];
   error?: string;
   action?: (formData: FormData) => void | Promise<void>;
   submitLabel?: string;
@@ -46,7 +48,6 @@ export function SubmitSpotForm({
 }) {
   const [category, setCategory] = useState("coffee_shop");
   const [price, setPrice] = useState("₱₱");
-  const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [name, setName] = useState("");
   const [nameFromSearch, setNameFromSearch] = useState(false);
 
@@ -60,11 +61,6 @@ export function SubmitSpotForm({
     setNameFromSearch(true);
   }
 
-  function toggleTag(id: number) {
-    setSelectedTags((current) =>
-      current.includes(id) ? current.filter((t) => t !== id) : [...current, id]
-    );
-  }
 
   return (
     <form action={action} className="flex max-w-2xl flex-col gap-6">
@@ -148,26 +144,8 @@ export function SubmitSpotForm({
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-semibold">Vibe & Amenities</p>
-        <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <button
-              key={tag.id}
-              type="button"
-              onClick={() => toggleTag(tag.id)}
-              className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                selectedTags.includes(tag.id)
-                  ? "bg-navey-ink text-navey-yellow"
-                  : "bg-navey-band"
-              }`}
-            >
-              {tag.label}
-            </button>
-          ))}
-        </div>
-        {selectedTags.map((id) => (
-          <input key={id} type="hidden" name="tagIds" value={id} />
-        ))}
+        <p className="mb-2 text-sm font-semibold">Vibe &amp; Amenities</p>
+        <TagPicker tags={tags} />
       </div>
 
       <div className="flex flex-col gap-2">

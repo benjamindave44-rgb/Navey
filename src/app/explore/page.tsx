@@ -206,6 +206,7 @@ export default async function ExplorePage({
                   isActive ? "bg-navey-ink text-navey-yellow" : "bg-white"
                 }`}
               >
+                {option.icon && <span aria-hidden className="mr-1">{option.icon}</span>}
                 {option.label}
               </Link>
             );
