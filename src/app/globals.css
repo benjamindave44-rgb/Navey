@@ -1,14 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffde00;
+  /*
+   * The page canvas is a warm off-white, not the brand yellow.
+   *
+   * Yellow is a surface in only a dozen places; the reason the site read as
+   * relentlessly yellow was this one value sitting behind everything. On a
+   * site whose product is photography, a full-saturation field competes with
+   * every image for the eye -- and since photos now run square and edge to
+   * edge, they meet that field with no rounded buffer.
+   *
+   * The yellow is still here, concentrated where it earns attention: the
+   * header and footer, the newsletter band, the sign-in and quiz screens, and
+   * every button. Set this back to #ffde00 to return to the old look.
+   */
+  --background: #fcf9f0;
   --foreground: #14120b;
+  --brand-yellow: #ffde00;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-navey-yellow: #ffde00;
+  --color-navey-yellow: var(--brand-yellow);
   --color-navey-band: #fdf2be;
   --color-navey-footer: #f5d200;
   --color-navey-ink: #14120b;
@@ -97,7 +111,9 @@ body {
   top: -4rem;
   z-index: 200;
   background: var(--foreground);
-  color: var(--background);
+  /* Explicitly the brand yellow, not the page colour: this sits on dark ink
+     and should keep the signature look wherever the canvas goes. */
+  color: var(--brand-yellow);
   padding: 0.75rem 1.25rem;
   border-radius: 999px;
   font-weight: 700;
