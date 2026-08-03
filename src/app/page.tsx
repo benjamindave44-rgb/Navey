@@ -9,6 +9,7 @@ import {
   getCollections,
   getFeaturedSpots,
   getTags,
+  tagsInUse,
 } from "@/lib/queries";
 import { getSavedSpotIds } from "@/lib/profile";
 import { getCityDirectory } from "@/lib/cities";
@@ -21,7 +22,7 @@ export default async function Home() {
     await Promise.all([
       getApprovedSpots({ limit: 8 }),
       getCollections(4),
-      getTags(),
+      getTags().then(tagsInUse),
       getFeaturedSpots(5),
       getSavedSpotIds(),
       getCityDirectory(),

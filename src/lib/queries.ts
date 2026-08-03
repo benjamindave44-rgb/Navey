@@ -235,15 +235,27 @@ export type Tag = {
   label: string;
   icon: string | null;
   group: string;
+  /** How many approved listings carry it. Zero means it is real but not yet
+   *  earned -- offer it when tagging, hide it when browsing. */
+  count: number;
 };
 
 /** Ordered by sort_order so groups arrive together and in a deliberate
  *  sequence, rather than in whatever order the rows were created. */
 export async function getTags(): Promise<Tag[]> {
-  const { data, error } = await supabase
-    .from("tags")
-    .select("id, label, icon, tag_group, sort_order")
-    .order("sort_order");
+  const [{ data, error }, { data: used }] = await Promise.all([
+    supabase
+      .from("tags")
+      .select("id, label, icon, tag_group, sort_order")
+      .order("sort_order"),
+    supabase.from("spot_tags").select("tag_id, spots!inner(status)"),
+  ]);
+
+  const counts = new Map<number, number>();
+  for (const row of used ?? []) {
+    if (row.spots?.status !== "approved") continue;
+    counts.set(row.tag_id, (counts.get(row.tag_id) ?? 0) + 1);
+  }
 
   logQueryError("getTags", error);
   if (error || !data) return [];
@@ -252,7 +264,18 @@ export async function getTags(): Promise<Tag[]> {
     label: tag.label,
     icon: tag.icon,
     group: tag.tag_group,
+    count: counts.get(tag.id) ?? 0,
   }));
+}
+
+/**
+ * Only the tags that lead somewhere. A browse chip promising "Unlimited
+ * Chicken" and landing on an empty page reads as a broken site, not as an
+ * empty category -- so the public surfaces filter, while the pickers keep
+ * offering everything so the tags can be earned in the first place.
+ */
+export function tagsInUse(tags: Tag[]): Tag[] {
+  return tags.filter((tag) => tag.count > 0);
 }
 
 export type CollectionSpot = SpotWithTags & { rank: number };

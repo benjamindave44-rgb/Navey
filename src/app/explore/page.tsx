@@ -3,7 +3,13 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PaginatedSpotGrid } from "@/components/PaginatedSpotGrid";
-import { getApprovedSpots, getCities, getTags, type SpotSort } from "@/lib/queries";
+import {
+  getApprovedSpots,
+  getCities,
+  getTags,
+  tagsInUse,
+  type SpotSort,
+} from "@/lib/queries";
 import { getSavedSpotIds } from "@/lib/profile";
 
 export const dynamic = "force-dynamic";
@@ -92,7 +98,7 @@ export default async function ExplorePage({
   const [spots, cities, tags, savedSpotIds] = await Promise.all([
     getApprovedSpots({ search, category, city, tags: activeTags, sort }),
     getCities(),
-    getTags(),
+    getTags().then(tagsInUse),
     getSavedSpotIds(),
   ]);
 
