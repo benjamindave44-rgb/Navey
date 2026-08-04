@@ -1,13 +1,9 @@
 import Image from "next/image";
+import { categoryLabel } from "@/lib/categories";
 import Link from "next/link";
 import type { SpotWithTags } from "@/lib/queries";
 import { SaveHeartButton } from "@/components/SaveHeartButton";
 
-const CATEGORY_LABEL: Record<string, string> = {
-  coffee_shop: "Coffee Shop",
-  restaurant: "Restaurant",
-  both: "Coffee Shop & Restaurant",
-};
 
 export function SpotCard({
   spot,
@@ -73,7 +69,7 @@ export function SpotCard({
           {spot.price_range ? ` · ${spot.price_range}` : ""}
         </p>
         <p className="text-[10px] uppercase tracking-wide text-navey-ink/50 sm:text-xs">
-          {CATEGORY_LABEL[spot.category] ?? spot.category}
+          {categoryLabel(spot.category)}
         </p>
         {showDescription && spot.description && (
           <p className="line-clamp-2 text-sm text-navey-ink/70">

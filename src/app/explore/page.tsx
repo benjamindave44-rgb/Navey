@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SPOT_CATEGORIES } from "@/lib/categories";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -47,9 +48,7 @@ export async function generateMetadata({
 
 const CATEGORIES = [
   { value: "", label: "All categories" },
-  { value: "coffee_shop", label: "Coffee Shop" },
-  { value: "restaurant", label: "Restaurant" },
-  { value: "both", label: "Coffee Shop & Restaurant" },
+  ...SPOT_CATEGORIES,
 ];
 
 const SORT_OPTIONS: { value: SpotSort; label: string }[] = [

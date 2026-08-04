@@ -1,17 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { SPOT_CATEGORIES } from "@/lib/categories";
 import { useFormStatus } from "react-dom";
 import { updateListing } from "@/app/admin/actions";
 import { LocationFields } from "@/components/LocationFields";
 import { OwnerHoursEditor } from "@/components/OwnerHoursEditor";
 import type { AdminSpotDetail } from "@/lib/admin";
 
-const CATEGORIES = [
-  { value: "coffee_shop", label: "Coffee Shop" },
-  { value: "restaurant", label: "Restaurant" },
-  { value: "both", label: "Both" },
-];
 
 const PRICES = ["₱", "₱₱", "₱₱₱"];
 
@@ -82,7 +78,7 @@ export function AdminListingForm({ spot }: { spot: AdminSpotDetail }) {
       <div>
         <p className="mb-2 text-sm font-semibold">Category</p>
         <div className="flex gap-2">
-          {CATEGORIES.map((option) => (
+          {SPOT_CATEGORIES.map((option) => (
             <button
               key={option.value}
               type="button"

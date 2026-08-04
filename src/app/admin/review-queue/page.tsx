@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { categoryLabel } from "@/lib/categories";
 import {
   approveSpot,
   dismissFlag,
@@ -9,11 +10,6 @@ import { getFlaggedSpots, getPendingSpots } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 
-const CATEGORY_LABEL: Record<string, string> = {
-  coffee_shop: "Coffee Shop",
-  restaurant: "Restaurant",
-  both: "Coffee Shop & Restaurant",
-};
 
 export default async function ReviewQueuePage() {
   const [pendingSpots, flaggedSpots] = await Promise.all([
@@ -108,7 +104,7 @@ export default async function ReviewQueuePage() {
                     {spot.province ? `, ${spot.province}` : ""}
                   </p>
                   <p className="mt-1 text-xs text-navey-ink/50">
-                    {CATEGORY_LABEL[spot.category] ?? spot.category} ·{" "}
+                    {categoryLabel(spot.category)} ·{" "}
                     {spot.priceRange ?? "no price set"} · submitted by{" "}
                     {spot.submitterName ?? "unknown"} on{" "}
                     {new Date(spot.createdAt).toLocaleDateString()}

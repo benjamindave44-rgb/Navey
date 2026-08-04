@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { categoryLabel } from "@/lib/categories";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { SaveHeartButton } from "@/components/SaveHeartButton";
@@ -8,11 +9,6 @@ import type { SpotWithTags } from "@/lib/queries";
 
 const SLIDE_MS = 5000;
 
-const CATEGORY_LABEL: Record<string, string> = {
-  coffee_shop: "Coffee Shop",
-  restaurant: "Restaurant",
-  both: "Coffee & Restaurant",
-};
 
 /**
  * Slow cross-fade rather than a sliding carousel: auto-advancing banners are
@@ -150,7 +146,7 @@ export function FeaturedShowcase({
                 </Link>
 
                 <p className="mt-1 text-sm font-medium text-white/85">
-                  {CATEGORY_LABEL[spot.category] ?? spot.category}
+                  {categoryLabel(spot.category)}
                   {spot.price_range ? ` · ${spot.price_range}` : ""} ·{" "}
                   {spot.city}
                   {spot.saveCount > 0 && (

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { categoryLabel, categorySchemaType } from "@/lib/categories";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -33,7 +34,7 @@ export async function generateMetadata({
   const description =
     spot.description ??
     `${spot.name} in ${spot.city} — ${
-      CATEGORY_LABEL[spot.category] ?? spot.category
+      categoryLabel(spot.category)
     }${spot.price_range ? `, ${spot.price_range}` : ""}. Find hours, reviews, and photos on Navey.`;
   const photo = spot.galleryPhotos[0]?.url;
 
@@ -56,11 +57,6 @@ export async function generateMetadata({
   };
 }
 
-const CATEGORY_LABEL: Record<string, string> = {
-  coffee_shop: "Coffee Shop",
-  restaurant: "Restaurant",
-  both: "Coffee Shop & Restaurant",
-};
 
 // schema.org expects its own day URIs, not the display labels below.
 const SCHEMA_DAYS = [
@@ -142,12 +138,7 @@ export default async function SpotDetailPage({
     ];
   });
 
-  const schemaType =
-    spot.category === "restaurant"
-      ? "Restaurant"
-      : spot.category === "coffee_shop"
-      ? "CafeOrCoffeeShop"
-      : "FoodEstablishment";
+  const schemaType = categorySchemaType(spot.category);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": schemaType,
@@ -275,7 +266,7 @@ export default async function SpotDetailPage({
                 </div>
               </div>
               <p className="mt-1 text-sm text-navey-ink/70">
-                {CATEGORY_LABEL[spot.category] ?? spot.category}
+                {categoryLabel(spot.category)}
                 {spot.price_range ? ` · ${spot.price_range}` : ""} · {spot.city}
               </p>
               <p className="mt-1 text-xs text-navey-ink/50">

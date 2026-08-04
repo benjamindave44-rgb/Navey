@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SpotCard } from "@/components/SpotCard";
 import { findCityBySlug, getCityDirectory } from "@/lib/cities";
+import { servesCoffeeOrBakes, servesMeals } from "@/lib/categories";
 import { getApprovedSpots } from "@/lib/queries";
 import { getSavedSpotIds } from "@/lib/profile";
 
@@ -62,8 +63,8 @@ export default async function CityPage({
     getCityDirectory(),
   ]);
 
-  const coffee = spots.filter((spot) => spot.category !== "restaurant").length;
-  const food = spots.filter((spot) => spot.category !== "coffee_shop").length;
+  const coffee = spots.filter((spot) => servesCoffeeOrBakes(spot.category)).length;
+  const food = spots.filter((spot) => servesMeals(spot.category)).length;
 
   // The tags people in this city actually get, ranked -- both a genuine
   // summary of the area's character and a set of internal links.
