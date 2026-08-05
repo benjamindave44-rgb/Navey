@@ -1,6 +1,23 @@
 import { supabase } from "@/lib/supabase";
 import { computeTopBadge } from "@/lib/badges";
 
+/**
+ * Admin accounts are left out of every community surface.
+ *
+ * The person running Navey enters most of the listings, so counting them here
+ * would make the feed, the contributor list and the leaderboard read as one
+ * account talking to itself -- and would put the owner permanently at the top
+ * of a board meant to reward the people who show up. An empty community
+ * section is honest; a community that is secretly staff is not.
+ */
+async function getAdminIds(): Promise<Set<string>> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("role", "admin");
+  return new Set((data ?? []).map((profile) => profile.id));
+}
+
 export type CommunityStats = {
   explorers: number;
   spotsSaved: number;
@@ -8,9 +25,10 @@ export type CommunityStats = {
 };
 
 export async function getCommunityStats(): Promise<CommunityStats> {
-  const [{ count: explorers }, { data: savedSpots }] = await Promise.all([
+  const [{ count: explorers }, { data: savedSpots }, admins] = await Promise.all([
     supabase.from("profiles").select("id", { count: "exact", head: true }),
     supabase.from("saved_list_spots").select("spot_id, spots(hidden_gem)"),
+    getAdminIds(),
   ]);
 
   const uniqueSpotIds = new Set<string>();
@@ -21,7 +39,7 @@ export async function getCommunityStats(): Promise<CommunityStats> {
   }
 
   return {
-    explorers: explorers ?? 0,
+    explorers: Math.max(0, (explorers ?? 0) - admins.size),
     spotsSaved: uniqueSpotIds.size,
     hiddenGemsFound: hiddenGemIds.size,
   };
@@ -40,7 +58,10 @@ export type ActivityItem = {
 };
 
 export async function getRecentActivity(limit = 10): Promise<ActivityItem[]> {
-  const [{ data: submissions }, { data: lists }] = await Promise.all([
+  // Fetched wider than needed because staff rows are removed afterwards;
+  // limiting first would leave the feed short whenever admin was recent.
+  const fetchLimit = limit * 4;
+  const [{ data: submissions }, { data: lists }, admins] = await Promise.all([
     supabase
       .from("spots")
       .select(
@@ -48,13 +69,14 @@ export async function getRecentActivity(limit = 10): Promise<ActivityItem[]> {
       )
       .not("submitted_by", "is", null)
       .order("created_at", { ascending: false })
-      .limit(limit),
+      .limit(fetchLimit),
     supabase
       .from("saved_lists")
       .select("id, name, created_at, user_id, profiles(display_name)")
       .eq("is_public", true)
       .order("created_at", { ascending: false })
-      .limit(limit),
+      .limit(fetchLimit),
+    getAdminIds(),
   ]);
 
   const items: ActivityItem[] = [
@@ -81,7 +103,9 @@ export async function getRecentActivity(limit = 10): Promise<ActivityItem[]> {
   items.sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
-  return items.slice(0, limit);
+  return items
+    .filter((item) => !item.actorId || !admins.has(item.actorId))
+    .slice(0, limit);
 }
 
 export type TopContributor = {
@@ -91,6 +115,7 @@ export type TopContributor = {
 };
 
 export async function getTopContributors(limit = 5): Promise<TopContributor[]> {
+  const admins = await getAdminIds();
   const { data } = await supabase
     .from("spots")
     .select(
@@ -103,7 +128,7 @@ export async function getTopContributors(limit = 5): Promise<TopContributor[]> {
 
   const counts = new Map<string, { name: string; count: number }>();
   for (const row of data) {
-    if (!row.submitted_by) continue;
+    if (!row.submitted_by || admins.has(row.submitted_by)) continue;
     const existing = counts.get(row.submitted_by);
     const name = row.submitted_by_profile?.display_name ?? "Someone";
     if (existing) {
@@ -147,7 +172,7 @@ export type LeaderboardEntry = {
 export async function getLeaderboard(limit = 10): Promise<LeaderboardEntry[]> {
   const [{ data: profiles }, { data: reviews }, { data: lists }, { data: listSpots }, { data: spots }] =
     await Promise.all([
-      supabase.from("profiles").select("id, display_name"),
+      supabase.from("profiles").select("id, display_name, role"),
       supabase.from("reviews").select("user_id"),
       supabase.from("saved_lists").select("id, user_id"),
       supabase.from("saved_list_spots").select("list_id"),
@@ -157,6 +182,14 @@ export async function getLeaderboard(limit = 10): Promise<LeaderboardEntry[]> {
         .eq("status", "approved")
         .not("submitted_by", "is", null),
     ]);
+
+  // Staff are dropped at the profile stage rather than filtered at the end,
+  // so their activity never contributes a rank to anyone else's position.
+  const rankedIds = new Set(
+    (profiles ?? [])
+      .filter((profile) => profile.role !== "admin")
+      .map((profile) => profile.id)
+  );
 
   const listOwner = new Map<string, string>();
   for (const list of lists ?? []) listOwner.set(list.id, list.user_id);
@@ -196,6 +229,7 @@ export async function getLeaderboard(limit = 10): Promise<LeaderboardEntry[]> {
   );
 
   return Array.from(stats.entries())
+    .filter(([id]) => rankedIds.has(id))
     .map(([id, s]) => {
       const points =
         s.reviews * LEADERBOARD_POINTS.review +
