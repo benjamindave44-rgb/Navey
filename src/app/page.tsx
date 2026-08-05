@@ -8,11 +8,10 @@ import {
   getApprovedSpots,
   getCollections,
   getFeaturedSpots,
-  getTags,
-  tagsInUse,
 } from "@/lib/queries";
 import { getSavedSpotIds } from "@/lib/profile";
 import { getCityDirectory } from "@/lib/cities";
+import { getTagDirectory } from "@/lib/tags";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +21,7 @@ export default async function Home() {
     await Promise.all([
       getApprovedSpots({ limit: 8 }),
       getCollections(4),
-      getTags().then(tagsInUse),
+      getTagDirectory(),
       getFeaturedSpots(5),
       getSavedSpotIds(),
       getCityDirectory(),
@@ -180,7 +179,7 @@ export default async function Home() {
                     {list.map((tag) => (
                       <Link
                         key={tag.id}
-                        href={`/explore?tags=${encodeURIComponent(tag.label)}`}
+                        href={`/tag/${tag.slug}`}
                         className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold shadow-[0_4px_12px_rgba(20,18,11,0.05)] transition-transform hover:-translate-y-0.5 hover:bg-navey-ink hover:text-navey-yellow active:scale-95"
                       >
                         {tag.icon && <span aria-hidden>{tag.icon}</span>}

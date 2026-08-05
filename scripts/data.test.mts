@@ -1,4 +1,4 @@
-import { citySlug } from "../src/lib/slug.ts";
+import { citySlug, tagSlug } from "../src/lib/slug.ts";
 import { normaliseName } from "../src/lib/duplicates.ts";
 
 let failures = 0;
@@ -24,6 +24,12 @@ check("punctuation", normaliseName("Joie-Coffee"), normaliseName("Joie Coffee"))
 check("distinct shops stay distinct",
   normaliseName("Odd Cafe Makati") === normaliseName("Odd Cafe"), false);
 check("empty stays empty", normaliseName("   "), "");
+
+check("tag: ampersand becomes a word", tagSlug("Grilled & Inasal"), "grilled-and-inasal");
+check("tag: spaces", tagSlug("Unlimited Chicken"), "unlimited-chicken");
+check("tag: hyphenated", tagSlug("Air-conditioned"), "air-conditioned");
+check("tag: no empty segments", tagSlug("Takeout & Delivery"), "takeout-and-delivery");
+check("tag: stable across case", tagSlug("PASTRIES"), tagSlug("Pastries"));
 
 console.log(failures === 0 ? "\nAll checks passed" : `\n${failures} FAILED`);
 process.exit(failures === 0 ? 0 : 1);

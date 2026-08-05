@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { supabase } from "@/lib/supabase";
 import { getCityDirectory } from "@/lib/cities";
+import { getTagDirectory } from "@/lib/tags";
 
 const SITE_URL = "https://www.navey.co";
 
@@ -19,10 +20,11 @@ const STATIC_ROUTES: { path: string; priority: number }[] = [
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [{ data: spots }, { data: collections }, cities] = await Promise.all([
+  const [{ data: spots }, { data: collections }, cities, tags] = await Promise.all([
     supabase.from("spots").select("id, created_at").eq("status", "approved"),
     supabase.from("collections").select("id, created_at"),
     getCityDirectory(),
+    getTagDirectory(),
   ]);
 
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((route) => ({
@@ -51,5 +53,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticEntries, ...cityEntries, ...spotEntries, ...collectionEntries];
+  // Same reasoning as the city pages: these answer a search a filtered
+  // Explore URL never could.
+  const tagEntries: MetadataRoute.Sitemap = tags.map((tag) => ({
+    url: `${SITE_URL}/tag/${tag.slug}`,
+    priority: 0.7,
+  }));
+
+  return [
+    ...staticEntries,
+    ...cityEntries,
+    ...tagEntries,
+    ...spotEntries,
+    ...collectionEntries,
+  ];
 }

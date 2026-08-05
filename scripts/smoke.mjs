@@ -86,8 +86,32 @@ async function cityChecks() {
   }
 }
 
+/** Tag pages appear on their own as listings get tagged, so they are found
+ *  from the sitemap rather than named here. */
+async function tagChecks() {
+  try {
+    const { status, body } = await get(`${BASE}/sitemap.xml`);
+    if (status !== 200) return [];
+    return [...body.matchAll(/<loc>([^<]*\/tag\/[^<]+)<\/loc>/g)]
+      .map((match) => new URL(match[1]).pathname)
+      .slice(0, 2)
+      .map((path, index) => ({
+        name: `Tag page ${index + 1}`,
+        path,
+        expect: ["Philippines"],
+      }));
+  } catch {
+    return [];
+  }
+}
+
 async function run() {
-  const checks = [...CHECKS, ...(await spotChecks()), ...(await cityChecks())];
+  const checks = [
+    ...CHECKS,
+    ...(await spotChecks()),
+    ...(await cityChecks()),
+    ...(await tagChecks()),
+  ];
   const failures = [];
 
   for (const check of checks) {
