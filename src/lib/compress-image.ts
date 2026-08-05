@@ -12,8 +12,16 @@ const QUALITY = 0.82;
  * Returns the original file untouched if anything goes wrong, so a failure
  * here degrades to the old behaviour rather than losing the photo.
  */
+/**
+ * Below this, a photo is already small enough to send and re-encoding it only
+ * costs time -- decoding and redrawing a picture on a phone is the slow part,
+ * not the transfer. Screenshots and already-optimised images land here.
+ */
+const ALREADY_SMALL_BYTES = 600 * 1024;
+
 export async function compressImage(file: File): Promise<File> {
   if (!file.type.startsWith("image/")) return file;
+  if (file.size <= ALREADY_SMALL_BYTES) return file;
 
   try {
     const bitmap = await createImageBitmap(file);

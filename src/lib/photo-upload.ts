@@ -24,7 +24,7 @@ export async function uploadPhotos(
   /** Menus are often published as a PDF; galleries stay images-only. */
   { allowPdf = false }: { allowPdf?: boolean } = {}
 ): Promise<{ urls: string[]; failed: number }> {
-  const urls: string[] = [];
+  const accepted: { entry: File; path: string; type: string }[] = [];
   let failed = 0;
 
   for (const entry of files) {
@@ -41,19 +41,30 @@ export async function uploadPhotos(
       continue;
     }
 
-    const path = `${pathPrefix}/${crypto.randomUUID()}.${extension}`;
-    const { error } = await supabase.storage.from("photos").upload(path, entry, {
-      contentType: entry.type,
-      upsert: false,
+    accepted.push({
+      entry,
+      path: `${pathPrefix}/${crypto.randomUUID()}.${extension}`,
+      type: entry.type,
     });
-    if (error) {
-      failed++;
-      continue;
-    }
-
-    const { data } = supabase.storage.from("photos").getPublicUrl(path);
-    urls.push(data.publicUrl);
   }
+
+  // Sent together rather than one after another. These are independent network
+  // round trips to storage, so waiting for each before starting the next made
+  // uploading four photos take four times as long as uploading one.
+  const results = await Promise.all(
+    accepted.map(async ({ entry, path, type }) => {
+      const { error } = await supabase.storage.from("photos").upload(path, entry, {
+        contentType: type,
+        upsert: false,
+      });
+      if (error) return null;
+      return supabase.storage.from("photos").getPublicUrl(path).data.publicUrl;
+    })
+  );
+
+  // Promise.all keeps order, so the photos land in the order they were picked.
+  const urls = results.filter((url): url is string => url !== null);
+  failed += results.length - urls.length;
 
   return { urls, failed };
 }

@@ -26,6 +26,9 @@ export function PhotoPicker({
   const [files, setFiles] = useState<File[]>([]);
   const [working, setWorking] = useState(false);
   const [tooLarge, setTooLarge] = useState<string | null>(null);
+  // Shown while photos are being prepared. Silence during a slow step is what
+  // makes people tap again or give up; a count that moves does not.
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
 
   function syncHiddenInput(list: File[]) {
     const dt = new DataTransfer();
@@ -42,9 +45,21 @@ export function PhotoPicker({
     setTooLarge(null);
     try {
       const room = Math.max(0, max - files.length);
-      const shrunk = await Promise.all(
-        picked.slice(0, room).map((file) => compressImage(file))
-      );
+      const queue = picked.slice(0, room);
+      setProgress({ done: 0, total: queue.length });
+
+      // Two at a time. Decoding a phone photo is heavy, and starting all of
+      // them together spikes memory enough on a mid-range phone to stall the
+      // page -- which reads as the upload being slow. Two keeps the work
+      // overlapping without the stall.
+      const shrunk: File[] = [];
+      for (let index = 0; index < queue.length; index += 2) {
+        const batch = await Promise.all(
+          queue.slice(index, index + 2).map((file) => compressImage(file))
+        );
+        shrunk.push(...batch);
+        setProgress({ done: shrunk.length, total: queue.length });
+      }
 
       // Checked after resizing, so a big photo is judged on what will actually
       // be sent rather than what came off the camera. PDFs are unchanged by
@@ -64,6 +79,7 @@ export function PhotoPicker({
       syncHiddenInput(next);
     } finally {
       setWorking(false);
+      setProgress({ done: 0, total: 0 });
     }
   }
 
@@ -142,7 +158,9 @@ export function PhotoPicker({
       )}
       <p className="mt-2 text-xs text-navey-ink/50">
         {working
-          ? "Preparing photos…"
+          ? progress.total > 1
+            ? `Preparing photo ${Math.min(progress.done + 1, progress.total)} of ${progress.total}…`
+            : "Preparing photo…"
           : helpText ??
             `Up to ${max} photos. Large photos are resized automatically.`}
       </p>
