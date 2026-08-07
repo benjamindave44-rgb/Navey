@@ -4,13 +4,16 @@ name: Smoke check
 # only show up with real data. A failed run emails the repository owner, which
 # is the point: nobody should have to click a link to discover an outage.
 on:
-  schedule:
-    # Hourly. Every page this touches renders on demand, so each run costs real
-    # server time -- and on a free tier a monitor that checks too eagerly
-    # becomes the thing that exhausts the budget it exists to protect. An
-    # outage is still caught within the hour, and the error webhook reports a
-    # crash the moment it happens.
-    - cron: "17 * * * *"
+  # The schedule is OFF while the hosting plan is close to its CPU limit.
+  # Every page this check touches renders on demand, so each run spends the
+  # allowance the site needs to stay up -- a monitor is not worth the thing it
+  # monitors. It still runs on every push, and can be run by hand from the
+  # Actions tab at any time.
+  #
+  # Turn it back on by uncommenting these two lines, ideally on a paid plan or
+  # once the public pages are cached:
+  # schedule:
+  #   - cron: "17 * * * *"
   push:
     branches: ["**"]
   workflow_dispatch:

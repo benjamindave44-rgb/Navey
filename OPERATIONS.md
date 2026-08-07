@@ -15,10 +15,17 @@ with no memory of today. Plain language first, file paths second.
 
 Three answers, in order of effort:
 
-1. **A robot checks every 15 minutes.** GitHub opens the homepage, Explore, a
-   real shop page and a real city page, and confirms a shop is actually on the
-   shop page — not just that the page answered. **If anything breaks, GitHub
-   emails the repository owner.** No news is good news.
+1. **A robot checks on every push.** GitHub opens the homepage, Explore, a real
+   shop page and a real city page, and confirms a shop is actually on the shop
+   page — not just that the page answered. **If anything breaks, GitHub emails
+   the repository owner.** No news is good news.
+
+   It used to also run every 15 minutes on a timer. That timer is switched off:
+   every page it opened was rendered fresh on the server, so the monitor was
+   spending the hosting allowance the site itself needs. Turn it back on
+   (uncomment the `schedule:` lines in `.github/workflows/smoke.yml`) once the
+   public pages are cached or the plan is paid. You can always run it by hand
+   from the repository's Actions tab.
 2. **`/admin/diagnostics`** (sign in as admin). Runs the shop-page database
    query in widening slices and shows which slice fails. Built after an outage
    where every shop page was dead and the error was hidden behind a reference
@@ -84,6 +91,12 @@ the server so they cannot disagree.
   PDFs are not, which is why a long PDF menu fails while photos of the same
   pages succeed. The real fix is uploading straight to Supabase and bypassing
   the server — a moderate piece of work, not yet done.
+- **The free Vercel plan includes 4 hours of server time per month**, and the
+  project pauses when that runs out. Nearly every public page here is marked
+  `force-dynamic`, meaning it is rebuilt for each visitor instead of being
+  reused, so anything that opens pages repeatedly — a monitor on a timer, a
+  crawler, a load test — costs real allowance. Check Usage → Fluid Active CPU
+  in Vercel before adding anything that runs on a schedule.
 - **Leaked-password protection is off.** It needs a paid Supabase plan. Turn
   it on when you upgrade: Authentication → Policies.
 - **Tag and city pages only exist where there is content.** Deliberate. A page

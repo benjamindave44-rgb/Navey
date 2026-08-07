@@ -17,9 +17,13 @@ export const dynamic = "force-dynamic";
 
 
 export default async function Home() {
-  const [spots, collections, tags, featured, savedSpotIds, cities] =
+  // One pass over the listings, not two. Both sections below are slices of
+  // the same set, and fetching it twice meant every homepage view pulled every
+  // spot -- with its tags, photos and hours -- across the wire a second time
+  // to reorder rows already in memory.
+  const [allSpots, collections, tags, featured, savedSpotIds, cities] =
     await Promise.all([
-      getApprovedSpots({ limit: 8 }),
+      getApprovedSpots({}),
       getCollections(4),
       getTagDirectory(),
       getFeaturedSpots(5),
@@ -27,11 +31,14 @@ export default async function Home() {
       getCityDirectory(),
     ]);
 
+  const spots = allSpots.slice(0, 8);
+
   // Only spots people have actually saved belong under "Community Picks";
   // an empty box announcing it has nothing reads worse than no section.
-  const communityPicks = (
-    await getApprovedSpots({ sort: "most_saved", limit: 5 })
-  ).filter((spot) => spot.saveCount > 0);
+  const communityPicks = [...allSpots]
+    .filter((spot) => spot.saveCount > 0)
+    .sort((a, b) => b.saveCount - a.saveCount)
+    .slice(0, 5);
 
 
   // Tells Google what Navey is as an organisation, not just what each spot
