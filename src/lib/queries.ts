@@ -1,5 +1,6 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { orderTagsForCards } from "@/lib/tag-priority";
 
 /**
  * A query that fails is not a query that found nothing, and the two must not
@@ -46,7 +47,7 @@ export async function getApprovedSpots(
   let query = supabase
     .from("spots")
     .select(
-      "id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label)), spot_photos(url, kind)"
+      "id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label, tag_group, sort_order)), spot_photos(url, kind)"
     )
     .eq("status", "approved");
 
@@ -79,9 +80,16 @@ export async function getApprovedSpots(
     hidden_gem: spot.hidden_gem,
     description: spot.description,
     saveCount: spot.save_count,
-    tags: spot.spot_tags
-      .map((st) => st.tags?.label)
-      .filter((label): label is string => Boolean(label)),
+    tags: orderTagsForCards(
+      spot.spot_tags
+        .map((st) => st.tags)
+        .filter((tag): tag is NonNullable<typeof tag> => Boolean(tag))
+        .map((tag) => ({
+          label: tag.label,
+          group: tag.tag_group,
+          sort: tag.sort_order,
+        }))
+    ),
     coverPhoto: spot.spot_photos.find((p) => p.kind === "gallery")?.url ?? null,
   }));
 
@@ -100,7 +108,7 @@ export async function getFeaturedSpots(limit = 5): Promise<SpotWithTags[]> {
   const { data } = await supabase
     .from("spots")
     .select(
-      "id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label)), spot_photos(url, kind)"
+      "id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label, tag_group, sort_order)), spot_photos(url, kind)"
     )
     .eq("status", "approved")
     .eq("featured", true)
@@ -118,9 +126,16 @@ export async function getFeaturedSpots(limit = 5): Promise<SpotWithTags[]> {
     hidden_gem: spot.hidden_gem,
     description: spot.description,
     saveCount: spot.save_count,
-    tags: spot.spot_tags
-      .map((st) => st.tags?.label)
-      .filter((label): label is string => Boolean(label)),
+    tags: orderTagsForCards(
+      spot.spot_tags
+        .map((st) => st.tags)
+        .filter((tag): tag is NonNullable<typeof tag> => Boolean(tag))
+        .map((tag) => ({
+          label: tag.label,
+          group: tag.tag_group,
+          sort: tag.sort_order,
+        }))
+    ),
     coverPhoto: spot.spot_photos.find((p) => p.kind === "gallery")?.url ?? null,
   }));
 

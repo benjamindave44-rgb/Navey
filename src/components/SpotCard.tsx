@@ -76,9 +76,13 @@ export function SpotCard({
             {spot.description}
           </p>
         )}
+        {/* Three at most. The query hands these back one-per-kind in priority
+            order, so the first three describe the place from three different
+            angles rather than saying "relaxed" three ways. The full set lives
+            on the listing's own page. */}
         {spot.tags.length > 0 && (
           <div className="mt-1 flex flex-wrap gap-1.5 sm:gap-2">
-            {spot.tags.map((tag) => (
+            {spot.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
                 className="rounded-full bg-navey-band px-2 py-0.5 text-[10px] font-semibold sm:px-3 sm:py-1 sm:text-xs"
