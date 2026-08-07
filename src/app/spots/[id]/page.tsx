@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { categoryLabel, categorySchemaType } from "@/lib/categories";
+import { OpenBadge } from "@/components/OpenBadge";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -487,7 +488,10 @@ export default async function SpotDetailPage({
 
               {spot.hours.length > 0 && (
                 <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
-                  <p className="font-heading font-bold">Hours</p>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-heading font-bold">Hours</p>
+                    <OpenBadge state={spot.openState} />
+                  </div>
                   <ul className="mt-3 space-y-1 text-sm">
                     {spot.hours.map((hour) => (
                       <li

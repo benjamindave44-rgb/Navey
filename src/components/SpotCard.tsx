@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { categoryLabel } from "@/lib/categories";
+import { OpenBadge } from "@/components/OpenBadge";
 import Link from "next/link";
 import type { SpotWithTags } from "@/lib/queries";
 import { SaveHeartButton } from "@/components/SaveHeartButton";
@@ -43,8 +44,16 @@ export function SpotCard({
             ☕
           </span>
         )}
+        {/* Top-left; the Hidden Gem and Trending chips hold the right, and the
+            rank badge only appears on leaderboard grids where there is no
+            open badge competing for the corner. */}
+        <OpenBadge state={spot.openState} className="absolute left-3 top-3" />
         {typeof rank === "number" && (
-          <span className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-navey-ink text-xs font-bold text-navey-yellow">
+          <span
+            className={`absolute left-3 flex h-7 w-7 items-center justify-center rounded-full bg-navey-ink text-xs font-bold text-navey-yellow ${
+              spot.openState === "unknown" ? "top-3" : "top-12"
+            }`}
+          >
             #{rank}
           </span>
         )}

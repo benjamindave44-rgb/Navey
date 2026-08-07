@@ -1,6 +1,7 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { orderTagsForCards } from "@/lib/tag-priority";
+import { openStatus, type OpenState } from "@/lib/open-status";
 
 /**
  * A query that fails is not a query that found nothing, and the two must not
@@ -24,6 +25,9 @@ export type SpotWithTags = {
   saveCount: number;
   tags: string[];
   coverPhoto: string | null;
+  /** Worked out at request time in Manila. "unknown" when the hours are
+   *  missing or unreadable, so the card can show no badge at all. */
+  openState: OpenState;
 };
 
 export type SpotSort = "recommended" | "newest" | "most_saved";
@@ -47,7 +51,7 @@ export async function getApprovedSpots(
   let query = supabase
     .from("spots")
     .select(
-      "id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label, tag_group, sort_order)), spot_photos(url, kind)"
+      "id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label, tag_group, sort_order)), spot_photos(url, kind), spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours)"
     )
     .eq("status", "approved");
 
@@ -70,6 +74,10 @@ export async function getApprovedSpots(
   logQueryError("getApprovedSpots", error);
   if (error || !data) return [];
 
+  // One timestamp for the whole grid: computing per card could straddle a
+  // minute boundary and show two spots with identical hours differently.
+  const now = new Date();
+
   let spots = data.map((spot) => ({
     id: spot.id,
     name: spot.name,
@@ -91,6 +99,7 @@ export async function getApprovedSpots(
         }))
     ),
     coverPhoto: spot.spot_photos.find((p) => p.kind === "gallery")?.url ?? null,
+    openState: openStatus(spot.spot_hours, now),
   }));
 
   if (tagList.length > 0) {
@@ -108,7 +117,7 @@ export async function getFeaturedSpots(limit = 5): Promise<SpotWithTags[]> {
   const { data } = await supabase
     .from("spots")
     .select(
-      "id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label, tag_group, sort_order)), spot_photos(url, kind)"
+      "id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label, tag_group, sort_order)), spot_photos(url, kind), spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours)"
     )
     .eq("status", "approved")
     .eq("featured", true)
@@ -116,6 +125,7 @@ export async function getFeaturedSpots(limit = 5): Promise<SpotWithTags[]> {
     .order("created_at", { ascending: false })
     .limit(limit);
 
+  const now = new Date();
   const featured = (data ?? []).map((spot) => ({
     id: spot.id,
     name: spot.name,
@@ -137,6 +147,7 @@ export async function getFeaturedSpots(limit = 5): Promise<SpotWithTags[]> {
         }))
     ),
     coverPhoto: spot.spot_photos.find((p) => p.kind === "gallery")?.url ?? null,
+    openState: openStatus(spot.spot_hours, now),
   }));
 
   if (featured.length > 0) return featured;
@@ -315,7 +326,7 @@ export async function getCollectionDetail(
       `id, title, description, created_at,
        curator:profiles(display_name),
        collection_photos(id, url),
-       collection_spots(rank, spots(id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label)), spot_photos(url, kind)))`
+       collection_spots(rank, spots(id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label, tag_group, sort_order)), spot_photos(url, kind), spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours)))`
     )
     .eq("id", id)
     .maybeSingle();
@@ -323,6 +334,7 @@ export async function getCollectionDetail(
   logQueryError("getCollectionDetail", error);
   if (error || !data) return null;
 
+  const now = new Date();
   let spots: CollectionSpot[] = data.collection_spots
     .filter((entry) => entry.spots)
     .map((entry) => {
@@ -337,10 +349,18 @@ export async function getCollectionDetail(
         hidden_gem: spot.hidden_gem,
         description: spot.description,
         saveCount: spot.save_count,
-        tags: spot.spot_tags
-          .map((st) => st.tags?.label)
-          .filter((label): label is string => Boolean(label)),
+        tags: orderTagsForCards(
+          spot.spot_tags
+            .map((st) => st.tags)
+            .filter((tag): tag is NonNullable<typeof tag> => Boolean(tag))
+            .map((tag) => ({
+              label: tag.label,
+              group: tag.tag_group,
+              sort: tag.sort_order,
+            }))
+        ),
         coverPhoto: spot.spot_photos.find((p) => p.kind === "gallery")?.url ?? null,
+        openState: openStatus(spot.spot_hours, now),
         rank: entry.rank,
       };
     });
@@ -457,6 +477,7 @@ export async function getSpotDetail(id: string): Promise<SpotDetail | null> {
     price_range: data.price_range,
     city: data.city,
     province: data.province,
+    openState: openStatus(data.spot_hours),
     hidden_gem: data.hidden_gem,
     description: data.description,
     tags: data.spot_tags
