@@ -626,3 +626,21 @@ export async function getSpotsByIds(
     ];
   });
 }
+
+/**
+ * How many listings are live. A count query rather than a fetch: nothing here
+ * needs the rows, and pulling all of them to call .length on the result is how
+ * a number in a caption quietly becomes the most expensive thing on a page.
+ * Memoised with the other reference values, since it changes about as often.
+ */
+export async function countApprovedSpots(): Promise<number> {
+  return memo("approved-count", async () => {
+    const { count, error } = await supabase
+      .from("spots")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "approved");
+
+    logQueryError("countApprovedSpots", error);
+    return count ?? 0;
+  });
+}
