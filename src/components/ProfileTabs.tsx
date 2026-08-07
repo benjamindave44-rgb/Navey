@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { createSavedList } from "@/app/profile/actions";
+import { SavedListCover } from "@/components/SavedListCover";
 import type { ProfileData } from "@/lib/profile";
 
 const BADGES = [
@@ -61,12 +62,12 @@ export function ProfileTabs({ profile }: { profile: ProfileData }) {
               <Link
                 key={list.id}
                 href={`/lists/${list.id}`}
-                className="flex flex-col gap-2 rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)] transition-[transform,box-shadow] hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(20,18,11,0.14)] active:scale-[0.98]"
+                className="group flex flex-col gap-2 rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)] transition-[transform,box-shadow] hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(20,18,11,0.14)] active:scale-[0.98]"
               >
-                <div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-navey-band text-3xl">
-                  🗺️
-                </div>
-                <p className="font-heading font-bold">{list.name}</p>
+                <SavedListCover covers={list.covers} name={list.name} />
+                <p className="font-heading font-bold group-hover:underline">
+                  {list.name}
+                </p>
                 <div className="flex items-center justify-between text-sm text-navey-ink/60">
                   <span>
                     {list.spotCount} spot{list.spotCount === 1 ? "" : "s"}

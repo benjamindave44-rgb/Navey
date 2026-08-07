@@ -26,6 +26,9 @@ export type ProfileSavedList = {
   name: string;
   isPublic: boolean;
   spotCount: number;
+  /** Cover photos of the first few spots on the list, for the card. A list of
+   *  real places should look like the places, not like a filing cabinet. */
+  covers: string[];
 };
 
 export type ProfileReview = {
@@ -75,7 +78,7 @@ export async function getProfileData(userId: string): Promise<ProfileData | null
       supabase
         .from("saved_lists")
         .select(
-          "id, name, is_public, created_at, saved_list_spots(spot_id, spots(hidden_gem))"
+          "id, name, is_public, created_at, saved_list_spots(spot_id, spots(hidden_gem, spot_photos(url, kind)))"
         )
         .eq("user_id", userId)
         .order("created_at", { ascending: false }),
@@ -105,6 +108,16 @@ export async function getProfileData(userId: string): Promise<ProfileData | null
       name: list.name,
       isPublic: list.is_public,
       spotCount: list.saved_list_spots.length,
+      // Four is what the card can show; asking for more would be fetched and
+      // thrown away.
+      covers: list.saved_list_spots
+        .map(
+          (entry) =>
+            entry.spots?.spot_photos.find((photo) => photo.kind === "gallery")
+              ?.url ?? null
+        )
+        .filter((url): url is string => Boolean(url))
+        .slice(0, 4),
     };
   });
 
