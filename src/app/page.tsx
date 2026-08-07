@@ -9,11 +9,14 @@ import {
   getCollections,
   getFeaturedSpots,
 } from "@/lib/queries";
-import { getSavedSpotIds } from "@/lib/profile";
 import { getCityDirectory } from "@/lib/cities";
 import { getTagDirectory } from "@/lib/tags";
 
-export const dynamic = "force-dynamic";
+// Built once and shared rather than rebuilt for every visitor. Nothing on the
+// page differs between people any more: the header's account controls and the
+// saved hearts both resolve in the browser. Five minutes is the longest a
+// newly approved listing waits to appear here.
+export const revalidate = 300;
 
 
 export default async function Home() {
@@ -21,13 +24,12 @@ export default async function Home() {
   // the same set, and fetching it twice meant every homepage view pulled every
   // spot -- with its tags, photos and hours -- across the wire a second time
   // to reorder rows already in memory.
-  const [allSpots, collections, tags, featured, savedSpotIds, cities] =
+  const [allSpots, collections, tags, featured, cities] =
     await Promise.all([
       getApprovedSpots({}),
       getCollections(4),
       getTagDirectory(),
       getFeaturedSpots(5),
-      getSavedSpotIds(),
       getCityDirectory(),
     ]);
 
@@ -86,7 +88,7 @@ export default async function Home() {
       />
       <Header />
       <main id="main" className="flex-1">
-        <Hero featured={featured} savedSpotIds={[...savedSpotIds]} />
+        <Hero featured={featured} />
 
         <section className="px-4 py-10 sm:px-6 md:px-12 md:py-12">
           <div className="mb-6 flex items-center justify-between">
@@ -229,7 +231,6 @@ export default async function Home() {
                   key={spot.id}
                   spot={spot}
                   showSaveButton
-                  saved={savedSpotIds.has(spot.id)}
                 />
               ))}
             </div>

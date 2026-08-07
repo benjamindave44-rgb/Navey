@@ -6,10 +6,13 @@ import { Footer } from "@/components/Footer";
 import { SpotCard } from "@/components/SpotCard";
 import { findTagBySlug, getTagDirectory } from "@/lib/tags";
 import { getApprovedSpots } from "@/lib/queries";
-import { getSavedSpotIds } from "@/lib/profile";
 import { citySlug } from "@/lib/slug";
 
-export const dynamic = "force-dynamic";
+// Built once and shared rather than rebuilt for every visitor. Nothing on the
+// page differs between people any more: the header's account controls and the
+// saved hearts both resolve in the browser. Five minutes is the longest a
+// newly approved listing waits to appear here.
+export const revalidate = 300;
 
 const SITE = "https://www.navey.co";
 
@@ -29,6 +32,11 @@ function headline(label: string, group: string): string {
     default:
       return `${label} spots in the Philippines`;
   }
+}
+
+export async function generateStaticParams() {
+  const directory = await getTagDirectory();
+  return directory.map((entry) => ({ slug: entry.slug }));
 }
 
 export async function generateMetadata({
@@ -62,9 +70,8 @@ export default async function TagPage({
   const tag = await findTagBySlug(slug);
   if (!tag) notFound();
 
-  const [spots, savedSpotIds, directory] = await Promise.all([
+  const [spots, directory] = await Promise.all([
     getApprovedSpots({ tag: tag.label }),
-    getSavedSpotIds(),
     getTagDirectory(),
   ]);
 
@@ -180,7 +187,6 @@ export default async function TagPage({
               key={spot.id}
               spot={spot}
               showSaveButton
-              saved={savedSpotIds.has(spot.id)}
             />
           ))}
         </div>

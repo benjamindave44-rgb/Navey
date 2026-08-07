@@ -7,12 +7,23 @@ import { SpotCard } from "@/components/SpotCard";
 import { areaPath, findArea, getAreaDirectory } from "@/lib/areas";
 import { servesCoffeeOrBakes, servesMeals } from "@/lib/categories";
 import { getApprovedSpots } from "@/lib/queries";
-import { getSavedSpotIds } from "@/lib/profile";
 import { citySlug } from "@/lib/slug";
 
-export const dynamic = "force-dynamic";
+// Built once and shared rather than rebuilt for every visitor. Nothing on the
+// page differs between people any more: the header's account controls and the
+// saved hearts both resolve in the browser. Five minutes is the longest a
+// newly approved listing waits to appear here.
+export const revalidate = 300;
 
 const SITE = "https://www.navey.co";
+
+export async function generateStaticParams() {
+  const directory = await getAreaDirectory();
+  return directory.map((entry) => ({
+    city: entry.citySlug,
+    district: entry.districtSlug,
+  }));
+}
 
 export async function generateMetadata({
   params,
@@ -43,9 +54,8 @@ export default async function AreaPage({
   const area = await findArea(city, district);
   if (!area) notFound();
 
-  const [spots, savedSpotIds, directory] = await Promise.all([
+  const [spots, directory] = await Promise.all([
     getApprovedSpots({ district: area.district }),
-    getSavedSpotIds(),
     getAreaDirectory(),
   ]);
 
@@ -153,7 +163,6 @@ export default async function AreaPage({
               key={spot.id}
               spot={spot}
               showSaveButton
-              saved={savedSpotIds.has(spot.id)}
             />
           ))}
         </div>

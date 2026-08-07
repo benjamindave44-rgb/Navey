@@ -5,7 +5,6 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SpotCard } from "@/components/SpotCard";
 import { getCollectionDetail, getOtherCollections } from "@/lib/queries";
-import { getSavedSpotIds } from "@/lib/profile";
 import { timeAgo } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
@@ -57,9 +56,8 @@ export default async function CollectionDetailPage({
   const collection = await getCollectionDetail(id, sort);
   if (!collection) notFound();
 
-  const [otherCollections, savedSpotIds] = await Promise.all([
+  const [otherCollections] = await Promise.all([
     getOtherCollections(collection.id, 4),
-    getSavedSpotIds(),
   ]);
   const createdAgo = timeAgo(collection.createdAt);
 
@@ -149,7 +147,6 @@ export default async function CollectionDetailPage({
                   spot={spot}
                   rank={sort === "recommended" ? index + 1 : undefined}
                   showSaveButton
-                  saved={savedSpotIds.has(spot.id)}
                   showDescription
                 />
               ))}

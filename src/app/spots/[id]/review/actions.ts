@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { publishChanges } from "@/lib/publish";
 import { checkContentGuidelines } from "@/lib/content-guidelines";
 import { withinRateLimit } from "@/lib/rate-limit";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
@@ -82,5 +83,6 @@ export async function submitReview(formData: FormData) {
     }
   }
 
+  await publishChanges();
   redirect(`/spots/${spotId}`);
 }

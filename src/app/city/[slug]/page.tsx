@@ -8,9 +8,12 @@ import { findCityBySlug, getCityDirectory } from "@/lib/cities";
 import { areaPath, getAreasInCity } from "@/lib/areas";
 import { servesCoffeeOrBakes, servesMeals } from "@/lib/categories";
 import { getApprovedSpots } from "@/lib/queries";
-import { getSavedSpotIds } from "@/lib/profile";
 
-export const dynamic = "force-dynamic";
+// Built once and shared rather than rebuilt for every visitor. Nothing on the
+// page differs between people any more: the header's account controls and the
+// saved hearts both resolve in the browser. Five minutes is the longest a
+// newly approved listing waits to appear here.
+export const revalidate = 300;
 
 const SITE = "https://www.navey.co";
 
@@ -23,6 +26,16 @@ function summarise(city: string, count: number, coffee: number, food: number) {
         ? "all of them coffee-first"
         : "all of them worth a meal";
   return `${places} in ${city} worth the trip — ${mix}, each one visited and written up rather than scraped from a directory.`;
+}
+
+/**
+ * The cities that exist, so each page is built once at deploy time instead of
+ * being rebuilt for every visitor. Anything not on this list still works --
+ * it renders on first request and is then cached like the rest.
+ */
+export async function generateStaticParams() {
+  const directory = await getCityDirectory();
+  return directory.map((entry) => ({ slug: entry.slug }));
 }
 
 export async function generateMetadata({
@@ -58,9 +71,8 @@ export default async function CityPage({
   const entry = await findCityBySlug(slug);
   if (!entry) notFound();
 
-  const [spots, savedSpotIds, directory, areas] = await Promise.all([
+  const [spots, directory, areas] = await Promise.all([
     getApprovedSpots({ city: entry.city }),
-    getSavedSpotIds(),
     getCityDirectory(),
     getAreasInCity(entry.city),
   ]);
@@ -194,7 +206,6 @@ export default async function CityPage({
                 key={spot.id}
                 spot={spot}
                 showSaveButton
-                saved={savedSpotIds.has(spot.id)}
               />
             ))}
           </div>

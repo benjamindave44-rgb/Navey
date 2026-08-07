@@ -118,11 +118,6 @@ Not urgent, not forgotten.
 2. **Visitor analytics.** Right now nobody can answer "did anyone visit today".
    Vercel Web Analytics is a toggle in the project; the free tier caps at a few
    thousand events a month.
-3. **Cache the public pages.** They are rebuilt for every visitor. Caching them
-   would cut server cost by roughly 90% and make the free plan hard to exhaust.
-   Two costs: new listings take up to ~5 minutes to appear, and the saved-spot
-   heart has to move from the server to the browser — the part that risks
-   breaking the save button. Do this calmly, well before a launch, never during.
 4. **Direct-to-storage uploads**, to lift the ~4MB submission ceiling.
 5. **Leaked-password protection**, when the Supabase plan is paid.
 
@@ -130,6 +125,30 @@ Listing content still to fill in: 8 listings have no neighbourhood, Sage Day
 Coffee has no tags, two listings have no description, and Auro Chocolate Cafe
 and Outpost Market are filed under Taguig with a Bangkal address — Bangkal is
 in Makati.
+
+## The public pages are cached
+
+Every public page except Explore and a single collection is now built once and
+shared, rather than rebuilt for each visitor. Those two read the query string,
+which is different for everybody, so they cannot be.
+
+What this means when you change something:
+
+- **Publishing refreshes the site immediately.** Approving a listing, editing
+  hours as an owner, adding a collection or leaving a review all drop the
+  cached copies (`src/lib/publish.ts`). You should never wait to see your own
+  change. If you ever do, that call is missing from whichever action you used.
+- **Five minutes is the fallback**, for changes made straight in the database
+  rather than through the site.
+- **Nothing on a public page may depend on who is looking.** That is the rule
+  that keeps this working. Who is signed in (`src/lib/use-viewer.ts`) and which
+  spots they saved (`src/lib/use-saved-spots.ts`) are both worked out in the
+  browser. If you add something per-person to a public page, either do it in a
+  client component the same way, or that page goes back to being rebuilt for
+  every visitor — and the reason will not be obvious later.
+- **A build that runs while the database is unreachable can bake empty pages.**
+  The five-minute refresh heals it; the health check reads page contents rather
+  than status codes, so a lasting one would be caught.
 
 ## Before changing code
 

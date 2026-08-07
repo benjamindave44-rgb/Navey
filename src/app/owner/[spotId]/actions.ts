@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { publishChanges } from "@/lib/publish";
 import { checkContentGuidelines } from "@/lib/content-guidelines";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { storagePathFromPublicUrl, uploadPhotos } from "@/lib/photo-upload";
@@ -104,6 +105,7 @@ export async function updateBasicInfo(formData: FormData) {
     : locationAdjusted && coords
       ? `Saved. Pin updated to ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}.`
       : "Saved.";
+  await publishChanges();
   redirect(`/owner/${spotId}?tab=overview&notice=${encodeURIComponent(notice)}`);
 }
 
@@ -125,6 +127,7 @@ export async function updateHours(formData: FormData) {
     );
   }
 
+  await publishChanges();
   redirect(`/owner/${spotId}?tab=hours&notice=${encodeURIComponent("Hours updated.")}`);
 }
 
@@ -142,6 +145,7 @@ export async function updatePayments(formData: FormData) {
     })
     .eq("id", spotId);
 
+  await publishChanges();
   redirect(
     `/owner/${spotId}?tab=payments&notice=${encodeURIComponent(
       "Payment methods updated."
@@ -180,6 +184,7 @@ export async function updateAmenities(formData: FormData) {
     })
     .eq("id", spotId);
 
+  await publishChanges();
   redirect(
     `/owner/${spotId}?tab=amenities&notice=${encodeURIComponent(
       "Amenities & Vibe updated."
@@ -235,6 +240,7 @@ async function addSpotPhotos(kind: PhotoKind, formData: FormData) {
     failed > 0
       ? `${photoUrls.length} photo${photoUrls.length === 1 ? "" : "s"} added, ${failed} failed (check file type/size).`
       : "Photos updated.";
+  await publishChanges();
   redirect(`/owner/${spotId}?tab=${kind}&notice=${encodeURIComponent(notice)}`);
 }
 
@@ -256,6 +262,7 @@ async function deleteSpotPhoto(kind: PhotoKind, formData: FormData) {
     await supabase.from("spot_photos").delete().eq("id", photo.id);
   }
 
+  await publishChanges();
   redirect(`/owner/${spotId}?tab=${kind}&notice=${encodeURIComponent("Photo removed.")}`);
 }
 

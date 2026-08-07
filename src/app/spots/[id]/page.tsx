@@ -12,16 +12,25 @@ import { SaveHeartButton } from "@/components/SaveHeartButton";
 import { ShareSpotButton } from "@/components/ShareSpotButton";
 import { ReportReviewButton } from "@/components/ReportReviewButton";
 import { SaveSpotButton } from "@/components/SaveSpotButton";
+import { ClaimBusinessPanel } from "@/components/ClaimBusinessPanel";
 import {
+  getApprovedSpots,
   getRelatedSpots,
   getSpotDetail,
   type SpotDetail,
 } from "@/lib/queries";
 import { describeHours, toIso24 } from "@/lib/hours";
-import { getSavedSpotIds } from "@/lib/profile";
-import { createServerSupabaseClient } from "@/lib/supabase-server";
 
-export const dynamic = "force-dynamic";
+// Built once and shared rather than rebuilt for every visitor. Nothing on the
+// page differs between people any more: the header's account controls and the
+// saved hearts both resolve in the browser. Five minutes is the longest a
+// newly approved listing waits to appear here.
+export const revalidate = 300;
+
+export async function generateStaticParams() {
+  const spots = await getApprovedSpots({});
+  return spots.map((spot) => ({ id: spot.id }));
+}
 
 export async function generateMetadata({
   params,
@@ -103,15 +112,8 @@ export default async function SpotDetailPage({
 
   if (!spot) notFound();
 
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const isOwner = Boolean(user && spot.contributor?.id === user.id);
-
-  const [related, savedSpotIds] = await Promise.all([
+  const [related] = await Promise.all([
     getRelatedSpots(spot.id, spot.city, 4),
-    getSavedSpotIds(),
   ]);
   const acceptedPayments = PAYMENT_OPTIONS.filter(({ key }) => spot[key]);
   const isPdf = (url: string) => url.toLowerCase().endsWith(".pdf");
@@ -260,7 +262,6 @@ export default async function SpotDetailPage({
                 <div className="flex items-center gap-2">
                   <SaveHeartButton
                     spotId={spot.id}
-                    initialSaved={savedSpotIds.has(spot.id)}
                     variant="plain"
                   />
                   <ShareSpotButton name={spot.name} city={spot.city} />
@@ -460,7 +461,6 @@ export default async function SpotDetailPage({
                     </a>
                     <SaveSpotButton
                       spotId={spot.id}
-                      initialSaved={savedSpotIds.has(spot.id)}
                     />
                   </div>
                 </div>
@@ -520,20 +520,10 @@ export default async function SpotDetailPage({
                 </div>
               )}
 
-              {!isOwner && (
-                <div className="rounded-2xl bg-navey-band p-4">
-                  <p className="font-heading font-bold">Own this business?</p>
-                  <p className="mt-1 text-sm text-navey-ink/70">
-                    Claim this listing to manage its menu, hours, and photos.
-                  </p>
-                  <Link
-                    href={`/spots/${spot.id}/claim`}
-                    className="mt-3 inline-block rounded-full bg-navey-ink px-4 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
-                  >
-                    Claim this business
-                  </Link>
-                </div>
-              )}
+              <ClaimBusinessPanel
+                spotId={spot.id}
+                contributorId={spot.contributor?.id ?? null}
+              />
             </aside>
           </div>
 

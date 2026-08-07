@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { publishChanges } from "@/lib/publish";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { geocodeAddress } from "@/lib/geocode";
 import { hasAnyHours, spotHoursRowsFromForm } from "@/lib/hours";
@@ -30,6 +31,7 @@ export async function approveSpot(formData: FormData) {
   const supabase = await requireAdmin();
   const id = String(formData.get("id") ?? "");
   if (id) await supabase.from("spots").update({ status: "approved" }).eq("id", id);
+  await publishChanges();
   redirect("/admin");
 }
 
@@ -37,6 +39,7 @@ export async function rejectSpot(formData: FormData) {
   const supabase = await requireAdmin();
   const id = String(formData.get("id") ?? "");
   if (id) await supabase.from("spots").update({ status: "rejected" }).eq("id", id);
+  await publishChanges();
   redirect("/admin");
 }
 
@@ -44,6 +47,7 @@ export async function dismissFlag(formData: FormData) {
   const supabase = await requireAdmin();
   const id = String(formData.get("id") ?? "");
   if (id) await supabase.from("spots").update({ needs_review: false }).eq("id", id);
+  await publishChanges();
   redirect("/admin");
 }
 
@@ -55,6 +59,7 @@ export async function takeSpotOffline(formData: FormData) {
       .from("spots")
       .update({ status: "rejected", needs_review: false })
       .eq("id", id);
+  await publishChanges();
   redirect("/admin");
 }
 
@@ -83,6 +88,7 @@ export async function backfillCoordinates() {
   }
 
   const total = spots?.length ?? 0;
+  await publishChanges();
   redirect(
     `/admin?notice=${encodeURIComponent(
       `Geocoded ${updated} of ${total} spot${total === 1 ? "" : "s"} missing coordinates.`
@@ -134,6 +140,7 @@ export async function approveClaim(formData: FormData) {
       .neq("id", claim.id);
   }
 
+  await publishChanges();
   redirect("/admin/claims");
 }
 
@@ -250,6 +257,7 @@ export async function createListingAsAdmin(formData: FormData) {
       .insert(photoUrls.map((url) => ({ spot_id: spot.id, url, kind: "gallery" })));
   }
 
+  await publishChanges();
   redirect(`/admin/listings/new?success=${encodeURIComponent(name)}&spotId=${spot.id}`);
 }
 
@@ -334,6 +342,7 @@ export async function updateListing(formData: FormData) {
 
   await replaceHours(supabase, id, formData);
 
+  await publishChanges();
   redirect(
     `/admin/listings/${id}?notice=${encodeURIComponent("Listing updated.")}`
   );
@@ -381,6 +390,7 @@ export async function deleteListing(formData: FormData) {
     );
   }
 
+  await publishChanges();
   redirect(
     `/admin/listings?notice=${encodeURIComponent("Listing permanently deleted.")}`
   );
@@ -404,5 +414,6 @@ export async function rejectClaim(formData: FormData) {
     })
     .eq("id", claimId);
 
+  await publishChanges();
   redirect("/admin/claims");
 }
