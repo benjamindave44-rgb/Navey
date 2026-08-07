@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { signOutAction } from "@/app/sign-in/actions";
+import { useViewer } from "@/lib/use-viewer";
 
 const NAV_LINKS = [
   { href: "/explore", label: "Explore", icon: "🔍" },
@@ -13,16 +14,14 @@ const NAV_LINKS = [
   { href: "/submit-a-spot", label: "Submit a Spot", icon: "➕" },
 ];
 
-export function MobileMenu({
-  isSignedIn,
-  isAdmin,
-  displayName,
-}: {
-  isSignedIn: boolean;
-  isAdmin: boolean;
-  displayName: string | null;
-}) {
+export function MobileMenu() {
   const [open, setOpen] = useState(false);
+  // Resolved here rather than passed down, so the header wrapping this menu
+  // stays identical for every visitor and the page can be cached.
+  const viewer = useViewer();
+  const isSignedIn = viewer.status === "signed-in";
+  const isAdmin = viewer.status === "signed-in" && viewer.isAdmin;
+  const displayName = viewer.status === "signed-in" ? viewer.displayName : null;
 
   // Stop the page scrolling behind the open panel.
   useEffect(() => {

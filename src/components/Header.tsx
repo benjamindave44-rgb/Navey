@@ -1,29 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
-import { signOutAction } from "@/app/sign-in/actions";
+import { HeaderAccount } from "@/components/HeaderAccount";
 import { MobileMenu } from "@/components/MobileMenu";
-import { createServerSupabaseClient } from "@/lib/supabase-server";
 
-export async function Header() {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  let displayName: string | null = null;
-  let isAdmin = false;
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("display_name, role")
-      .eq("id", user.id)
-      .maybeSingle();
-    displayName = profile?.display_name ?? user.email ?? null;
-    isAdmin = profile?.role === "admin";
-  }
-
-  const initial = displayName?.trim()?.[0]?.toUpperCase() ?? "?";
-
+/**
+ * Identical for every visitor, on purpose. This header sits on every page, so
+ * for as long as it asked the server who was signed in, no page on the site
+ * could be cached -- each one had to be rebuilt per person to render this one
+ * corner. The parts that differ now resolve in the browser instead.
+ */
+export function Header() {
   return (
     <header className="sticky top-0 z-50 flex h-[68px] items-center justify-between border-b border-black/5 bg-navey-yellow px-4 md:h-auto md:px-12 md:py-4">
       <Link href="/" className="flex items-center gap-2 md:gap-4">
@@ -64,46 +50,8 @@ export async function Header() {
         >
           <span aria-hidden>♡</span>
         </Link>
-        <MobileMenu
-          isSignedIn={Boolean(user)}
-          isAdmin={isAdmin}
-          displayName={displayName}
-        />
-        {user ? (
-          <div className="hidden items-center gap-2 md:flex">
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className="rounded-full bg-navey-ink/10 px-4 py-2 text-sm font-bold hover:bg-navey-ink/20"
-              >
-                Admin
-              </Link>
-            )}
-            <Link
-              href="/profile"
-              aria-label="Your profile"
-              title={displayName ?? undefined}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-navey-ink text-sm font-bold text-navey-yellow hover:bg-navey-ink/80"
-            >
-              {initial}
-            </Link>
-            <form action={signOutAction}>
-              <button
-                type="submit"
-                className="rounded-full bg-white px-4 py-2 text-sm font-bold hover:bg-white/80"
-              >
-                Sign out
-              </button>
-            </form>
-          </div>
-        ) : (
-          <Link
-            href="/sign-in"
-            className="hidden rounded-full bg-navey-ink px-5 py-2 text-sm font-bold text-navey-yellow hover:bg-navey-ink/80 md:block"
-          >
-            Sign in
-          </Link>
-        )}
+        <MobileMenu />
+        <HeaderAccount />
       </div>
     </header>
   );
