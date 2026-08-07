@@ -108,6 +108,29 @@ the server so they cannot disagree.
 - **Tag and city pages only exist where there is content.** Deliberate. A page
   promising pastries and listing none is worse than no page.
 
+## Parked, in rough order of value
+
+Not urgent, not forgotten.
+
+1. **Google Search Console.** Free, no server cost, no script. Tells you what
+   people searched to reach Navey and which pages Google actually indexed. For
+   a directory that lives on search, this is the biggest missing thing.
+2. **Visitor analytics.** Right now nobody can answer "did anyone visit today".
+   Vercel Web Analytics is a toggle in the project; the free tier caps at a few
+   thousand events a month.
+3. **Cache the public pages.** They are rebuilt for every visitor. Caching them
+   would cut server cost by roughly 90% and make the free plan hard to exhaust.
+   Two costs: new listings take up to ~5 minutes to appear, and the saved-spot
+   heart has to move from the server to the browser — the part that risks
+   breaking the save button. Do this calmly, well before a launch, never during.
+4. **Direct-to-storage uploads**, to lift the ~4MB submission ceiling.
+5. **Leaked-password protection**, when the Supabase plan is paid.
+
+Listing content still to fill in: 8 listings have no neighbourhood, Sage Day
+Coffee has no tags, two listings have no description, and Auro Chocolate Cafe
+and Outpost Market are filed under Taguig with a Bangkal address — Bangkal is
+in Makati.
+
 ## Before changing code
 
 ```
