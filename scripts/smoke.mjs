@@ -24,7 +24,6 @@ const CHECKS = [
   { name: "Explore", path: "/explore", expect: ["Explore"] },
   { name: "Collections", path: "/collections", expect: [] },
   { name: "Sign in", path: "/sign-in", expect: [] },
-  { name: "Sitemap", path: "/sitemap.xml", expect: ["<urlset"] },
   { name: "Robots", path: "/robots.txt", expect: ["Sitemap:"] },
 ];
 
@@ -61,10 +60,14 @@ function pagesFrom(body, kind, name, expect, anyOf = false) {
     .map((path) => ({ name, path, expect, anyOf }));
 }
 
-async function discoveredChecks() {
+/**
+ * The sitemap is fetched once and used twice: as a check in its own right, and
+ * as the list of real pages to sample. It used to be requested a second time
+ * for the check, which is the most expensive single request here -- rebuilding
+ * it walks every listing, city, tag, neighbourhood and collection.
+ */
+function discoveredChecks(body) {
   try {
-    const { status, body } = await get(`${BASE}/sitemap.xml`);
-    if (status !== 200) return [];
     return [
       // Absence of these means the page rendered the error or not-found
       // screen rather than a listing.
@@ -79,8 +82,28 @@ async function discoveredChecks() {
 }
 
 async function run() {
-  const checks = [...CHECKS, ...(await discoveredChecks())];
   const failures = [];
+
+  let sitemap = "";
+  try {
+    const response = await get(`${BASE}/sitemap.xml`);
+    if (response.status !== 200) {
+      failures.push(`Sitemap (/sitemap.xml) returned ${response.status}`);
+    } else if (!response.body.includes("<urlset")) {
+      failures.push("Sitemap (/sitemap.xml) loaded but is missing: <urlset");
+    } else {
+      sitemap = response.body;
+      console.log("  ok   Sitemap — /sitemap.xml");
+    }
+  } catch (error) {
+    failures.push(
+      `Sitemap (/sitemap.xml) could not be reached: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+
+  const checks = [...CHECKS, ...discoveredChecks(sitemap)];
 
   for (const check of checks) {
     const url = `${BASE}${check.path}`;
@@ -118,12 +141,12 @@ async function run() {
 
   console.log("");
   if (failures.length > 0) {
-    console.error(`FAILED ${failures.length} of ${checks.length} checks on ${BASE}`);
+    console.error(`FAILED ${failures.length} of ${checks.length + 1} checks on ${BASE}`);
     for (const failure of failures) console.error(`  - ${failure}`);
     process.exit(1);
   }
 
-  console.log(`All ${checks.length} checks passed on ${BASE}`);
+  console.log(`All ${checks.length + 1} checks passed on ${BASE}`);
 }
 
 run().catch((error) => {
