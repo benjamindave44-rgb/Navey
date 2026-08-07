@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SpotCard } from "@/components/SpotCard";
-import { findAreaBySlug, getAreaDirectory } from "@/lib/areas";
+import { areaPath, findArea, getAreaDirectory } from "@/lib/areas";
 import { servesCoffeeOrBakes, servesMeals } from "@/lib/categories";
 import { getApprovedSpots } from "@/lib/queries";
 import { getSavedSpotIds } from "@/lib/profile";
@@ -17,10 +17,10 @@ const SITE = "https://www.navey.co";
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ city: string; district: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
-  const area = await findAreaBySlug(slug);
+  const { city, district } = await params;
+  const area = await findArea(city, district);
   if (!area) return { title: "Not found" };
 
   const title = `Coffee Shops & Restaurants in ${area.district}`;
@@ -29,18 +29,18 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: `/area/${area.slug}` },
-    openGraph: { title, description, type: "website", url: `${SITE}/area/${area.slug}` },
+    alternates: { canonical: areaPath(area) },
+    openGraph: { title, description, type: "website", url: `${SITE}${areaPath(area)}` },
   };
 }
 
 export default async function AreaPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ city: string; district: string }>;
 }) {
-  const { slug } = await params;
-  const area = await findAreaBySlug(slug);
+  const { city, district } = await params;
+  const area = await findArea(city, district);
   if (!area) notFound();
 
   const [spots, savedSpotIds, directory] = await Promise.all([
@@ -54,7 +54,8 @@ export default async function AreaPage({
   const openNow = spots.filter((spot) => spot.openState === "open").length;
 
   const nearby = directory.filter(
-    (entry) => entry.city === area.city && entry.slug !== area.slug
+    (entry) =>
+      entry.city === area.city && entry.districtSlug !== area.districtSlug
   );
 
   const jsonLd = {
@@ -63,7 +64,7 @@ export default async function AreaPage({
       {
         "@type": "CollectionPage",
         name: `Coffee Shops & Restaurants in ${area.district}`,
-        url: `${SITE}/area/${area.slug}`,
+        url: `${SITE}${areaPath(area)}`,
         about: {
           "@type": "Place",
           name: area.district,
@@ -101,7 +102,7 @@ export default async function AreaPage({
             "@type": "ListItem",
             position: 4,
             name: area.district,
-            item: `${SITE}/area/${area.slug}`,
+            item: `${SITE}${areaPath(area)}`,
           },
         ],
       },
@@ -165,8 +166,8 @@ export default async function AreaPage({
             <div className="mt-4 flex flex-wrap gap-2">
               {nearby.map((entry) => (
                 <Link
-                  key={entry.slug}
-                  href={`/area/${entry.slug}`}
+                  key={`${entry.citySlug}/${entry.districtSlug}`}
+                  href={areaPath(entry)}
                   className="rounded-full bg-navey-band px-4 py-2 text-sm font-semibold transition-transform hover:-translate-y-0.5 hover:bg-navey-ink hover:text-navey-yellow"
                 >
                   {entry.district}

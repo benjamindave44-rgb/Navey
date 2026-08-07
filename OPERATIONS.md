@@ -46,6 +46,16 @@ appears everywhere — including its own page at `/tag/ramen`.
 **Add a city** — nothing to do. Add a listing with a new city and
 `/city/that-city` appears, sitemapped and linked from the homepage.
 
+**Add a neighbourhood** — fill the "Neighbourhood" field on a listing (BGC,
+Poblacion, Salcedo Village). `/area/<city>/<neighbourhood>` appears on its
+own, linked from the city page above it. The field suggests districts already
+in use; take the suggestion rather than retyping, or the same place ends up
+spelled two ways and split across two pages.
+
+The city is in the address on purpose: district names are not unique here.
+Makati has a Poblacion and so does Nasugbu, and a bare `/area/poblacion`
+would merge two different places into one page.
+
 **Add a kind of place** (e.g. "Bar") — one entry in `src/lib/categories.ts`.
 It carries the label and the term search engines are told, together. This was
 once copied across eight files; do not scatter it again.

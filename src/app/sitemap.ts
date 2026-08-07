@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { supabase } from "@/lib/supabase";
 import { getCityDirectory } from "@/lib/cities";
 import { getTagDirectory } from "@/lib/tags";
-import { getAreaDirectory } from "@/lib/areas";
+import { areaPath, getAreaDirectory } from "@/lib/areas";
 
 const SITE_URL = "https://www.navey.co";
 
@@ -65,7 +65,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Ranked highest of the generated pages: a neighbourhood is the most
   // specific thing someone searches for.
   const areaEntries: MetadataRoute.Sitemap = areas.map((area) => ({
-    url: `${SITE_URL}/area/${area.slug}`,
+    url: `${SITE_URL}${areaPath(area)}`,
     priority: 0.9,
   }));
 

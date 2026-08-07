@@ -5,7 +5,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SpotCard } from "@/components/SpotCard";
 import { findCityBySlug, getCityDirectory } from "@/lib/cities";
-import { getAreasInCity } from "@/lib/areas";
+import { areaPath, getAreasInCity } from "@/lib/areas";
 import { servesCoffeeOrBakes, servesMeals } from "@/lib/categories";
 import { getApprovedSpots } from "@/lib/queries";
 import { getSavedSpotIds } from "@/lib/profile";
@@ -154,8 +154,8 @@ export default async function CityPage({
             <div className="flex flex-wrap gap-2">
               {areas.map((area) => (
                 <Link
-                  key={area.slug}
-                  href={`/area/${area.slug}`}
+                  key={area.districtSlug}
+                  href={areaPath(area)}
                   className="rounded-full bg-navey-ink px-4 py-2 text-sm font-semibold text-navey-yellow transition-transform hover:-translate-y-0.5"
                 >
                   {area.district}

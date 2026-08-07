@@ -17,9 +17,19 @@ import { slugify } from "@/lib/slug";
 export type AreaEntry = {
   district: string;
   city: string;
-  slug: string;
+  /** URL segments. The city is part of the address because district names are
+   *  not unique in the Philippines -- Makati has a Poblacion and so does
+   *  Nasugbu, and a single /area/poblacion would silently merge two different
+   *  places into one page. Including the city keeps every slug stable forever,
+   *  rather than only until the day a second town collides with the first. */
+  citySlug: string;
+  districtSlug: string;
   count: number;
 };
+
+export function areaPath(entry: { citySlug: string; districtSlug: string }): string {
+  return `/area/${entry.citySlug}/${entry.districtSlug}`;
+}
 
 export async function getAreaDirectory(): Promise<AreaEntry[]> {
   const { data, error } = await supabase
@@ -34,14 +44,22 @@ export async function getAreaDirectory(): Promise<AreaEntry[]> {
   for (const spot of data) {
     const district = spot.district?.trim();
     if (!district) continue;
-    const slug = slugify(district);
-    if (!slug) continue;
+    const districtSlug = slugify(district);
+    const citySlug = slugify(spot.city ?? "");
+    if (!districtSlug || !citySlug) continue;
 
-    const existing = counts.get(slug);
+    const key = `${citySlug}/${districtSlug}`;
+    const existing = counts.get(key);
     if (existing) {
       existing.count += 1;
     } else {
-      counts.set(slug, { district, city: spot.city, slug, count: 1 });
+      counts.set(key, {
+        district,
+        city: spot.city,
+        citySlug,
+        districtSlug,
+        count: 1,
+      });
     }
   }
 
@@ -50,9 +68,17 @@ export async function getAreaDirectory(): Promise<AreaEntry[]> {
   );
 }
 
-export async function findAreaBySlug(slug: string): Promise<AreaEntry | null> {
+export async function findArea(
+  citySlug: string,
+  districtSlug: string
+): Promise<AreaEntry | null> {
   const directory = await getAreaDirectory();
-  return directory.find((entry) => entry.slug === slug) ?? null;
+  return (
+    directory.find(
+      (entry) =>
+        entry.citySlug === citySlug && entry.districtSlug === districtSlug
+    ) ?? null
+  );
 }
 
 /** The neighbourhoods inside one city, for linking down from its page. */
