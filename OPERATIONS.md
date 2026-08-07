@@ -98,11 +98,11 @@ the server so they cannot disagree.
   "Browse by City". Only these public reference lists are cached — never
   anything belonging to a signed-in person.
 - **The free Vercel plan includes 4 hours of server time per month**, and the
-  project pauses when that runs out. Nearly every public page here is marked
-  `force-dynamic`, meaning it is rebuilt for each visitor instead of being
-  reused, so anything that opens pages repeatedly — a monitor on a timer, a
-  crawler, a load test — costs real allowance. Check Usage → Fluid Active CPU
-  in Vercel before adding anything that runs on a schedule.
+  project pauses when that runs out. Most public pages are now cached, so a
+  repeat visit costs close to nothing — but Explore is not, and it is the page
+  crawlers hammer. Check Usage → Fluid Active CPU before adding anything that
+  runs on a schedule. A bot once spent three quarters of a month's allowance in
+  two days on `/explore?city=<somewhere with no listings>`.
 - **Leaked-password protection is off.** It needs a paid Supabase plan. Turn
   it on when you upgrade: Authentication → Policies.
 - **Tag and city pages only exist where there is content.** Deliberate. A page
@@ -118,8 +118,13 @@ Not urgent, not forgotten.
 2. **Visitor analytics.** Right now nobody can answer "did anyone visit today".
    Vercel Web Analytics is a toggle in the project; the free tier caps at a few
    thousand events a month.
-4. **Direct-to-storage uploads**, to lift the ~4MB submission ceiling.
-5. **Leaked-password protection**, when the Supabase plan is paid.
+3. **Direct-to-storage uploads**, to lift the ~4MB submission ceiling.
+4. **Leaked-password protection**, when the Supabase plan is paid.
+5. **The scheduled health check is still switched off.** It was turned off
+   because every page it opened was rendered fresh; now that they are cached,
+   the reason is gone and the hourly timer in `.github/workflows/smoke.yml`
+   can be uncommented. Left off deliberately rather than switched back on
+   quietly — it is a recurring cost, and those get agreed first here.
 
 Listing content still to fill in: 8 listings have no neighbourhood, Sage Day
 Coffee has no tags, two listings have no description, and Auro Chocolate Cafe
