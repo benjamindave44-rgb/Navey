@@ -92,6 +92,23 @@ body {
 
 /* Countdown on the active dot, so the rotation is legible rather than
    something that just happens to you. */
+/* A slow push into a photo while it is the one on screen.
+   Only `transform` is animated, which the browser hands to the GPU: it never
+   reflows the page, and it runs on the visitor's device rather than ours --
+   animation costs nothing on the server, whatever it looks like. */
+@keyframes photoDrift {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.09);
+  }
+}
+
+.photo-drift {
+  animation: photoDrift 7s ease-out forwards;
+}
+
 @keyframes dotProgress {
   from {
     width: 0.375rem;
@@ -103,7 +120,8 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .animate-\[riseIn_0\.45s_ease-out\],
-  .animate-\[dotProgress_5s_linear\] {
+  .animate-\[dotProgress_5s_linear\],
+  .photo-drift {
     animation: none;
   }
 }

@@ -78,7 +78,7 @@ export function SignInShowcase({
           priority={i === 0}
           sizes="(max-width: 768px) 100vw, 50vw"
           className={`object-cover transition-opacity duration-1000 ${
-            i === index ? "opacity-100" : "opacity-0"
+            i === index ? "photo-drift opacity-100" : "opacity-0"
           }`}
         />
       ))}
