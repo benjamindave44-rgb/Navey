@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { supabase } from "@/lib/supabase";
 import { getCityDirectory } from "@/lib/cities";
 import { getTagDirectory } from "@/lib/tags";
+import { getAreaDirectory } from "@/lib/areas";
 
 const SITE_URL = "https://www.navey.co";
 
@@ -20,11 +21,12 @@ const STATIC_ROUTES: { path: string; priority: number }[] = [
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [{ data: spots }, { data: collections }, cities, tags] = await Promise.all([
+  const [{ data: spots }, { data: collections }, cities, tags, areas] = await Promise.all([
     supabase.from("spots").select("id, created_at").eq("status", "approved"),
     supabase.from("collections").select("id, created_at"),
     getCityDirectory(),
     getTagDirectory(),
+    getAreaDirectory(),
   ]);
 
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((route) => ({
@@ -60,8 +62,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  // Ranked highest of the generated pages: a neighbourhood is the most
+  // specific thing someone searches for.
+  const areaEntries: MetadataRoute.Sitemap = areas.map((area) => ({
+    url: `${SITE_URL}/area/${area.slug}`,
+    priority: 0.9,
+  }));
+
   return [
     ...staticEntries,
+    ...areaEntries,
     ...cityEntries,
     ...tagEntries,
     ...spotEntries,

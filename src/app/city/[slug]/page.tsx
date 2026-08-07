@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SpotCard } from "@/components/SpotCard";
 import { findCityBySlug, getCityDirectory } from "@/lib/cities";
+import { getAreasInCity } from "@/lib/areas";
 import { servesCoffeeOrBakes, servesMeals } from "@/lib/categories";
 import { getApprovedSpots } from "@/lib/queries";
 import { getSavedSpotIds } from "@/lib/profile";
@@ -57,10 +58,11 @@ export default async function CityPage({
   const entry = await findCityBySlug(slug);
   if (!entry) notFound();
 
-  const [spots, savedSpotIds, directory] = await Promise.all([
+  const [spots, savedSpotIds, directory, areas] = await Promise.all([
     getApprovedSpots({ city: entry.city }),
     getSavedSpotIds(),
     getCityDirectory(),
+    getAreasInCity(entry.city),
   ]);
 
   const coffee = spots.filter((spot) => servesCoffeeOrBakes(spot.category)).length;
@@ -140,6 +142,29 @@ export default async function CityPage({
         <p className="mt-3 max-w-2xl text-sm font-medium text-navey-ink/70">
           {summarise(entry.city, spots.length, coffee, food)}
         </p>
+
+        {/* Sent down to the neighbourhood pages, which are what people
+            actually search for. Placed above the tags because "BGC" is a
+            stronger intent than "Chill". */}
+        {areas.length > 0 && (
+          <div className="mt-5">
+            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-navey-ink/45">
+              Neighbourhoods
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {areas.map((area) => (
+                <Link
+                  key={area.slug}
+                  href={`/area/${area.slug}`}
+                  className="rounded-full bg-navey-ink px-4 py-2 text-sm font-semibold text-navey-yellow transition-transform hover:-translate-y-0.5"
+                >
+                  {area.district}
+                  <span className="ml-1.5 opacity-60">{area.count}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {topTags.length > 0 && (
           <div className="mt-5 flex flex-wrap gap-2">

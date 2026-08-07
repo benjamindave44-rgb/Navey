@@ -509,6 +509,7 @@ export type Database = {
           city: string
           created_at: string
           description: string | null
+          district: string | null
           featured: boolean
           featured_rank: number
           hidden_gem: boolean
@@ -538,6 +539,7 @@ export type Database = {
           city: string
           created_at?: string
           description?: string | null
+          district?: string | null
           featured?: boolean
           featured_rank?: number
           hidden_gem?: boolean
@@ -567,6 +569,7 @@ export type Database = {
           city?: string
           created_at?: string
           description?: string | null
+          district?: string | null
           featured?: boolean
           featured_rank?: number
           hidden_gem?: boolean

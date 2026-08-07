@@ -148,6 +148,7 @@ export async function createListingAsAdmin(formData: FormData) {
   const address = String(formData.get("address") ?? "").trim();
   const city = String(formData.get("city") ?? "").trim();
   const province = String(formData.get("province") ?? "").trim();
+  const district = String(formData.get("district") ?? "").trim();
   const category = String(formData.get("category") ?? "coffee_shop");
   const priceRange = String(formData.get("priceRange") ?? "");
   const description = String(formData.get("description") ?? "").trim();
@@ -203,6 +204,7 @@ export async function createListingAsAdmin(formData: FormData) {
       address,
       city,
       province: province || null,
+      district: district || null,
       category,
       price_range: priceRange || null,
       description: description || null,
@@ -262,6 +264,7 @@ export async function updateListing(formData: FormData) {
   const address = String(formData.get("address") ?? "").trim();
   const city = String(formData.get("city") ?? "").trim();
   const province = String(formData.get("province") ?? "").trim();
+  const district = String(formData.get("district") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const status = String(formData.get("status") ?? "approved");
   const hiddenGem = formData.get("hiddenGem") === "on";
@@ -310,6 +313,7 @@ export async function updateListing(formData: FormData) {
       address,
       city,
       province: province || null,
+      district: district || null,
       description: description || null,
       status,
       hidden_gem: hiddenGem,

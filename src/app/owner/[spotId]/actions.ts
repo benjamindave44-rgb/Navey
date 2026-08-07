@@ -39,6 +39,7 @@ export async function updateBasicInfo(formData: FormData) {
   const address = String(formData.get("address") ?? "").trim();
   const city = String(formData.get("city") ?? "").trim();
   const province = String(formData.get("province") ?? "").trim();
+  const district = String(formData.get("district") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const locationAdjusted = formData.get("locationAdjusted") === "true";
   const manualLat = Number(formData.get("lat"));
@@ -83,6 +84,7 @@ export async function updateBasicInfo(formData: FormData) {
       address,
       city,
       province: province || null,
+      district: district || null,
       description: description || null,
       needs_review: needsReview,
       ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),

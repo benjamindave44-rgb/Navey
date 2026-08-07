@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getAreaDirectory } from "@/lib/areas";
 import { redirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -34,6 +35,7 @@ export default async function SubmitASpotPage({
   const success = typeof params.success === "string" ? params.success : undefined;
 
   const tags = success ? [] : await getTags();
+  const districts = (await getAreaDirectory()).map((area) => area.district);
 
   return (
     <>
@@ -78,7 +80,11 @@ export default async function SubmitASpotPage({
                 Navey.
               </p>
               <div className="mt-8">
-                <SubmitSpotForm tags={tags} error={error} />
+                <SubmitSpotForm
+                  tags={tags}
+                  knownDistricts={districts}
+                  error={error}
+                />
               </div>
             </>
           )}

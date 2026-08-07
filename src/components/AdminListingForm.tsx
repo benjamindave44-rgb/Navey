@@ -30,7 +30,13 @@ function SaveButton() {
   );
 }
 
-export function AdminListingForm({ spot }: { spot: AdminSpotDetail }) {
+export function AdminListingForm({
+  spot,
+  knownDistricts = [],
+}: {
+  spot: AdminSpotDetail;
+  knownDistricts?: string[];
+}) {
   const [category, setCategory] = useState(spot.category);
   const [priceRange, setPriceRange] = useState(spot.priceRange ?? "₱₱");
   const [status, setStatus] = useState(spot.status);
@@ -100,6 +106,8 @@ export function AdminListingForm({ spot }: { spot: AdminSpotDetail }) {
         initialAddress={spot.address}
         initialCity={spot.city}
         initialProvince={spot.province ?? ""}
+        initialDistrict={spot.district ?? ""}
+        knownDistricts={knownDistricts}
         initialLat={spot.lat}
         initialLng={spot.lng}
       />

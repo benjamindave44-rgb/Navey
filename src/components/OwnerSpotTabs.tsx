@@ -138,10 +138,12 @@ type Tab = "overview" | "hours" | "payments" | "amenities" | "gallery" | "menu";
 export function OwnerSpotTabs({
   spot,
   tags,
+  knownDistricts = [],
   initialTab,
 }: {
   spot: OwnerSpotDetail;
   tags: Tag[];
+  knownDistricts?: string[];
   initialTab: string;
 }) {
   const [tab, setTab] = useState<Tab>(
@@ -226,6 +228,8 @@ export function OwnerSpotTabs({
               initialAddress={spot.address}
               initialCity={spot.city}
               initialProvince={spot.province ?? ""}
+              initialDistrict={spot.district ?? ""}
+              knownDistricts={knownDistricts}
               initialLat={spot.lat}
               initialLng={spot.lng}
             />

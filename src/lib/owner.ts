@@ -33,6 +33,7 @@ export type OwnerSpotDetail = {
   address: string;
   city: string;
   province: string | null;
+  district: string | null;
   lat: number | null;
   lng: number | null;
   description: string | null;
@@ -66,7 +67,7 @@ export async function getOwnerSpotDetail(
   const { data, error } = await supabase
     .from("spots")
     .select(
-      `id, name, category, price_range, address, city, province, lat, lng, description, status, needs_review,
+      `id, name, category, price_range, address, city, province, district, lat, lng, description, status, needs_review,
        noise_level, music_style, lighting, seating_style,
        accepts_cash, accepts_qr_ph, accepts_cards, accepts_bank_transfer,
        spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours),
@@ -87,6 +88,7 @@ export async function getOwnerSpotDetail(
     address: data.address,
     city: data.city,
     province: data.province,
+    district: data.district,
     lat: data.lat,
     lng: data.lng,
     description: data.description,

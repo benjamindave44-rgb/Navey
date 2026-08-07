@@ -28,6 +28,7 @@ function SubmitButton({ label }: { label: string }) {
 
 export function SubmitSpotForm({
   tags,
+  knownDistricts = [],
   error,
   action = submitSpot,
   submitLabel = "Submit Spot",
@@ -35,6 +36,7 @@ export function SubmitSpotForm({
   allowFeature = false,
 }: {
   tags: Tag[];
+  knownDistricts?: string[];
   error?: string;
   action?: (formData: FormData) => void | Promise<void>;
   submitLabel?: string;
@@ -116,7 +118,7 @@ export function SubmitSpotForm({
         <input type="hidden" name="category" value={category} />
       </div>
 
-      <LocationFields onPick={handleLocationPick} />
+      <LocationFields onPick={handleLocationPick} knownDistricts={knownDistricts} />
 
       <HoursQuickPicker />
 

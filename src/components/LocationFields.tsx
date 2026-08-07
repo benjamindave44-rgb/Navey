@@ -211,6 +211,8 @@ export function LocationFields({
   initialAddress = "",
   initialCity = "",
   initialProvince = "",
+  initialDistrict = "",
+  knownDistricts = [],
   initialLat = null,
   initialLng = null,
   onPick,
@@ -218,6 +220,11 @@ export function LocationFields({
   initialAddress?: string;
   initialCity?: string;
   initialProvince?: string;
+  /** Neighbourhood, e.g. BGC or Poblacion. Drives the /area pages. */
+  initialDistrict?: string;
+  /** Districts already in use, offered as suggestions so the same place does
+   *  not end up spelled three ways and split across three pages. */
+  knownDistricts?: string[];
   initialLat?: number | null;
   initialLng?: number | null;
   /**
@@ -242,6 +249,7 @@ export function LocationFields({
   const [address, setAddress] = useState(initialAddress);
   const [city, setCity] = useState(initialCity);
   const [province, setProvince] = useState(initialProvince);
+  const [district, setDistrict] = useState(initialDistrict);
   const [position, setPosition] = useState<{ lat: number; lng: number } | null>(
     initialLat != null && initialLng != null
       ? { lat: initialLat, lng: initialLng }
@@ -546,6 +554,31 @@ export function LocationFields({
             className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
           />
         </div>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="district" className="text-sm font-semibold">
+            Neighbourhood (optional)
+          </label>
+          <input
+            id="district"
+            name="district"
+            type="text"
+            list="navey-districts"
+            value={district}
+            onChange={(event) => setDistrict(event.target.value)}
+            placeholder="BGC, Poblacion, Katipunan..."
+            className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+          />
+          <datalist id="navey-districts">
+            {knownDistricts.map((entry) => (
+              <option key={entry} value={entry} />
+            ))}
+          </datalist>
+          <p className="text-xs text-navey-ink/50">
+            This is what people search — &ldquo;coffee in BGC&rdquo;, not
+            &ldquo;coffee in Taguig&rdquo;. Each one gets its own page.
+          </p>
+        </div>
+
         <div className="flex flex-col gap-2">
           <label htmlFor="province" className="text-sm font-semibold">
             Province (optional)

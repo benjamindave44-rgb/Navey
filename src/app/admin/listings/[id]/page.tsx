@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getAreaDirectory } from "@/lib/areas";
 import { notFound } from "next/navigation";
 import { AdminListingForm } from "@/components/AdminListingForm";
 import { DeleteListingButton } from "@/components/DeleteListingButton";
@@ -19,6 +20,7 @@ export default async function AdminListingDetailPage({
   const error = typeof query.error === "string" ? query.error : undefined;
 
   const spot = await getAdminSpotDetail(id);
+  const districts = (await getAreaDirectory()).map((area) => area.district);
   if (!spot) notFound();
 
   return (
@@ -57,7 +59,7 @@ export default async function AdminListingDetailPage({
       )}
 
       <div className="mt-8">
-        <AdminListingForm spot={spot} />
+        <AdminListingForm spot={spot} knownDistricts={districts} />
       </div>
 
       <div className="mt-10 border-t border-black/10 pt-6">

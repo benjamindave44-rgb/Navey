@@ -36,6 +36,7 @@ export type SpotFilters = {
   search?: string;
   category?: string;
   city?: string;
+  district?: string;
   tag?: string;
   tags?: string[];
   sort?: SpotSort;
@@ -45,7 +46,7 @@ export type SpotFilters = {
 export async function getApprovedSpots(
   filters: SpotFilters = {}
 ): Promise<SpotWithTags[]> {
-  const { search, category, city, tag, tags, sort, limit } = filters;
+  const { search, category, city, district, tag, tags, sort, limit } = filters;
   const tagList = tags && tags.length > 0 ? tags : tag ? [tag] : [];
 
   let query = supabase
@@ -69,6 +70,7 @@ export async function getApprovedSpots(
   }
   if (category) query = query.eq("category", category);
   if (city) query = query.eq("city", city);
+  if (district) query = query.eq("district", district);
 
   const { data, error } = await query;
   logQueryError("getApprovedSpots", error);

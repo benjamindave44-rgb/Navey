@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getAreaDirectory } from "@/lib/areas";
 import { notFound, redirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -29,6 +30,7 @@ export default async function OwnerSpotPage({
 
   if (!user) redirect("/sign-in");
 
+  const districts = (await getAreaDirectory()).map((area) => area.district);
   const [spot, tags] = await Promise.all([
     getOwnerSpotDetail(user.id, spotId),
     getTags(),
@@ -78,7 +80,12 @@ export default async function OwnerSpotPage({
           )}
 
           <div className="mt-8">
-            <OwnerSpotTabs spot={spot} tags={tags} initialTab={initialTab} />
+            <OwnerSpotTabs
+              spot={spot}
+              tags={tags}
+              knownDistricts={districts}
+              initialTab={initialTab}
+            />
           </div>
         </div>
       </main>

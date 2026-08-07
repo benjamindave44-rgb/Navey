@@ -105,9 +105,28 @@ async function tagChecks() {
   }
 }
 
+/** Neighbourhood pages, discovered from the sitemap like the rest. */
+async function areaChecks() {
+  try {
+    const { status, body } = await get(`${BASE}/sitemap.xml`);
+    if (status !== 200) return [];
+    return [...body.matchAll(/<loc>([^<]*\/area\/[^<]+)<\/loc>/g)]
+      .map((match) => new URL(match[1]).pathname)
+      .slice(0, 2)
+      .map((path, index) => ({
+        name: `Area page ${index + 1}`,
+        path,
+        expect: ["Coffee Shops"],
+      }));
+  } catch {
+    return [];
+  }
+}
+
 async function run() {
   const checks = [
     ...CHECKS,
+    ...(await areaChecks()),
     ...(await spotChecks()),
     ...(await cityChecks()),
     ...(await tagChecks()),

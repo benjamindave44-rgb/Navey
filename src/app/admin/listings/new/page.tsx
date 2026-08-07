@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getAreaDirectory } from "@/lib/areas";
 import { createListingAsAdmin } from "@/app/admin/actions";
 import { SubmitSpotForm } from "@/components/SubmitSpotForm";
 import { getTags } from "@/lib/queries";
@@ -16,6 +17,7 @@ export default async function AdminAddListingPage({
   const spotId = typeof params.spotId === "string" ? params.spotId : undefined;
 
   const tags = success ? [] : await getTags();
+  const districts = (await getAreaDirectory()).map((area) => area.district);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -76,6 +78,7 @@ export default async function AdminAddListingPage({
           </p>
           <div className="mt-8">
             <SubmitSpotForm
+              knownDistricts={districts}
               tags={tags}
               error={error}
               action={createListingAsAdmin}
