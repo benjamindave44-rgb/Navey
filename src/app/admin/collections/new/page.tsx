@@ -38,7 +38,7 @@ export default async function NewCollectionPage({
             type="text"
             required
             placeholder="Best Work-Friendly Cafés in BGC"
-            className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+            className="rounded-full border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -50,7 +50,7 @@ export default async function NewCollectionPage({
             name="description"
             rows={3}
             placeholder="What ties these spots together?"
-            className="rounded-2xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+            className="rounded-2xl border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
           />
         </div>
         <button

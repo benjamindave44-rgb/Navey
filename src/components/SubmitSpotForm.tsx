@@ -154,7 +154,7 @@ export function SubmitSpotForm({
           id="description"
           name="description"
           rows={4}
-          className="rounded-2xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+          className="rounded-2xl border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
         />
       </div>
 

@@ -149,7 +149,7 @@ export default async function ExplorePage({
               name="q"
               defaultValue={search}
               placeholder="Search spots, cities, vibes..."
-              className="w-full rounded-full bg-white px-4 py-2 pr-9 text-sm shadow-[0_8px_24px_rgba(20,18,11,0.08)] outline-none"
+              className="w-full rounded-full bg-white px-4 py-2 pr-9 text-base sm:text-sm shadow-[0_8px_24px_rgba(20,18,11,0.08)] outline-none"
             />
             {search && (
               <Link
@@ -164,7 +164,7 @@ export default async function ExplorePage({
           <select
             name="category"
             defaultValue={category}
-            className="rounded-full bg-white px-4 py-2 text-sm shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
+            className="rounded-full bg-white px-4 py-2 text-base sm:text-sm shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
           >
             {CATEGORIES.map((option) => (
               <option key={option.value} value={option.value}>
@@ -175,7 +175,7 @@ export default async function ExplorePage({
           <select
             name="city"
             defaultValue={city}
-            className="rounded-full bg-white px-4 py-2 text-sm shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
+            className="rounded-full bg-white px-4 py-2 text-base sm:text-sm shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
           >
             <option value="">All cities</option>
             {cities.map((option) => (
@@ -187,7 +187,7 @@ export default async function ExplorePage({
           <select
             name="sort"
             defaultValue={sort}
-            className="rounded-full bg-white px-4 py-2 text-sm shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
+            className="rounded-full bg-white px-4 py-2 text-base sm:text-sm shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
           >
             {SORT_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>

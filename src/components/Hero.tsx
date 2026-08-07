@@ -60,7 +60,7 @@ export function Hero({
             type="text"
             name="q"
             placeholder="Search spots, cities, vibes..."
-            className="flex-1 border-none bg-transparent text-sm outline-none"
+            className="flex-1 border-none bg-transparent text-base sm:text-sm outline-none"
           />
           <button
             type="submit"

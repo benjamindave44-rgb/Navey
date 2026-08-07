@@ -35,7 +35,7 @@ export function ProfileInfoForm({
           type="text"
           required
           defaultValue={displayName}
-          className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+          className="rounded-full border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
         />
       </div>
 
@@ -53,7 +53,7 @@ export function ProfileInfoForm({
             type="text"
             defaultValue={handle}
             placeholder="yourname"
-            className="w-full rounded-full border border-black/10 py-3 pl-8 pr-4 text-sm outline-none focus:border-navey-ink"
+            className="w-full rounded-full border border-black/10 py-3 pl-8 pr-4 text-base sm:text-sm outline-none focus:border-navey-ink"
           />
         </div>
       </div>

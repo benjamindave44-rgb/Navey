@@ -84,7 +84,7 @@ export function WriteReviewForm({
           rows={5}
           defaultValue={initialBody}
           placeholder="How was the coffee, the vibe, the service?"
-          className="rounded-2xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+          className="rounded-2xl border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
         />
       </div>
 

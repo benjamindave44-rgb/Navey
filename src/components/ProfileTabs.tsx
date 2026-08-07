@@ -89,7 +89,7 @@ export function ProfileTabs({ profile }: { profile: ProfileData }) {
                   name="name"
                   placeholder="List name"
                   required
-                  className="rounded-full border border-black/10 px-4 py-2 text-sm outline-none focus:border-navey-ink"
+                  className="rounded-full border border-black/10 px-4 py-2 text-base sm:text-sm outline-none focus:border-navey-ink"
                 />
                 <label className="flex items-center gap-2 text-sm text-navey-ink/70">
                   <input type="checkbox" name="isPublic" />

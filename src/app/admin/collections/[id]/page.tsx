@@ -75,7 +75,7 @@ export default async function EditCollectionPage({
             type="text"
             defaultValue={collection.title}
             required
-            className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+            className="rounded-full border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -87,7 +87,7 @@ export default async function EditCollectionPage({
             name="description"
             rows={3}
             defaultValue={collection.description ?? ""}
-            className="rounded-2xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+            className="rounded-2xl border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
           />
         </div>
         <button
@@ -182,7 +182,7 @@ export default async function EditCollectionPage({
             <select
               name="spotId"
               required
-              className="min-w-[240px] flex-1 rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm"
+              className="min-w-[240px] flex-1 rounded-full border border-black/10 bg-white px-4 py-2.5 text-base sm:text-sm"
             >
               {available.map((spot) => (
                 <option key={spot.id} value={spot.id}>

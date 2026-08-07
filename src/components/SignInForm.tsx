@@ -115,7 +115,7 @@ export function SignInForm({
             name="name"
             placeholder="Name"
             required
-            className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+            className="rounded-full border border-black/10 px-4 py-3 text-base outline-none focus:border-navey-ink sm:text-sm"
           />
         )}
         <div className="relative">
@@ -126,7 +126,7 @@ export function SignInForm({
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="w-full rounded-full border border-black/10 px-4 py-3 pr-9 text-sm outline-none focus:border-navey-ink"
+            className="w-full rounded-full border border-black/10 px-4 py-3 pr-9 text-base outline-none focus:border-navey-ink sm:text-sm"
           />
           {emailValid && (
             <span
@@ -146,7 +146,7 @@ export function SignInForm({
             minLength={mode === "signup" ? 8 : undefined}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="w-full rounded-full border border-black/10 px-4 py-3 pr-16 text-sm outline-none focus:border-navey-ink"
+            className="w-full rounded-full border border-black/10 px-4 py-3 pr-16 text-base outline-none focus:border-navey-ink sm:text-sm"
           />
           <button
             type="button"

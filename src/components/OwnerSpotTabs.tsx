@@ -199,7 +199,7 @@ export function OwnerSpotTabs({
                 type="text"
                 defaultValue={spot.name}
                 required
-                className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+                className="rounded-full border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
               />
             </div>
 
@@ -264,7 +264,7 @@ export function OwnerSpotTabs({
                 name="description"
                 rows={4}
                 defaultValue={spot.description ?? ""}
-                className="rounded-2xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+                className="rounded-2xl border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
               />
             </div>
 
@@ -329,7 +329,7 @@ export function OwnerSpotTabs({
                   type="text"
                   defaultValue={spot.noiseLevel ?? ""}
                   placeholder="e.g. Quiet"
-                  className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+                  className="rounded-full border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -342,7 +342,7 @@ export function OwnerSpotTabs({
                   type="text"
                   defaultValue={spot.musicStyle ?? ""}
                   placeholder="e.g. Lo-fi"
-                  className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+                  className="rounded-full border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -355,7 +355,7 @@ export function OwnerSpotTabs({
                   type="text"
                   defaultValue={spot.lighting ?? ""}
                   placeholder="e.g. Warm"
-                  className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+                  className="rounded-full border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -368,7 +368,7 @@ export function OwnerSpotTabs({
                   type="text"
                   defaultValue={spot.seatingStyle ?? ""}
                   placeholder="e.g. Communal tables"
-                  className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+                  className="rounded-full border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
                 />
               </div>
             </div>

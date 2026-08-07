@@ -61,12 +61,12 @@ export default async function AdminListingsPage({
           name="q"
           defaultValue={search}
           placeholder="Search by name or city..."
-          className="min-w-[200px] flex-1 rounded-full bg-white px-4 py-2 text-sm shadow-[0_8px_24px_rgba(20,18,11,0.08)] outline-none"
+          className="min-w-[200px] flex-1 rounded-full bg-white px-4 py-2 text-base sm:text-sm shadow-[0_8px_24px_rgba(20,18,11,0.08)] outline-none"
         />
         <select
           name="status"
           defaultValue={status}
-          className="rounded-full bg-white px-4 py-2 text-sm shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
+          className="rounded-full bg-white px-4 py-2 text-base sm:text-sm shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
         >
           {STATUS_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>

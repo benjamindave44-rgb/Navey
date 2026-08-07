@@ -74,7 +74,7 @@ export function ClaimBusinessForm({
           type="text"
           required
           defaultValue={defaultName}
-          className="w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+          className="w-full rounded-xl border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
         />
       </div>
 
@@ -88,7 +88,7 @@ export function ClaimBusinessForm({
           type="email"
           required
           defaultValue={defaultEmail}
-          className="w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+          className="w-full rounded-xl border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
         />
       </div>
 
@@ -102,7 +102,7 @@ export function ClaimBusinessForm({
           type="file"
           accept="image/jpeg,image/png,application/pdf"
           onChange={checkProof}
-          className="w-full rounded-xl border-2 border-dashed border-black/20 px-4 py-3 text-sm outline-none"
+          className="w-full rounded-xl border-2 border-dashed border-black/20 px-4 py-3 text-base sm:text-sm outline-none"
         />
         {tooLarge && (
           <p

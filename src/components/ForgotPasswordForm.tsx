@@ -58,7 +58,7 @@ export function ForgotPasswordForm({
             name="email"
             placeholder="you@gmail.com"
             required
-            className="w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+            className="w-full rounded-xl border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
           />
         </div>
 

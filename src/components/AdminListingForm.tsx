@@ -56,7 +56,7 @@ export function AdminListingForm({
           type="text"
           defaultValue={spot.name}
           required
-          className="rounded-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+          className="rounded-full border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
         />
       </div>
 
@@ -147,7 +147,7 @@ export function AdminListingForm({
           name="description"
           rows={4}
           defaultValue={spot.description ?? ""}
-          className="rounded-2xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-navey-ink"
+          className="rounded-2xl border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
         />
       </div>
 
@@ -181,7 +181,7 @@ export function AdminListingForm({
               type="number"
               min={0}
               defaultValue={spot.featuredRank}
-              className="w-24 rounded-full border border-black/10 px-4 py-2 text-sm outline-none focus:border-navey-ink"
+              className="w-24 rounded-full border border-black/10 px-4 py-2 text-base sm:text-sm outline-none focus:border-navey-ink"
             />
             <span className="text-xs text-navey-ink/50">
               Lower shows first.
