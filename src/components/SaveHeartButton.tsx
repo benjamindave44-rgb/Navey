@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toggleSaveSpot } from "@/app/spots/actions";
+import { forgetSavedSpots, useSavedSpots } from "@/lib/use-saved-spots";
 
 export function SaveHeartButton({
   spotId,
@@ -14,7 +15,13 @@ export function SaveHeartButton({
   variant?: "overlay" | "plain";
 }) {
   const router = useRouter();
-  const [saved, setSaved] = useState(initialSaved);
+  // The page may still tell us (older, uncached pages do). Where it does not,
+  // the browser works it out instead -- which is what lets those pages be
+  // built once and shared. A click always wins over both.
+  const { ids, ready } = useSavedSpots();
+  const [clicked, setClicked] = useState<boolean | null>(null);
+  const saved = clicked ?? (ready ? ids.has(spotId) : initialSaved);
+  const setSaved = setClicked;
   const [pending, startTransition] = useTransition();
 
   function handleClick(event: React.MouseEvent) {
@@ -38,6 +45,9 @@ export function SaveHeartButton({
         return;
       }
       setSaved(result.status === "saved");
+      // The shared list was fetched before this change; drop it so the next
+      // page reads the truth rather than a stale copy.
+      forgetSavedSpots();
     });
   }
 
