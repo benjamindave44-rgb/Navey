@@ -155,6 +155,37 @@ What this means when you change something:
   The five-minute refresh heals it; the health check reads page contents rather
   than status codes, so a lasting one would be caught.
 
+## The rule that keeps the hosting bill at zero
+
+`src/proxy.ts` runs before a page is served, and it is billed as its own
+invocation — separately from whatever it sits in front of. It used to run on
+every request, which meant a page already built and waiting in the CDN still
+woke a server up to be handed over: caching the site saved nothing, because
+the meter was read before the cached page was ever reached. A crawler asking
+for the homepage three times a second cost the same as real admin work.
+126,000 invocations in twelve hours, on a site with no visitors.
+
+Its `matcher` now lists only pages belonging to a signed-in person. **Anything
+not on that list is served by the CDN with no server involvement at all, and
+cannot cost anything however often it is requested.**
+
+So: **never add a public page to that matcher.** If a public page needs to
+know who is looking, do it in the browser — `src/lib/use-viewer.ts` and
+`src/lib/use-saved-spots.ts` are the two examples, and the browser refreshing
+its own session is exactly what makes leaving public pages out safe.
+
+Bot defence has three layers, in order of how much they actually stop:
+
+1. **Vercel Firewall rules** (dashboard, not code) — the only layer that
+   enforces anything. Currently: GPTBot denied, `/explore` challenged. The
+   free plan allows 3 rules, 1 rate limit, 10 IP blocks.
+2. **The matcher above** — makes the requests that do get through free.
+3. **`src/app/robots.ts`** — a polite request. Honoured by well-behaved
+   crawlers, ignored by the rest.
+
+Note that Vercel's Attack Challenge Mode does **not** stop verified bots —
+GPTBot walked through it for twelve hours. Use a firewall rule for those.
+
 ## Before changing code
 
 ```
