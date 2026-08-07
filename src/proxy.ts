@@ -111,8 +111,15 @@ export async function proxy(request: NextRequest) {
   return sessionResponse;
 }
 
+/**
+ * Anything listed here skips this file entirely, and skipping it is not just
+ * cheaper -- it is one fewer billed invocation, because the proxy is counted
+ * separately from the page it runs in front of. Crawlers hit the sitemap,
+ * robots.txt and the icons constantly, and not one of those requests has ever
+ * carried a session worth refreshing.
+ */
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|icon.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|manifest.webmanifest|opengraph-image|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|webmanifest)$).*)",
   ],
 };
