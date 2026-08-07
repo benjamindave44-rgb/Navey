@@ -246,12 +246,17 @@ export type CollectionWithSpots = {
   title: string;
   description: string | null;
   spotCount: number;
+  /** What the card shows. The curator's own uploaded cover if there is one,
+   *  otherwise the photos of the places inside it. */
+  covers: string[];
 };
 
 export async function getCollections(limit = 4): Promise<CollectionWithSpots[]> {
   const { data, error } = await supabase
     .from("collections")
-    .select("id, title, description, collection_spots(spot_id)")
+    .select(
+      "id, title, description, collection_photos(url), collection_spots(spot_id, spots(spot_photos(url, kind)))"
+    )
     .order("created_at", { ascending: false });
 
   logQueryError("getCollections", error);
@@ -263,12 +268,27 @@ export async function getCollections(limit = 4): Promise<CollectionWithSpots[]> 
   // from a collection that has something in it. Admin has its own query and
   // still sees every collection.
   return data
-    .map((collection) => ({
-      id: collection.id,
-      title: collection.title,
-      description: collection.description,
-      spotCount: collection.collection_spots.length,
-    }))
+    .map((collection) => {
+      // A curator who uploaded a cover chose it on purpose, so it wins over
+      // anything assembled automatically.
+      const uploaded = collection.collection_photos[0]?.url;
+      const fromSpots = collection.collection_spots
+        .map(
+          (entry) =>
+            entry.spots?.spot_photos.find((photo) => photo.kind === "gallery")
+              ?.url ?? null
+        )
+        .filter((url): url is string => Boolean(url))
+        .slice(0, 4);
+
+      return {
+        id: collection.id,
+        title: collection.title,
+        description: collection.description,
+        spotCount: collection.collection_spots.length,
+        covers: uploaded ? [uploaded] : fromSpots,
+      };
+    })
     .filter((collection) => collection.spotCount > 0)
     .slice(0, limit);
 }

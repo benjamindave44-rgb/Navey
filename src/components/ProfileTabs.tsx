@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { createSavedList } from "@/app/profile/actions";
-import { SavedListCover } from "@/components/SavedListCover";
+import { CoverMosaic } from "@/components/CoverMosaic";
 import type { ProfileData } from "@/lib/profile";
 
 const BADGES = [
@@ -64,7 +64,7 @@ export function ProfileTabs({ profile }: { profile: ProfileData }) {
                 href={`/lists/${list.id}`}
                 className="group flex flex-col gap-2 rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)] transition-[transform,box-shadow] hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(20,18,11,0.14)] active:scale-[0.98]"
               >
-                <SavedListCover covers={list.covers} name={list.name} />
+                <CoverMosaic covers={list.covers} name={list.name} />
                 <p className="font-heading font-bold group-hover:underline">
                   {list.name}
                 </p>
