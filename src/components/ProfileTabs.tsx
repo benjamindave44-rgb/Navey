@@ -56,9 +56,12 @@ export function ProfileTabs({ profile }: { profile: ProfileData }) {
         {tab === "lists" && (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {profile.savedLists.map((list) => (
-              <div
+              // These were plain boxes with nothing behind them, so a saved
+              // list could be counted but never opened.
+              <Link
                 key={list.id}
-                className="flex flex-col gap-2 rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]"
+                href={`/lists/${list.id}`}
+                className="flex flex-col gap-2 rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)] transition-[transform,box-shadow] hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(20,18,11,0.14)] active:scale-[0.98]"
               >
                 <div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-navey-band text-3xl">
                   🗺️
@@ -72,7 +75,7 @@ export function ProfileTabs({ profile }: { profile: ProfileData }) {
                     {list.isPublic ? "Public" : "Private"}
                   </span>
                 </div>
-              </div>
+              </Link>
             ))}
 
             {showNewList ? (

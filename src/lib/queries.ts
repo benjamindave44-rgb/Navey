@@ -1,4 +1,5 @@
-import type { PostgrestError } from "@supabase/supabase-js";
+import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/database.types";
 import { supabase } from "@/lib/supabase";
 import { orderTagsForCards } from "@/lib/tag-priority";
 import { openStatus, type OpenState } from "@/lib/open-status";
@@ -44,6 +45,17 @@ export type SpotFilters = {
   limit?: number;
 };
 
+/** Any Supabase client. Passed in rather than reached for, so a caller can
+ *  hand over the signed-in person's own client and let the database's rules
+ *  decide what comes back. */
+type SupabaseLike = SupabaseClient<Database>;
+
+/** Everything a card needs, in one place. This was written out at each call
+ *  site, which is how two of them can quietly drift apart and one grid starts
+ *  rendering without hours or tags. */
+const SPOT_CARD_SELECT =
+  "id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label, tag_group, sort_order)), spot_photos(url, kind), spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours)";
+
 export async function getApprovedSpots(
   filters: SpotFilters = {}
 ): Promise<SpotWithTags[]> {
@@ -53,7 +65,7 @@ export async function getApprovedSpots(
   let query = supabase
     .from("spots")
     .select(
-      "id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label, tag_group, sort_order)), spot_photos(url, kind), spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours)"
+      SPOT_CARD_SELECT
     )
     .eq("status", "approved");
 
@@ -120,7 +132,7 @@ export async function getFeaturedSpots(limit = 5): Promise<SpotWithTags[]> {
   const { data } = await supabase
     .from("spots")
     .select(
-      "id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label, tag_group, sort_order)), spot_photos(url, kind), spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours)"
+      SPOT_CARD_SELECT
     )
     .eq("status", "approved")
     .eq("featured", true)
@@ -535,4 +547,62 @@ export async function getRelatedSpots(
     combined.push(spot);
   }
   return combined.slice(0, limit);
+}
+
+/**
+ * The spots on a saved list. Reads through the caller's own Supabase client so
+ * the database decides what may be seen -- a private list returns nothing to
+ * anyone but its owner, and that rule lives in one place rather than being
+ * re-implemented here.
+ */
+export async function getSpotsByIds(
+  client: SupabaseLike,
+  ids: string[]
+): Promise<SpotWithTags[]> {
+  if (ids.length === 0) return [];
+
+  const { data, error } = await client
+    .from("spots")
+    .select(SPOT_CARD_SELECT)
+    .eq("status", "approved")
+    .in("id", ids);
+
+  logQueryError("getSpotsByIds", error);
+  if (error || !data) return [];
+
+  const now = new Date();
+  const byId = new Map(data.map((spot) => [spot.id, spot]));
+
+  // Kept in the order the ids arrived, so a list reads the way it was built
+  // rather than in whatever order the database happened to return.
+  return ids.flatMap((id) => {
+    const spot = byId.get(id);
+    if (!spot) return [];
+    return [
+      {
+        id: spot.id,
+        name: spot.name,
+        category: spot.category,
+        price_range: spot.price_range,
+        city: spot.city,
+        province: spot.province,
+        hidden_gem: spot.hidden_gem,
+        description: spot.description,
+        saveCount: spot.save_count,
+        tags: orderTagsForCards(
+          spot.spot_tags
+            .map((st) => st.tags)
+            .filter((tag): tag is NonNullable<typeof tag> => Boolean(tag))
+            .map((tag) => ({
+              label: tag.label,
+              group: tag.tag_group,
+              sort: tag.sort_order,
+            }))
+        ),
+        coverPhoto:
+          spot.spot_photos.find((p) => p.kind === "gallery")?.url ?? null,
+        openState: openStatus(spot.spot_hours, now),
+      },
+    ];
+  });
 }
