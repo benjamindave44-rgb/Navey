@@ -10,6 +10,7 @@ import {
   getTags,
   tagsInUse,
   type SpotSort,
+  type SpotWithTags,
 } from "@/lib/queries";
 import { getSavedSpotIds } from "@/lib/profile";
 
@@ -94,9 +95,19 @@ export default async function ExplorePage({
     .map((t) => t.trim())
     .filter(Boolean);
 
-  const [spots, cities, tags, savedSpotIds] = await Promise.all([
-    getApprovedSpots({ search, category, city, tags: activeTags, sort }),
-    getCities(),
+  // Cities first, and on its own, so the expensive query below can be skipped
+  // entirely. A filter naming a city with nothing in it is nearly always a
+  // crawler walking guesses -- Tagaytay, Baguio, Cebu -- and answering each
+  // guess cost a full catalogue read plus a rendered page to say "nothing
+  // here". The answer is the same without asking, and this is one small
+  // single-column read against the several it replaces.
+  const cities = await getCities();
+  const unknownCity = Boolean(city) && !cities.includes(city);
+
+  const [spots, tags, savedSpotIds] = await Promise.all([
+    unknownCity
+      ? Promise.resolve<SpotWithTags[]>([])
+      : getApprovedSpots({ search, category, city, tags: activeTags, sort }),
     getTags().then(tagsInUse),
     getSavedSpotIds(),
   ]);
@@ -207,6 +218,7 @@ export default async function ExplorePage({
               <Link
                 key={option.id}
                 href={buildHref(baseParams, { tags: nextTags.join(",") })}
+                prefetch={false}
                 className={`rounded-full px-4 py-2 text-xs font-semibold ${
                   isActive ? "bg-navey-ink text-navey-yellow" : "bg-white"
                 }`}
@@ -236,6 +248,7 @@ export default async function ExplorePage({
                 <Link
                   key={option}
                   href={buildHref(baseParams, { city: option })}
+                  prefetch={false}
                   className="rounded-full bg-white px-4 py-2 text-xs font-semibold hover:bg-navey-band"
                 >
                   {option}

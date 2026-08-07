@@ -156,6 +156,7 @@ export default async function CityPage({
                 <Link
                   key={area.districtSlug}
                   href={areaPath(area)}
+                  prefetch={false}
                   className="rounded-full bg-navey-ink px-4 py-2 text-sm font-semibold text-navey-yellow transition-transform hover:-translate-y-0.5"
                 >
                   {area.district}
@@ -172,6 +173,7 @@ export default async function CityPage({
               <Link
                 key={tag}
                 href={`/explore?city=${encodeURIComponent(entry.city)}&tags=${encodeURIComponent(tag)}`}
+                prefetch={false}
                 className="rounded-full bg-white px-4 py-2 text-xs font-semibold shadow-[0_4px_12px_rgba(20,18,11,0.06)] transition-transform hover:-translate-y-0.5"
               >
                 {tag}
@@ -208,6 +210,7 @@ export default async function CityPage({
                 <Link
                   key={city.slug}
                   href={`/city/${city.slug}`}
+                  prefetch={false}
                   className="rounded-full bg-navey-band px-4 py-2 text-sm font-semibold transition-transform hover:-translate-y-0.5 hover:bg-navey-ink hover:text-navey-yellow"
                 >
                   {city.city}

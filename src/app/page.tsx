@@ -187,6 +187,11 @@ export default async function Home() {
                       <Link
                         key={tag.id}
                         href={`/tag/${tag.slug}`}
+                        // Without this, every chip on screen quietly renders
+                        // its whole page on the server before anyone clicks
+                        // it -- forty pages built to serve one. Chips are
+                        // cheap to open on demand; prefetching them is not.
+                        prefetch={false}
                         className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold shadow-[0_4px_12px_rgba(20,18,11,0.05)] transition-transform hover:-translate-y-0.5 hover:bg-navey-ink hover:text-navey-yellow active:scale-95"
                       >
                         {tag.icon && <span aria-hidden>{tag.icon}</span>}
@@ -248,6 +253,7 @@ export default async function Home() {
                 <Link
                   key={city.slug}
                   href={`/city/${city.slug}`}
+                  prefetch={false}
                   className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold transition-transform hover:-translate-y-0.5 hover:bg-navey-ink hover:text-navey-yellow active:scale-95"
                 >
                   {city.city}
