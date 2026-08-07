@@ -13,7 +13,13 @@ import {
 } from "@/lib/community";
 import { timeAgo } from "@/lib/time";
 
-export const dynamic = "force-dynamic";
+// Built once and shared, rather than rebuilt for each visitor. Nothing on
+// this page differs between people -- the account controls in the header
+// resolve in the browser -- so a per-visitor rebuild bought nothing and cost
+// a page render every time. Five minutes is the longest anyone waits to see
+// a newly approved listing here; publishing from the admin panel refreshes
+// the affected pages at once regardless.
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Community",
