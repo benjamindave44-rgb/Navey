@@ -91,6 +91,12 @@ the server so they cannot disagree.
   PDFs are not, which is why a long PDF menu fails while photos of the same
   pages succeed. The real fix is uploading straight to Supabase and bypassing
   the server — a moderate piece of work, not yet done.
+- **City, tag and neighbourhood lists are up to a minute stale.** They are held
+  in memory for 60 seconds (`src/lib/memo.ts`) because every page reads them
+  and almost nothing changes them. Add a listing in a brand-new city and the
+  listing appears at once, but the city may take a minute to show up under
+  "Browse by City". Only these public reference lists are cached — never
+  anything belonging to a signed-in person.
 - **The free Vercel plan includes 4 hours of server time per month**, and the
   project pauses when that runs out. Nearly every public page here is marked
   `force-dynamic`, meaning it is rebuilt for each visitor instead of being

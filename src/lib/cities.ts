@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { citySlug } from "@/lib/slug";
+import { memo } from "@/lib/memo";
 
 /**
  * "Coffee shops in Taguig" is what people actually type, and a filtered
@@ -20,23 +21,25 @@ export type CityEntry = {
 
 /** Every city with at least one approved listing, busiest first. */
 export async function getCityDirectory(): Promise<CityEntry[]> {
-  const { data, error } = await supabase
-    .from("spots")
-    .select("city")
-    .eq("status", "approved");
+  return memo("city-directory", async () => {
+    const { data, error } = await supabase
+      .from("spots")
+      .select("city")
+      .eq("status", "approved");
 
-  if (error || !data) return [];
+    if (error || !data) return [];
 
-  const counts = new Map<string, number>();
-  for (const spot of data) {
-    const name = spot.city?.trim();
-    if (!name) continue;
-    counts.set(name, (counts.get(name) ?? 0) + 1);
-  }
+    const counts = new Map<string, number>();
+    for (const spot of data) {
+      const name = spot.city?.trim();
+      if (!name) continue;
+      counts.set(name, (counts.get(name) ?? 0) + 1);
+    }
 
-  return [...counts.entries()]
-    .map(([city, count]) => ({ city, slug: citySlug(city), count }))
-    .sort((a, b) => b.count - a.count || a.city.localeCompare(b.city));
+    return [...counts.entries()]
+      .map(([city, count]) => ({ city, slug: citySlug(city), count }))
+      .sort((a, b) => b.count - a.count || a.city.localeCompare(b.city));
+  });
 }
 
 /**

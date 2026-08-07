@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slug";
+import { memo } from "@/lib/memo";
 
 /**
  * Neighbourhoods, sitting under cities.
@@ -32,40 +33,42 @@ export function areaPath(entry: { citySlug: string; districtSlug: string }): str
 }
 
 export async function getAreaDirectory(): Promise<AreaEntry[]> {
-  const { data, error } = await supabase
-    .from("spots")
-    .select("district, city")
-    .eq("status", "approved")
-    .not("district", "is", null);
+  return memo("area-directory", async () => {
+    const { data, error } = await supabase
+      .from("spots")
+      .select("district, city")
+      .eq("status", "approved")
+      .not("district", "is", null);
 
-  if (error || !data) return [];
+    if (error || !data) return [];
 
-  const counts = new Map<string, AreaEntry>();
-  for (const spot of data) {
-    const district = spot.district?.trim();
-    if (!district) continue;
-    const districtSlug = slugify(district);
-    const citySlug = slugify(spot.city ?? "");
-    if (!districtSlug || !citySlug) continue;
+    const counts = new Map<string, AreaEntry>();
+    for (const spot of data) {
+      const district = spot.district?.trim();
+      if (!district) continue;
+      const districtSlug = slugify(district);
+      const citySlug = slugify(spot.city ?? "");
+      if (!districtSlug || !citySlug) continue;
 
-    const key = `${citySlug}/${districtSlug}`;
-    const existing = counts.get(key);
-    if (existing) {
-      existing.count += 1;
-    } else {
-      counts.set(key, {
-        district,
-        city: spot.city,
-        citySlug,
-        districtSlug,
-        count: 1,
-      });
+      const key = `${citySlug}/${districtSlug}`;
+      const existing = counts.get(key);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        counts.set(key, {
+          district,
+          city: spot.city,
+          citySlug,
+          districtSlug,
+          count: 1,
+        });
+      }
     }
-  }
 
-  return [...counts.values()].sort(
-    (a, b) => b.count - a.count || a.district.localeCompare(b.district)
-  );
+    return [...counts.values()].sort(
+      (a, b) => b.count - a.count || a.district.localeCompare(b.district)
+    );
+  });
 }
 
 export async function findArea(

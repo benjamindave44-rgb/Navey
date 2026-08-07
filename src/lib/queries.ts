@@ -2,6 +2,7 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { orderTagsForCards } from "@/lib/tag-priority";
 import { openStatus, type OpenState } from "@/lib/open-status";
+import { memo } from "@/lib/memo";
 
 /**
  * A query that fails is not a query that found nothing, and the two must not
@@ -216,14 +217,16 @@ export async function getVibeMatches(
 }
 
 export async function getCities(): Promise<string[]> {
-  const { data, error } = await supabase
-    .from("spots")
-    .select("city")
-    .eq("status", "approved");
+  return memo("cities", async () => {
+    const { data, error } = await supabase
+      .from("spots")
+      .select("city")
+      .eq("status", "approved");
 
-  logQueryError("getCities", error);
-  if (error || !data) return [];
-  return Array.from(new Set(data.map((spot) => spot.city))).sort();
+    logQueryError("getCities", error);
+    if (error || !data) return [];
+    return Array.from(new Set(data.map((spot) => spot.city))).sort();
+  });
 }
 
 export type CollectionWithSpots = {
@@ -271,29 +274,31 @@ export type Tag = {
 /** Ordered by sort_order so groups arrive together and in a deliberate
  *  sequence, rather than in whatever order the rows were created. */
 export async function getTags(): Promise<Tag[]> {
-  const [{ data, error }, { data: used }] = await Promise.all([
-    supabase
-      .from("tags")
-      .select("id, label, icon, tag_group, sort_order")
-      .order("sort_order"),
-    supabase.from("spot_tags").select("tag_id, spots!inner(status)"),
-  ]);
+  return memo("tags", async () => {
+    const [{ data, error }, { data: used }] = await Promise.all([
+      supabase
+        .from("tags")
+        .select("id, label, icon, tag_group, sort_order")
+        .order("sort_order"),
+      supabase.from("spot_tags").select("tag_id, spots!inner(status)"),
+    ]);
 
-  const counts = new Map<number, number>();
-  for (const row of used ?? []) {
-    if (row.spots?.status !== "approved") continue;
-    counts.set(row.tag_id, (counts.get(row.tag_id) ?? 0) + 1);
-  }
+    const counts = new Map<number, number>();
+    for (const row of used ?? []) {
+      if (row.spots?.status !== "approved") continue;
+      counts.set(row.tag_id, (counts.get(row.tag_id) ?? 0) + 1);
+    }
 
-  logQueryError("getTags", error);
-  if (error || !data) return [];
-  return data.map((tag) => ({
-    id: tag.id,
-    label: tag.label,
-    icon: tag.icon,
-    group: tag.tag_group,
-    count: counts.get(tag.id) ?? 0,
-  }));
+    logQueryError("getTags", error);
+    if (error || !data) return [];
+    return data.map((tag) => ({
+      id: tag.id,
+      label: tag.label,
+      icon: tag.icon,
+      group: tag.tag_group,
+      count: counts.get(tag.id) ?? 0,
+    }));
+  });
 }
 
 /**
