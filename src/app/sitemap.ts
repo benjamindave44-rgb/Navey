@@ -6,6 +6,15 @@ import { areaPath, getAreaDirectory } from "@/lib/areas";
 
 const SITE_URL = "https://www.navey.co";
 
+/**
+ * Rebuilt at most once an hour rather than on every request. The sitemap is
+ * identical for every visitor and is the heaviest query on the site -- it
+ * walks every spot, collection, city, tag and area -- so recomputing it per
+ * hit was burning server time to produce a byte-identical file. Crawlers read
+ * it a few times a day; an hour stale costs nothing.
+ */
+export const revalidate = 3600;
+
 const STATIC_ROUTES: { path: string; priority: number }[] = [
   { path: "/", priority: 1 },
   { path: "/explore", priority: 0.9 },

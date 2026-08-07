@@ -44,93 +44,42 @@ async function get(url) {
 }
 
 /**
- * Spot pages are the product, and they are what broke. Rather than pin a spot
- * id that could later be deleted, take whichever ones the sitemap advertises.
+ * Pages are discovered from the sitemap rather than pinned by id, so this keeps
+ * working as listings come and go.
+ *
+ * The sitemap is fetched once and shared. Every page here renders on demand,
+ * so each request costs real server time -- and on a free tier a monitor that
+ * checks too eagerly becomes the thing that exhausts the budget it is meant to
+ * protect. One sample of each page type is enough: these are the same code
+ * path, so a second one proves nothing the first did not.
  */
-async function spotChecks() {
-  try {
-    const { status, body } = await get(`${BASE}/sitemap.xml`);
-    if (status !== 200) return [];
-    const paths = [...body.matchAll(/<loc>([^<]*\/spots\/[^<]+)<\/loc>/g)]
-      .map((match) => new URL(match[1]).pathname)
-      .slice(0, 3);
-    return paths.map((path, index) => ({
-      name: `Spot page ${index + 1}`,
-      path,
-      // Every spot page carries this; its absence means the page rendered the
-      // error or not-found screen instead of a listing.
-      expect: ["Own this business?", "Hours", "Report"],
-      anyOf: true,
-    }));
-  } catch {
-    return [];
-  }
+function pagesFrom(body, kind, name, expect, anyOf = false) {
+  const pattern = new RegExp(`<loc>([^<]*\\/${kind}\\/[^<]+)</loc>`, "g");
+  return [...body.matchAll(pattern)]
+    .map((match) => new URL(match[1]).pathname)
+    .slice(0, 1)
+    .map((path) => ({ name, path, expect, anyOf }));
 }
 
-/** City pages are new and search-facing; a broken one is invisible until
- *  someone notices traffic has gone. Taken from the sitemap like the spots. */
-async function cityChecks() {
+async function discoveredChecks() {
   try {
     const { status, body } = await get(`${BASE}/sitemap.xml`);
     if (status !== 200) return [];
-    return [...body.matchAll(/<loc>([^<]*\/city\/[^<]+)<\/loc>/g)]
-      .map((match) => new URL(match[1]).pathname)
-      .slice(0, 2)
-      .map((path, index) => ({
-        name: `City page ${index + 1}`,
-        path,
-        expect: ["Coffee Shops"],
-      }));
-  } catch {
-    return [];
-  }
-}
-
-/** Tag pages appear on their own as listings get tagged, so they are found
- *  from the sitemap rather than named here. */
-async function tagChecks() {
-  try {
-    const { status, body } = await get(`${BASE}/sitemap.xml`);
-    if (status !== 200) return [];
-    return [...body.matchAll(/<loc>([^<]*\/tag\/[^<]+)<\/loc>/g)]
-      .map((match) => new URL(match[1]).pathname)
-      .slice(0, 2)
-      .map((path, index) => ({
-        name: `Tag page ${index + 1}`,
-        path,
-        expect: ["Philippines"],
-      }));
-  } catch {
-    return [];
-  }
-}
-
-/** Neighbourhood pages, discovered from the sitemap like the rest. */
-async function areaChecks() {
-  try {
-    const { status, body } = await get(`${BASE}/sitemap.xml`);
-    if (status !== 200) return [];
-    return [...body.matchAll(/<loc>([^<]*\/area\/[^<]+)<\/loc>/g)]
-      .map((match) => new URL(match[1]).pathname)
-      .slice(0, 2)
-      .map((path, index) => ({
-        name: `Area page ${index + 1}`,
-        path,
-        expect: ["Coffee Shops"],
-      }));
+    return [
+      // Absence of these means the page rendered the error or not-found
+      // screen rather than a listing.
+      ...pagesFrom(body, "spots", "Spot page", ["Own this business?", "Hours", "Report"], true),
+      ...pagesFrom(body, "city", "City page", ["Coffee Shops"]),
+      ...pagesFrom(body, "tag", "Tag page", ["Philippines"]),
+      ...pagesFrom(body, "area", "Area page", ["Coffee Shops"]),
+    ];
   } catch {
     return [];
   }
 }
 
 async function run() {
-  const checks = [
-    ...CHECKS,
-    ...(await areaChecks()),
-    ...(await spotChecks()),
-    ...(await cityChecks()),
-    ...(await tagChecks()),
-  ];
+  const checks = [...CHECKS, ...(await discoveredChecks())];
   const failures = [];
 
   for (const check of checks) {

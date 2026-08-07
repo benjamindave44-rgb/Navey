@@ -5,9 +5,12 @@ name: Smoke check
 # is the point: nobody should have to click a link to discover an outage.
 on:
   schedule:
-    # Every 15 minutes. GitHub queues cron generously, so treat this as
-    # "roughly every 15 minutes" rather than a guarantee.
-    - cron: "*/15 * * * *"
+    # Hourly. Every page this touches renders on demand, so each run costs real
+    # server time -- and on a free tier a monitor that checks too eagerly
+    # becomes the thing that exhausts the budget it exists to protect. An
+    # outage is still caught within the hour, and the error webhook reports a
+    # crash the moment it happens.
+    - cron: "17 * * * *"
   push:
     branches: ["**"]
   workflow_dispatch:
