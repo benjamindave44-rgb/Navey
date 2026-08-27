@@ -13,11 +13,12 @@ import {
 import { getCityDirectory } from "@/lib/cities";
 import { getTagDirectory } from "@/lib/tags";
 
-// Built once and shared rather than rebuilt for every visitor. Nothing on the
-// page differs between people any more: the header's account controls and the
-// saved hearts both resolve in the browser. Five minutes is the longest a
-// newly approved listing waits to appear here.
-export const revalidate = 300;
+// Rebuilt at most once a day, not once every five minutes. Publishing from
+// the admin refreshes the affected listing immediately (src/lib/publish.ts),
+// so this timer is only a backstop for changes made straight in the database.
+// At five minutes, every page on the site could be rebuilt 288 times a day
+// just by being crawled -- which is most of what the hosting bill was.
+export const revalidate = 86400;
 
 
 export default async function Home() {
@@ -27,7 +28,11 @@ export default async function Home() {
   // to reorder rows already in memory.
   const [allSpots, collections, tags, featured, cities] =
     await Promise.all([
-      getApprovedSpots({}),
+      // Bounded on purpose. This page shows eight listings and five community
+      // picks; fetching the whole catalogue -- every tag, photo and opening
+      // hour -- to render thirteen cards was invisible at fifty listings and
+      // would not be at five hundred.
+      getApprovedSpots({ limit: 40 }),
       getCollections(4),
       getTagDirectory(),
       getFeaturedSpots(5),

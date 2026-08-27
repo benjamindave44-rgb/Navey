@@ -5,13 +5,12 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { getCollections } from "@/lib/queries";
 
-// Built once and shared, rather than rebuilt for each visitor. Nothing on
-// this page differs between people -- the account controls in the header
-// resolve in the browser -- so a per-visitor rebuild bought nothing and cost
-// a page render every time. Five minutes is the longest anyone waits to see
-// a newly approved listing here; publishing from the admin panel refreshes
-// the affected pages at once regardless.
-export const revalidate = 300;
+// Rebuilt at most once a day, not once every five minutes. Publishing from
+// the admin refreshes the affected listing immediately (src/lib/publish.ts),
+// so this timer is only a backstop for changes made straight in the database.
+// At five minutes, every page on the site could be rebuilt 288 times a day
+// just by being crawled -- which is most of what the hosting bill was.
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: "Collections",

@@ -14,22 +14,23 @@ import { ReportReviewButton } from "@/components/ReportReviewButton";
 import { SaveSpotButton } from "@/components/SaveSpotButton";
 import { ClaimBusinessPanel } from "@/components/ClaimBusinessPanel";
 import {
-  getApprovedSpots,
+  getApprovedSpotIds,
   getRelatedSpots,
   getSpotDetail,
   type SpotDetail,
 } from "@/lib/queries";
 import { describeHours, toIso24 } from "@/lib/hours";
 
-// Built once and shared rather than rebuilt for every visitor. Nothing on the
-// page differs between people any more: the header's account controls and the
-// saved hearts both resolve in the browser. Five minutes is the longest a
-// newly approved listing waits to appear here.
-export const revalidate = 300;
+// Rebuilt at most once a day, not once every five minutes. Publishing from
+// the admin refreshes the affected listing immediately (src/lib/publish.ts),
+// so this timer is only a backstop for changes made straight in the database.
+// At five minutes, every page on the site could be rebuilt 288 times a day
+// just by being crawled -- which is most of what the hosting bill was.
+export const revalidate = 86400;
 
 export async function generateStaticParams() {
-  const spots = await getApprovedSpots({});
-  return spots.map((spot) => ({ id: spot.id }));
+  const ids = await getApprovedSpotIds();
+  return ids.map((id) => ({ id }));
 }
 
 export async function generateMetadata({

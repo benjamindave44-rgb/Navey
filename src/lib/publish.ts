@@ -2,25 +2,40 @@ import { revalidatePath } from "next/cache";
 import { clearMemo } from "@/lib/memo";
 
 /**
- * Throws away the cached copies of the public pages.
+ * Refreshes what a write actually changed.
  *
- * Public pages are built once and reused now, so a change to a listing is not
- * visible until those copies are dropped. Without this a newly approved coffee
- * shop, an edited set of opening hours or a new review would sit invisible for
- * up to five minutes; with it, publishing feels immediate, exactly as it did
- * when every page was rebuilt for every visitor.
+ * This used to call `revalidatePath("/", "layout")` -- throwing away every
+ * cached page on the site after every admin action, from twenty-three call
+ * sites. The comment defending it said writes were rare and the site was
+ * small. Both were wrong: a listing is added several times a day, and each one
+ * meant rebuilding roughly a hundred pages. ISR writes went from 946 to 68,000
+ * in a fortnight, and the CPU that went with it was the largest single cost on
+ * the project. Adding coffee shops was quietly the most expensive thing anyone
+ * could do here.
  *
- * Everything is dropped rather than a careful list of paths. A single listing
- * appears on the homepage, its own page, its city, its neighbourhood and every
- * tag it carries, and getting that list subtly wrong fails silently -- the
- * worst way for a cache to fail. Writes here are rare and the site is small,
- * so rebuilding all of it is much the cheaper mistake.
+ * The blunt version was chosen because a hand-written list of paths can be
+ * subtly wrong and fail silently. The answer to that is not to rebuild
+ * everything -- it is to not depend on the list being complete. Every public
+ * page carries its own `revalidate`, so anything omitted here corrects itself
+ * shortly afterwards. This call is only what makes a change visible *now*.
  *
- * Call this only where a write actually succeeded. A form rejected for a bad
- * value has changed nothing, and rebuilding the site to reflect nothing is the
- * exact waste the caching exists to remove.
+ * Pass the paths the writer would look at immediately after saving, which in
+ * practice means the listing they just edited. Everything else can wait a
+ * minute; nobody is watching it.
+ *
+ * Call this only where a write succeeded. A form rejected for a bad value has
+ * changed nothing.
  */
-export async function publishChanges() {
+export async function publishChanges(...paths: string[]) {
+  // Free: in-process, and the reference lists are read constantly.
   clearMemo();
-  revalidatePath("/", "layout");
+
+  for (const path of paths) {
+    revalidatePath(path);
+  }
+}
+
+/** The page whoever just saved is about to be looking at. */
+export function spotPath(spotId: string): string {
+  return `/spots/${spotId}`;
 }

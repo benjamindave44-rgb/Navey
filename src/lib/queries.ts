@@ -644,3 +644,20 @@ export async function countApprovedSpots(): Promise<number> {
     return count ?? 0;
   });
 }
+
+/**
+ * Just the ids of live listings, for the build's page lists.
+ *
+ * generateStaticParams only needs a column of ids, and calling
+ * getApprovedSpots for it pulled the whole catalogue -- tags, photos and
+ * opening hours included -- for every route that wanted the list.
+ */
+export async function getApprovedSpotIds(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("spots")
+    .select("id")
+    .eq("status", "approved");
+
+  logQueryError("getApprovedSpotIds", error);
+  return (data ?? []).map((spot) => spot.id);
+}

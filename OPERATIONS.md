@@ -139,12 +139,24 @@ which is different for everybody, so they cannot be.
 
 What this means when you change something:
 
-- **Publishing refreshes the site immediately.** Approving a listing, editing
-  hours as an owner, adding a collection or leaving a review all drop the
-  cached copies (`src/lib/publish.ts`). You should never wait to see your own
-  change. If you ever do, that call is missing from whichever action you used.
-- **Five minutes is the fallback**, for changes made straight in the database
-  rather than through the site.
+- **Publishing refreshes the listing you changed**, immediately
+  (`src/lib/publish.ts`). Everything else — homepage, city, tag, neighbourhood
+  — catches up within a minute or two.
+- **Never make that call refresh everything.** It used to run
+  `revalidatePath("/", "layout")`, which threw away all ~100 pages after every
+  admin action, from 23 call sites. Adding a coffee shop became the single most
+  expensive thing anyone could do here: ISR writes went from 946 to 68,000 in a
+  fortnight. A hand-written list of paths can be incomplete, but that is safe —
+  anything omitted corrects itself on the page's own timer. Rebuilding
+  everything is not.
+- **A day is the fallback** for changes made straight in the database rather
+  than through the site. It was five minutes, which meant every page on the
+  site could be rebuilt 288 times a day just by being crawled.
+- **Social preview images are prerendered** (`opengraph-image.tsx`). Drawing a
+  1200x630 picture is expensive, and these had no caching at all, so every
+  visit from a Facebook or Messenger crawler redrew one. They need
+  `generateStaticParams` as well as `revalidate`: without the page list the
+  route stays render-on-demand whatever the revalidate says.
 - **Nothing on a public page may depend on who is looking.** That is the rule
   that keeps this working. Who is signed in (`src/lib/use-viewer.ts`) and which
   spots they saved (`src/lib/use-saved-spots.ts`) are both worked out in the

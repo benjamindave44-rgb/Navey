@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { publishChanges } from "@/lib/publish";
+import { publishChanges, spotPath } from "@/lib/publish";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { geocodeAddress } from "@/lib/geocode";
 import { hasAnyHours, spotHoursRowsFromForm } from "@/lib/hours";
@@ -31,7 +31,7 @@ export async function approveSpot(formData: FormData) {
   const supabase = await requireAdmin();
   const id = String(formData.get("id") ?? "");
   if (id) await supabase.from("spots").update({ status: "approved" }).eq("id", id);
-  await publishChanges();
+  await publishChanges(spotPath(id));
   redirect("/admin");
 }
 
@@ -39,7 +39,7 @@ export async function rejectSpot(formData: FormData) {
   const supabase = await requireAdmin();
   const id = String(formData.get("id") ?? "");
   if (id) await supabase.from("spots").update({ status: "rejected" }).eq("id", id);
-  await publishChanges();
+  await publishChanges(spotPath(id));
   redirect("/admin");
 }
 
@@ -47,7 +47,7 @@ export async function dismissFlag(formData: FormData) {
   const supabase = await requireAdmin();
   const id = String(formData.get("id") ?? "");
   if (id) await supabase.from("spots").update({ needs_review: false }).eq("id", id);
-  await publishChanges();
+  await publishChanges(spotPath(id));
   redirect("/admin");
 }
 
@@ -59,7 +59,7 @@ export async function takeSpotOffline(formData: FormData) {
       .from("spots")
       .update({ status: "rejected", needs_review: false })
       .eq("id", id);
-  await publishChanges();
+  await publishChanges(spotPath(id));
   redirect("/admin");
 }
 
@@ -138,9 +138,12 @@ export async function approveClaim(formData: FormData) {
       .eq("spot_id", claim.spot_id)
       .eq("status", "pending")
       .neq("id", claim.id);
+
+    // Inside the block on purpose: no claim means nothing was written, and
+    // refreshing a page to reflect nothing is the waste this change removes.
+    await publishChanges(spotPath(claim.spot_id));
   }
 
-  await publishChanges();
   redirect("/admin/claims");
 }
 
@@ -257,7 +260,7 @@ export async function createListingAsAdmin(formData: FormData) {
       .insert(photoUrls.map((url) => ({ spot_id: spot.id, url, kind: "gallery" })));
   }
 
-  await publishChanges();
+  await publishChanges(spotPath(spot.id));
   redirect(`/admin/listings/new?success=${encodeURIComponent(name)}&spotId=${spot.id}`);
 }
 
@@ -342,7 +345,7 @@ export async function updateListing(formData: FormData) {
 
   await replaceHours(supabase, id, formData);
 
-  await publishChanges();
+  await publishChanges(spotPath(id));
   redirect(
     `/admin/listings/${id}?notice=${encodeURIComponent("Listing updated.")}`
   );

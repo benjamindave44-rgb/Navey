@@ -1,7 +1,29 @@
 import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { getSpotDetail } from "@/lib/queries";
+import { getApprovedSpotIds, getSpotDetail } from "@/lib/queries";
+
+/**
+ * Cached for a day rather than drawn on every request.
+ *
+ * Drawing a 1200x630 picture is one of the most expensive things this site
+ * does, and these had no caching setting at all -- so every visit from a
+ * Facebook, Messenger or Twitter crawler redrew one from scratch. Invisible
+ * on the site itself, which is why it went unnoticed while the hosting bill
+ * was being investigated.
+ */
+export const revalidate = 86400;
+
+/**
+ * Without this the route stays render-on-demand and every crawler visit
+ * redraws the picture, whatever the revalidate above says. Listing the real
+ * spots moves the work into the build, which is billed separately from the
+ * per-request allowance this project keeps running out of.
+ */
+export async function generateStaticParams() {
+  const ids = await getApprovedSpotIds();
+  return ids.map((id) => ({ id }));
+}
 
 export const alt = "Navey spot";
 export const size = { width: 1200, height: 630 };
