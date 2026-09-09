@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PaginatedSpotGrid } from "@/components/PaginatedSpotGrid";
+import { getAreaDirectory } from "@/lib/areas";
 import {
   getApprovedSpots,
   getCities,
@@ -51,6 +52,13 @@ const CATEGORIES = [
   ...SPOT_CATEGORIES,
 ];
 
+const PRICE_OPTIONS = [
+  { value: "", label: "Any price" },
+  { value: "P", label: "₱ Budget" },
+  { value: "PP", label: "₱₱ Mid-range" },
+  { value: "PPP", label: "₱₱₱ Splurge" },
+];
+
 const SORT_OPTIONS: { value: SpotSort; label: string }[] = [
   { value: "recommended", label: "Recommended" },
   { value: "newest", label: "Newest" },
@@ -93,6 +101,9 @@ export default async function ExplorePage({
     .split(",")
     .map((t) => t.trim())
     .filter(Boolean);
+  const district = firstParam(params.area);
+  const price = firstParam(params.price);
+  const openNow = firstParam(params.open) === "now";
 
   // Cities first, and on its own, so the expensive query below can be skipped
   // entirely. A filter naming a city with nothing in it is nearly always a
@@ -100,13 +111,22 @@ export default async function ExplorePage({
   // guess cost a full catalogue read plus a rendered page to say "nothing
   // here". The answer is the same without asking, and this is one small
   // single-column read against the several it replaces.
-  const cities = await getCities();
+  const [cities, areas] = await Promise.all([getCities(), getAreaDirectory()]);
   const unknownCity = Boolean(city) && !cities.includes(city);
 
   const [spots, tags] = await Promise.all([
     unknownCity
       ? Promise.resolve<SpotWithTags[]>([])
-      : getApprovedSpots({ search, category, city, tags: activeTags, sort }),
+      : getApprovedSpots({
+          search,
+          category,
+          city,
+          district,
+          tags: activeTags,
+          price,
+          openNow,
+          sort,
+        }),
     getTags().then(tagsInUse),
   ]);
 
@@ -114,11 +134,16 @@ export default async function ExplorePage({
     q: search,
     category,
     city,
+    area: district,
+    price,
+    open: openNow ? "now" : "",
     sort,
     tags: activeTags.join(","),
   };
 
-  const hasActiveFilters = Boolean(search || category || city || activeTags.length > 0);
+  const hasActiveFilters = Boolean(
+    search || category || city || district || price || openNow || activeTags.length > 0
+  );
 
   return (
     <>
@@ -184,6 +209,31 @@ export default async function ExplorePage({
               </option>
             ))}
           </select>
+          {areas.length > 0 && (
+            <select
+              name="area"
+              defaultValue={district}
+              className="rounded-full bg-white px-4 py-2 text-base shadow-[0_8px_24px_rgba(20,18,11,0.08)] sm:text-sm"
+            >
+              <option value="">All neighbourhoods</option>
+              {areas.map((area) => (
+                <option key={`${area.citySlug}-${area.districtSlug}`} value={area.district}>
+                  {area.district}
+                </option>
+              ))}
+            </select>
+          )}
+          <select
+            name="price"
+            defaultValue={price}
+            className="rounded-full bg-white px-4 py-2 text-base shadow-[0_8px_24px_rgba(20,18,11,0.08)] sm:text-sm"
+          >
+            {PRICE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
           <select
             name="sort"
             defaultValue={sort}
@@ -207,6 +257,20 @@ export default async function ExplorePage({
         </form>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
+          {/* First, and a single tap. "What is open right now" is the question
+              people actually arrive with, and making it a dropdown you then
+              have to submit would bury it. */}
+          <Link
+            href={buildHref(baseParams, { open: openNow ? "" : "now" })}
+            aria-pressed={openNow}
+            className={`rounded-full px-4 py-2 text-xs font-bold transition-colors ${
+              openNow
+                ? "bg-green-700 text-white"
+                : "bg-white text-navey-ink shadow-[0_4px_12px_rgba(20,18,11,0.06)]"
+            }`}
+          >
+            {openNow ? "● Open now" : "○ Open now"}
+          </Link>
           {tags.map((option) => {
             const isActive = activeTags.includes(option.label);
             const nextTags = isActive

@@ -393,7 +393,9 @@ export async function deleteListing(formData: FormData) {
     );
   }
 
-  await publishChanges();
+  // The listing is gone from the database, but its page is cached: without
+  // naming it here the deleted shop stays readable, and indexable, for a day.
+  await publishChanges(spotPath(id));
   redirect(
     `/admin/listings?notice=${encodeURIComponent("Listing permanently deleted.")}`
   );

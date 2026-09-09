@@ -13,12 +13,12 @@ import {
 } from "@/lib/community";
 import { timeAgo } from "@/lib/time";
 
-// Rebuilt at most once a day, not once every five minutes. Publishing from
-// the admin refreshes the affected listing immediately (src/lib/publish.ts),
-// so this timer is only a backstop for changes made straight in the database.
-// At five minutes, every page on the site could be rebuilt 288 times a day
-// just by being crawled -- which is most of what the hosting bill was.
-export const revalidate = 86400;
+// Rebuilt at most once a week. Publishing from the admin refreshes the
+// listing that changed straight away (src/lib/publish.ts), so this timer is
+// only a backstop for edits made directly in the database. It was five
+// minutes, which let every page on the site be rebuilt 288 times a day just
+// by being crawled -- most of what the hosting bill turned out to be.
+export const revalidate = 604800;
 
 export const metadata: Metadata = {
   title: "Community",

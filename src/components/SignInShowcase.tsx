@@ -112,7 +112,11 @@ export function SignInShowcase({
                 type="button"
                 onClick={() => {
                   setIndex(i);
+                  // Hold on the chosen photo for one turn, then carry on. It
+                  // used to pause for ever, because a phone has no
+                  // "mouse left the element" to start it again.
                   setPaused(true);
+                  window.setTimeout(() => setPaused(false), 8000);
                 }}
                 aria-label={`Show ${spot.name}`}
                 aria-current={i === index}

@@ -21,12 +21,12 @@ import {
 } from "@/lib/queries";
 import { describeHours, toIso24 } from "@/lib/hours";
 
-// Rebuilt at most once a day, not once every five minutes. Publishing from
-// the admin refreshes the affected listing immediately (src/lib/publish.ts),
-// so this timer is only a backstop for changes made straight in the database.
-// At five minutes, every page on the site could be rebuilt 288 times a day
-// just by being crawled -- which is most of what the hosting bill was.
-export const revalidate = 86400;
+// Rebuilt at most once a week. Publishing from the admin refreshes the
+// listing that changed straight away (src/lib/publish.ts), so this timer is
+// only a backstop for edits made directly in the database. It was five
+// minutes, which let every page on the site be rebuilt 288 times a day just
+// by being crawled -- most of what the hosting bill turned out to be.
+export const revalidate = 604800;
 
 export async function generateStaticParams() {
   const ids = await getApprovedSpotIds();
@@ -117,6 +117,22 @@ export default async function SpotDetailPage({
     getRelatedSpots(spot.id, spot.city, 4),
   ]);
   const acceptedPayments = PAYMENT_OPTIONS.filter(({ key }) => spot[key]);
+
+  // Stored as free-ish text by the forms, so it is presented rather than
+  // trusted: capitalised here so "quiet" and "Quiet" read the same way.
+  const atmosphere = (
+    [
+      ["Noise", spot.noise_level],
+      ["Seating", spot.seating_style],
+      ["Music", spot.music_style],
+      ["Lighting", spot.lighting],
+    ] as const
+  )
+    .filter(([, value]) => Boolean(value?.trim()))
+    .map(([label, value]) => ({
+      label,
+      value: value!.trim().replace(/^./, (c) => c.toUpperCase()),
+    }));
   const isPdf = (url: string) => url.toLowerCase().endsWith(".pdf");
   const menuImages = spot.menuPhotos.filter((photo) => !isPdf(photo.url));
   const menuPdfs = spot.menuPhotos.filter((photo) => isPdf(photo.url));
@@ -466,6 +482,25 @@ export default async function SpotDetailPage({
                   </div>
                 </div>
               </div>
+
+              {/* Collected on the submission form and shown nowhere until now.
+                  "Is it quiet enough to take a call" is exactly the question a
+                  listing can answer and a map cannot -- and the answers were
+                  already sitting in the database. Only the fields that are
+                  filled in appear; a row of "unknown" tells nobody anything. */}
+              {atmosphere.length > 0 && (
+                <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
+                  <p className="font-heading font-bold">Atmosphere</p>
+                  <dl className="mt-3 flex flex-col gap-2 text-sm">
+                    {atmosphere.map(({ label, value }) => (
+                      <div key={label} className="flex justify-between gap-3">
+                        <dt className="text-navey-ink/60">{label}</dt>
+                        <dd className="font-semibold">{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              )}
 
               <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
                 <p className="font-heading font-bold">Payment Methods</p>

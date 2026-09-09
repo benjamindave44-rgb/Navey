@@ -11,7 +11,7 @@ import { join } from "node:path";
  * on the site itself, which is why it went unnoticed while the hosting bill
  * was being investigated.
  */
-export const revalidate = 86400;
+export const revalidate = 604800;
 
 export const alt = "Navey — Navigate Good Spots Nearby";
 export const size = { width: 1200, height: 630 };

@@ -41,6 +41,10 @@ export type SpotFilters = {
   district?: string;
   tag?: string;
   tags?: string[];
+  /** "P", "PP", "PPP" -- matched exactly, as stored on the listing. */
+  price?: string;
+  /** Only places open at the moment of the request, worked out in Manila. */
+  openNow?: boolean;
   sort?: SpotSort;
   limit?: number;
 };
@@ -59,7 +63,8 @@ const SPOT_CARD_SELECT =
 export async function getApprovedSpots(
   filters: SpotFilters = {}
 ): Promise<SpotWithTags[]> {
-  const { search, category, city, district, tag, tags, sort, limit } = filters;
+  const { search, category, city, district, tag, tags, price, openNow, sort, limit } =
+    filters;
   const tagList = tags && tags.length > 0 ? tags : tag ? [tag] : [];
 
   let query = supabase
@@ -84,6 +89,7 @@ export async function getApprovedSpots(
   if (category) query = query.eq("category", category);
   if (city) query = query.eq("city", city);
   if (district) query = query.eq("district", district);
+  if (price) query = query.eq("price_range", price);
 
   const { data, error } = await query;
   logQueryError("getApprovedSpots", error);
@@ -119,6 +125,14 @@ export async function getApprovedSpots(
 
   if (tagList.length > 0) {
     spots = spots.filter((spot) => tagList.every((t) => spot.tags.includes(t)));
+  }
+
+  // Filtered here rather than in SQL: opening hours wrap past midnight and are
+  // read against Manila's clock, and that rule is already written and tested
+  // once in openStatus. "unknown" is excluded -- a listing with no readable
+  // hours is not a promise that it is open.
+  if (openNow) {
+    spots = spots.filter((spot) => spot.openState === "open");
   }
 
   return typeof limit === "number" ? spots.slice(0, limit) : spots;

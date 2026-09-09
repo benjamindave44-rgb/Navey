@@ -46,7 +46,7 @@ export async function createCollection(formData: FormData) {
     );
   }
 
-  await publishChanges();
+  await publishChanges("/collections");
   redirect(`/admin/collections/${data.id}`);
 }
 
@@ -71,7 +71,7 @@ export async function updateCollection(formData: FormData) {
   if (error) {
     redirect(`/admin/collections/${id}?error=${encodeURIComponent(error.message)}`);
   }
-  await publishChanges();
+  await publishChanges("/collections");
   redirect(`/admin/collections/${id}?notice=${encodeURIComponent("Saved.")}`);
 }
 
@@ -96,7 +96,7 @@ export async function deleteCollection(formData: FormData) {
     );
   }
 
-  await publishChanges();
+  await publishChanges("/collections");
   redirect(`/admin/collections?notice=${encodeURIComponent("Collection deleted.")}`);
 }
 
@@ -127,7 +127,7 @@ export async function addSpotToCollection(formData: FormData) {
       `/admin/collections/${collectionId}?error=${encodeURIComponent(error.message)}`
     );
   }
-  await publishChanges();
+  await publishChanges("/collections");
   redirect(
     `/admin/collections/${collectionId}?notice=${encodeURIComponent("Spot added.")}`
   );
@@ -145,7 +145,7 @@ export async function removeSpotFromCollection(formData: FormData) {
     .eq("collection_id", collectionId)
     .eq("spot_id", spotId);
 
-  await publishChanges();
+  await publishChanges("/collections");
   redirect(
     `/admin/collections/${collectionId}?notice=${encodeURIComponent("Spot removed.")}`
   );
@@ -185,6 +185,6 @@ export async function moveSpotInCollection(formData: FormData) {
     }
   }
 
-  await publishChanges();
+  await publishChanges("/collections");
   redirect(`/admin/collections/${collectionId}`);
 }
