@@ -11,6 +11,22 @@ with no memory of today. Plain language first, file paths second.
 | Data, logins, photos | Supabase | Postgres database + file storage |
 | The code | GitHub | Also runs the site health check |
 
+## Did it actually deploy?
+
+**Check Vercel's Deployments list. Nothing else answers this question.**
+
+Between 27 August and 22 September, four production deployments in a row
+failed, and the site went on serving the build from 21 August. It looked
+completely healthy the entire time, because it *was* healthy — it was simply a
+month old.
+
+The health check below did not catch it and could not have. It opens
+`www.navey.co` and tests whatever is live, so a green run proves the live site
+works, not that the code you just wrote is on it. Treating a passing health
+check as proof of a deploy is the specific mistake that hid this for a month.
+After any deploy, look at the Deployments list and confirm the top row says
+**Ready** against the commit you expected.
+
 ## Is the site healthy?
 
 Three answers, in order of effort:
@@ -304,6 +320,17 @@ npm run build     # the real check
 
 ## Traps that have already bitten once
 
+- **The link-preview pictures are drawn by Satori, not a browser.** Satori
+  implements a subset of CSS and refuses anything ambiguous instead of guessing.
+  Its strictest rule: **any element with more than one child must state its
+  `display`**. A div holding `{city}` and `{price}` side by side, with no
+  display, broke four deployments in a row over a month — and before that, while
+  the pictures were drawn on demand, it was merely an invisible broken preview,
+  because nobody looks at their own link previews. The drawing now lives in
+  `src/lib/og-image.ts`, written with `createElement` rather than JSX precisely
+  so the number of children is impossible to miscount, and `scripts/og.test.mts`
+  draws every variant for real on `npm test`. If you edit those pictures, run
+  the tests — a type check cannot see this class of fault.
 - **A failed database query used to look like a missing page.** Shop pages
   404'd for every visitor because of an unrelated schema change. Queries now
   throw on error rather than pretending the row is absent, so a fault shows an
