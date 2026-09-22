@@ -39,12 +39,26 @@ export default async function AdminListingDetailPage({
             Submitted by {spot.submitterName ?? "unknown"}
           </p>
         </div>
-        <Link
-          href={`/spots/${spot.id}`}
-          className="rounded-full bg-navey-band px-4 py-2 text-sm font-bold hover:bg-navey-band/80"
-        >
-          View Live Page
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          {/* Photos and menus live in the owner editor, and nothing here said
+              so -- which is why the menu feature looked unusable. It is not:
+              listings created from the admin are recorded as submitted by the
+              admin, so this link opens straight into their photo and menu
+              tabs. It was simply unreachable from the page you are on when you
+              want it. */}
+          <Link
+            href={`/owner/${spot.id}`}
+            className="rounded-full bg-navey-band px-4 py-2 text-sm font-bold hover:bg-navey-band/80"
+          >
+            Photos &amp; Menu
+          </Link>
+          <Link
+            href={`/spots/${spot.id}`}
+            className="rounded-full bg-navey-band px-4 py-2 text-sm font-bold hover:bg-navey-band/80"
+          >
+            View Live Page
+          </Link>
+        </div>
       </div>
 
       {notice && (

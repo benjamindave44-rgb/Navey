@@ -104,6 +104,8 @@ export default async function ExplorePage({
   const district = firstParam(params.area);
   const price = firstParam(params.price);
   const openNow = firstParam(params.open) === "now";
+  const workFriendly = firstParam(params.work) === "1";
+  const aircon = firstParam(params.aircon) === "1";
 
   // Cities first, and on its own, so the expensive query below can be skipped
   // entirely. A filter naming a city with nothing in it is nearly always a
@@ -125,6 +127,8 @@ export default async function ExplorePage({
           tags: activeTags,
           price,
           openNow,
+          workFriendly,
+          aircon,
           sort,
         }),
     getTags().then(tagsInUse),
@@ -137,12 +141,22 @@ export default async function ExplorePage({
     area: district,
     price,
     open: openNow ? "now" : "",
+    work: workFriendly ? "1" : "",
+    aircon: aircon ? "1" : "",
     sort,
     tags: activeTags.join(","),
   };
 
   const hasActiveFilters = Boolean(
-    search || category || city || district || price || openNow || activeTags.length > 0
+    search ||
+      category ||
+      city ||
+      district ||
+      price ||
+      openNow ||
+      workFriendly ||
+      aircon ||
+      activeTags.length > 0
   );
 
   return (
@@ -163,6 +177,18 @@ export default async function ExplorePage({
             </Link>
           </div>
         </div>
+
+        {/* The vibe quiz already existed and was reachable from exactly one
+            place: the sign-up flow. So the only people who could ever use it
+            were people who had never used the site. Anybody browsing a list of
+            fifty cafes and unable to choose is precisely who it was built for,
+            and they had no way in. */}
+        <Link
+          href="/onboarding"
+          className="mt-3 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold shadow-[0_4px_12px_rgba(20,18,11,0.06)] hover:bg-navey-band"
+        >
+          <span aria-hidden>✨</span> Can&apos;t decide? Answer three questions
+        </Link>
         <p className="mt-2 text-sm text-navey-ink/60">
           {spots.length} spot{spots.length === 1 ? "" : "s"} found
         </p>
@@ -270,6 +296,34 @@ export default async function ExplorePage({
             }`}
           >
             {openNow ? "● Open now" : "○ Open now"}
+          </Link>
+          {/* The other two questions people actually arrive with. Kept as taps
+              beside "Open now" rather than dropdowns in the form above: nobody
+              wants to tick three boxes and press Search to ask "where can I
+              work". "Can work here" means good wifi and at least a few outlets
+              -- see SpotFilters.workFriendly for why it is one control and not
+              three. */}
+          <Link
+            href={buildHref(baseParams, { work: workFriendly ? "" : "1" })}
+            aria-pressed={workFriendly}
+            className={`rounded-full px-4 py-2 text-xs font-bold transition-colors ${
+              workFriendly
+                ? "bg-navey-ink text-navey-yellow"
+                : "bg-white text-navey-ink shadow-[0_4px_12px_rgba(20,18,11,0.06)]"
+            }`}
+          >
+            {workFriendly ? "● Can work here" : "○ Can work here"}
+          </Link>
+          <Link
+            href={buildHref(baseParams, { aircon: aircon ? "" : "1" })}
+            aria-pressed={aircon}
+            className={`rounded-full px-4 py-2 text-xs font-bold transition-colors ${
+              aircon
+                ? "bg-navey-ink text-navey-yellow"
+                : "bg-white text-navey-ink shadow-[0_4px_12px_rgba(20,18,11,0.06)]"
+            }`}
+          >
+            {aircon ? "● Aircon" : "○ Aircon"}
           </Link>
           {tags.map((option) => {
             const isActive = activeTags.includes(option.label);

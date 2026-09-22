@@ -7,6 +7,10 @@ import { geocodeAddress } from "@/lib/geocode";
 import { hasAnyHours, spotHoursRowsFromForm } from "@/lib/hours";
 import { findDuplicateSpot } from "@/lib/duplicates";
 import { uploadPhotos } from "@/lib/photo-upload";
+import {
+  amenityColumnsFromForm,
+  priceAnchorsFromForm,
+} from "@/lib/amenity-form";
 
 async function requireAdmin() {
   const supabase = await createServerSupabaseClient();
@@ -331,6 +335,7 @@ export async function updateListing(formData: FormData) {
       needs_review: needsReview,
       featured,
       featured_rank: featuredRank,
+      ...amenityColumnsFromForm(formData),
       ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
     })
     .eq("id", id);
@@ -344,6 +349,7 @@ export async function updateListing(formData: FormData) {
   }
 
   await replaceHours(supabase, id, formData);
+  await replacePriceAnchors(supabase, id, formData);
 
   await publishChanges(spotPath(id));
   redirect(
@@ -362,6 +368,26 @@ async function replaceHours(
   if (!hasAnyHours(rows)) return;
   await supabase.from("spot_hours").delete().eq("spot_id", spotId);
   await supabase.from("spot_hours").insert(rows);
+}
+
+/**
+ * Replaced wholesale rather than merged, unlike hours.
+ *
+ * The three slots are always present in the form, so an empty set genuinely
+ * means "remove the prices" -- there is no way to submit this form without
+ * having seen them. Hours are different: that editor can be left untouched, and
+ * clearing them on every save would be a data loss bug.
+ */
+async function replacePriceAnchors(
+  supabase: Awaited<ReturnType<typeof requireAdmin>>,
+  spotId: string,
+  formData: FormData
+) {
+  const rows = priceAnchorsFromForm(formData, spotId);
+  await supabase.from("spot_price_anchors").delete().eq("spot_id", spotId);
+  if (rows.length > 0) {
+    await supabase.from("spot_price_anchors").insert(rows);
+  }
 }
 
 export async function deleteListing(formData: FormData) {

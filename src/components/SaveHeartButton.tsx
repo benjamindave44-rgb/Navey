@@ -1,9 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toggleSaveSpot } from "@/app/spots/actions";
 import { forgetSavedSpots, useSavedSpots } from "@/lib/use-saved-spots";
+import { toggleGuestSave, useGuestSaves } from "@/lib/guest-saves";
+import { useViewer } from "@/lib/use-viewer";
 
 export function SaveHeartButton({
   spotId,
@@ -14,13 +15,17 @@ export function SaveHeartButton({
   initialSaved?: boolean;
   variant?: "overlay" | "plain";
 }) {
-  const router = useRouter();
+  const viewer = useViewer();
   // The page may still tell us (older, uncached pages do). Where it does not,
   // the browser works it out instead -- which is what lets those pages be
   // built once and shared. A click always wins over both.
   const { ids, ready } = useSavedSpots();
+  const guestIds = useGuestSaves();
+  const signedOut = viewer.status === "signed-out";
   const [clicked, setClicked] = useState<boolean | null>(null);
-  const saved = clicked ?? (ready ? ids.has(spotId) : initialSaved);
+  const saved =
+    clicked ??
+    (signedOut ? guestIds.has(spotId) : ready ? ids.has(spotId) : initialSaved);
   const setSaved = setClicked;
   const [pending, startTransition] = useTransition();
 
@@ -29,6 +34,15 @@ export function SaveHeartButton({
     event.preventDefault();
     event.stopPropagation();
 
+    // Not signed in: keep it in this browser and say nothing about accounts.
+    // This used to throw the visitor at the sign-in page having saved nothing,
+    // which is how a site ends up with four accounts and two saves. The list
+    // follows them in when they do sign in -- see GuestSaveImporter.
+    if (signedOut) {
+      setSaved(toggleGuestSave(spotId));
+      return;
+    }
+
     // Flip immediately so the tap feels instant, then reconcile.
     const next = !saved;
     setSaved(next);
@@ -36,8 +50,9 @@ export function SaveHeartButton({
     startTransition(async () => {
       const result = await toggleSaveSpot(spotId);
       if (result.status === "unauthenticated") {
-        setSaved(!next);
-        router.push("/sign-in");
+        // The session expired between loading the page and tapping. Keep the
+        // save rather than discarding it.
+        setSaved(toggleGuestSave(spotId));
         return;
       }
       if (result.status === "error") {

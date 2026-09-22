@@ -191,6 +191,19 @@ export type AdminSpotDetail = {
     isClosed: boolean;
     is24Hours: boolean;
   }[];
+  /** The practical facts. Null everywhere means nobody has checked. */
+  wifi: string | null;
+  powerOutlets: string | null;
+  laptopFriendly: string | null;
+  hasAircon: boolean | null;
+  hasOutdoorSeating: boolean | null;
+  parking: string | null;
+  instagram: string | null;
+  phone: string | null;
+  website: string | null;
+  detailsCheckedAt: string | null;
+  /** Up to PRICE_ANCHOR_SLOTS of them, in display order. */
+  priceAnchors: { item: string; pricePhp: number }[];
 };
 
 export async function getAdminSpotDetail(spotId: string): Promise<AdminSpotDetail | null> {
@@ -198,7 +211,7 @@ export async function getAdminSpotDetail(spotId: string): Promise<AdminSpotDetai
   const { data, error } = await supabase
     .from("spots")
     .select(
-      "id, name, category, price_range, address, city, province, district, lat, lng, description, status, hidden_gem, needs_review, featured, featured_rank, spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours), submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)"
+      "id, name, category, price_range, address, city, province, district, lat, lng, description, status, hidden_gem, needs_review, featured, featured_rank, wifi, power_outlets, laptop_friendly, has_aircon, has_outdoor_seating, parking, instagram, phone, website, details_checked_at, spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours), spot_price_anchors(item, price_php, sort_order), submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)"
     )
     .eq("id", spotId)
     .maybeSingle();
@@ -230,6 +243,19 @@ export async function getAdminSpotDetail(spotId: string): Promise<AdminSpotDetai
       isClosed: hour.is_closed,
       is24Hours: hour.is_24_hours,
     })),
+    wifi: data.wifi,
+    powerOutlets: data.power_outlets,
+    laptopFriendly: data.laptop_friendly,
+    hasAircon: data.has_aircon,
+    hasOutdoorSeating: data.has_outdoor_seating,
+    parking: data.parking,
+    instagram: data.instagram,
+    phone: data.phone,
+    website: data.website,
+    detailsCheckedAt: data.details_checked_at,
+    priceAnchors: [...data.spot_price_anchors]
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((anchor) => ({ item: anchor.item, pricePhp: anchor.price_php })),
   };
 }
 

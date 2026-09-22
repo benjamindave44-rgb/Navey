@@ -20,6 +20,20 @@ import {
   type SpotDetail,
 } from "@/lib/queries";
 import { describeHours, toIso24 } from "@/lib/hours";
+import {
+  comfortChips as comfortChipsFor,
+  formatPeso,
+  workChips as workChipsFor,
+} from "@/lib/amenities";
+import {
+  directionsUrl,
+  instagramHandle,
+  telHref,
+  websiteLabel,
+  websiteUrl,
+} from "@/lib/contact";
+import { monthAndYear } from "@/lib/time";
+import { SpotReactions } from "@/components/SpotReactions";
 
 // Rebuilt at most once a week. Publishing from the admin refreshes the
 // listing that changed straight away (src/lib/publish.ts), so this timer is
@@ -103,6 +117,15 @@ const PAYMENT_OPTIONS: {
   { key: "accepts_bank_transfer", label: "Bank Transfer" },
 ];
 
+/** A chip carries its own tone, so "No outlets" and "Plenty of outlets" are not
+ *  the same shade of beige at a glance. */
+function chipClass(tone: "good" | "mixed" | "poor"): string {
+  const base = "rounded-full px-3 py-1 font-semibold";
+  if (tone === "good") return `${base} bg-green-50 text-green-900`;
+  if (tone === "mixed") return `${base} bg-amber-50 text-amber-900`;
+  return `${base} bg-navey-band text-navey-ink/70`;
+}
+
 export default async function SpotDetailPage({
   params,
 }: {
@@ -117,6 +140,15 @@ export default async function SpotDetailPage({
     getRelatedSpots(spot.id, spot.city, 4),
   ]);
   const acceptedPayments = PAYMENT_OPTIONS.filter(({ key }) => spot[key]);
+  const workChips = workChipsFor(spot.amenities);
+  const comfortChips = comfortChipsFor(spot.amenities);
+  const instagram = instagramHandle(spot.instagram);
+  const phoneHref = telHref(spot.phone);
+  const website = websiteUrl(spot.website);
+  const websiteName = websiteLabel(spot.website);
+  const checkedOn = spot.detailsCheckedAt
+    ? monthAndYear(spot.detailsCheckedAt)
+    : null;
 
   // Stored as free-ish text by the forms, so it is presented rather than
   // trusted: capitalised here so "quiet" and "Quiet" read the same way.
@@ -483,6 +515,123 @@ export default async function SpotDetailPage({
                 </div>
               </div>
 
+              <SpotReactions
+                spotId={spot.id}
+                initialCounts={spot.reactionCounts}
+              />
+
+              {/* The way out of the page, and the point of the page.
+                  Without these a visitor reads the listing, leaves, and
+                  searches Instagram themselves -- which is where they were
+                  going anyway, only without us. Directions are always offered
+                  because they are built from the address and coordinates the
+                  listing already carries; the rest appear only when filled. */}
+              <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
+                <p className="font-heading font-bold">Go / get in touch</p>
+                <div className="mt-3 flex flex-col gap-2 text-sm">
+                  <a
+                    href={directionsUrl(spot)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 rounded-xl bg-navey-ink px-3 py-2 font-semibold text-navey-yellow"
+                  >
+                    <span aria-hidden>📍</span> Get directions
+                  </a>
+                  {instagram && (
+                    <a
+                      href={`https://www.instagram.com/${instagram}/`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 rounded-xl bg-navey-band px-3 py-2 font-semibold"
+                    >
+                      <span aria-hidden>📷</span> @{instagram}
+                    </a>
+                  )}
+                  {phoneHref && (
+                    <a
+                      href={phoneHref}
+                      className="flex items-center gap-2 rounded-xl bg-navey-band px-3 py-2 font-semibold"
+                    >
+                      <span aria-hidden>📞</span> {spot.phone}
+                    </a>
+                  )}
+                  {website && websiteName && (
+                    <a
+                      href={website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 rounded-xl bg-navey-band px-3 py-2 font-semibold"
+                    >
+                      <span aria-hidden>🔗</span> {websiteName}
+                    </a>
+                  )}
+                </div>
+                {/* A directory is only worth opening if its hours are true, and
+                    the honest way to earn that is to say when somebody last
+                    looked. */}
+                {checkedOn && (
+                  <p className="mt-3 text-xs text-navey-ink/50">
+                    Details checked {checkedOn}
+                  </p>
+                )}
+              </div>
+
+              {/* "Can I work here?" -- put above atmosphere on purpose. The
+                  listing carried four fields describing a mood before it
+                  carried one about wifi, and this is the block people came for.
+                  Absent entirely when nothing has been checked, rather than
+                  printed as a row of blanks. */}
+              {workChips.length > 0 && (
+                <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
+                  <p className="font-heading font-bold">Working here</p>
+                  <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                    {workChips.map((chip) => (
+                      <span key={chip.text} className={chipClass(chip.tone)}>
+                        {chip.text}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {comfortChips.length > 0 && (
+                <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
+                  <p className="font-heading font-bold">Comfort & parking</p>
+                  <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                    {comfortChips.map((chip) => (
+                      <span key={chip.text} className={chipClass(chip.tone)}>
+                        {chip.text}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* What things actually cost. "PP" is true of most of Metro
+                  Manila and tells nobody anything; "Latte ₱170" is the whole
+                  answer, and it is the one thing a map listing never shows. */}
+              {spot.priceAnchors.length > 0 && (
+                <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
+                  <p className="font-heading font-bold">What it costs</p>
+                  <dl className="mt-3 flex flex-col gap-2 text-sm">
+                    {spot.priceAnchors.map((anchor) => (
+                      <div
+                        key={`${anchor.item}-${anchor.pricePhp}`}
+                        className="flex justify-between gap-3"
+                      >
+                        <dt className="text-navey-ink/60">{anchor.item}</dt>
+                        <dd className="font-semibold">
+                          {formatPeso(anchor.pricePhp)}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <p className="mt-3 text-xs text-navey-ink/50">
+                    Prices change. Treat these as a guide.
+                  </p>
+                </div>
+              )}
+
               {/* Collected on the submission form and shown nowhere until now.
                   "Is it quiet enough to take a call" is exactly the question a
                   listing can answer and a map cannot -- and the answers were
@@ -526,7 +675,7 @@ export default async function SpotDetailPage({
                 <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-heading font-bold">Hours</p>
-                    <OpenBadge state={spot.openState} />
+                    <OpenBadge hours={spot.hours} initialState={spot.openState} />
                   </div>
                   <ul className="mt-3 space-y-1 text-sm">
                     {spot.hours.map((hour) => (

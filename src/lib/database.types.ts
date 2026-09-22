@@ -468,6 +468,67 @@ export type Database = {
           },
         ]
       }
+      spot_price_anchors: {
+        Row: {
+          id: string
+          item: string
+          price_php: number
+          sort_order: number
+          spot_id: string
+        }
+        Insert: {
+          id?: string
+          item: string
+          price_php: number
+          sort_order?: number
+          spot_id: string
+        }
+        Update: {
+          id?: string
+          item?: string
+          price_php?: number
+          sort_order?: number
+          spot_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spot_price_anchors_spot_id_fkey"
+            columns: ["spot_id"]
+            isOneToOne: false
+            referencedRelation: "spots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spot_reactions: {
+        Row: {
+          created_at: string
+          label: string
+          spot_id: string
+          voter_key: string
+        }
+        Insert: {
+          created_at?: string
+          label: string
+          spot_id: string
+          voter_key: string
+        }
+        Update: {
+          created_at?: string
+          label?: string
+          spot_id?: string
+          voter_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spot_reactions_spot_id_fkey"
+            columns: ["spot_id"]
+            isOneToOne: false
+            referencedRelation: "spots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spot_tags: {
         Row: {
           spot_id: string
@@ -509,11 +570,16 @@ export type Database = {
           city: string
           created_at: string
           description: string | null
+          details_checked_at: string | null
           district: string | null
           featured: boolean
           featured_rank: number
+          has_aircon: boolean | null
+          has_outdoor_seating: boolean | null
           hidden_gem: boolean
           id: string
+          instagram: string | null
+          laptop_friendly: string | null
           lat: number | null
           lighting: string | null
           lng: number | null
@@ -521,6 +587,9 @@ export type Database = {
           name: string
           needs_review: boolean
           noise_level: string | null
+          parking: string | null
+          phone: string | null
+          power_outlets: string | null
           price_range: string | null
           province: string | null
           pwd_friendly: boolean
@@ -528,6 +597,8 @@ export type Database = {
           seating_style: string | null
           status: string
           submitted_by: string | null
+          website: string | null
+          wifi: string | null
         }
         Insert: {
           accepts_bank_transfer?: boolean
@@ -539,11 +610,16 @@ export type Database = {
           city: string
           created_at?: string
           description?: string | null
+          details_checked_at?: string | null
           district?: string | null
           featured?: boolean
           featured_rank?: number
+          has_aircon?: boolean | null
+          has_outdoor_seating?: boolean | null
           hidden_gem?: boolean
           id?: string
+          instagram?: string | null
+          laptop_friendly?: string | null
           lat?: number | null
           lighting?: string | null
           lng?: number | null
@@ -551,6 +627,9 @@ export type Database = {
           name: string
           needs_review?: boolean
           noise_level?: string | null
+          parking?: string | null
+          phone?: string | null
+          power_outlets?: string | null
           price_range?: string | null
           province?: string | null
           pwd_friendly?: boolean
@@ -558,6 +637,8 @@ export type Database = {
           seating_style?: string | null
           status?: string
           submitted_by?: string | null
+          website?: string | null
+          wifi?: string | null
         }
         Update: {
           accepts_bank_transfer?: boolean
@@ -569,11 +650,16 @@ export type Database = {
           city?: string
           created_at?: string
           description?: string | null
+          details_checked_at?: string | null
           district?: string | null
           featured?: boolean
           featured_rank?: number
+          has_aircon?: boolean | null
+          has_outdoor_seating?: boolean | null
           hidden_gem?: boolean
           id?: string
+          instagram?: string | null
+          laptop_friendly?: string | null
           lat?: number | null
           lighting?: string | null
           lng?: number | null
@@ -581,6 +667,9 @@ export type Database = {
           name?: string
           needs_review?: boolean
           noise_level?: string | null
+          parking?: string | null
+          phone?: string | null
+          power_outlets?: string | null
           price_range?: string | null
           province?: string | null
           pwd_friendly?: boolean
@@ -588,6 +677,8 @@ export type Database = {
           seating_style?: string | null
           status?: string
           submitted_by?: string | null
+          website?: string | null
+          wifi?: string | null
         }
         Relationships: [
           {
@@ -625,7 +716,22 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      spot_reaction_counts: {
+        Row: {
+          label: string | null
+          spot_id: string | null
+          total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spot_reactions_spot_id_fkey"
+            columns: ["spot_id"]
+            isOneToOne: false
+            referencedRelation: "spots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       check_rate_limit: {
@@ -646,6 +752,10 @@ export type Database = {
       delete_own_account: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      toggle_spot_reaction: {
+        Args: { p_spot_id: string; p_voter_key: string; p_label: string }
+        Returns: number
       }
     }
     Enums: {

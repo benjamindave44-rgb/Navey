@@ -4,6 +4,8 @@ import { OpenBadge } from "@/components/OpenBadge";
 import Link from "next/link";
 import type { SpotWithTags } from "@/lib/queries";
 import { SaveHeartButton } from "@/components/SaveHeartButton";
+import { cardAmenitySummary } from "@/lib/amenities";
+import { isRecentlyAdded } from "@/lib/time";
 
 
 export function SpotCard({
@@ -21,6 +23,8 @@ export function SpotCard({
   rank?: number;
   showDescription?: boolean;
 }) {
+  const amenitySummary = cardAmenitySummary(spot.amenities);
+
   return (
     <Link
       href={`/spots/${spot.id}`}
@@ -47,7 +51,15 @@ export function SpotCard({
         {/* Top-left; the Hidden Gem and Trending chips hold the right, and the
             rank badge only appears on leaderboard grids where there is no
             open badge competing for the corner. */}
-        <OpenBadge state={spot.openState} className="absolute left-3 top-3" />
+        <OpenBadge
+          hours={spot.hours}
+          initialState={spot.openState}
+          className="absolute left-3 top-3"
+          // A grid of cards is scanned, not read. "Closes in 40 min" is the
+          // right fact on a listing page, where somebody is deciding; here it
+          // would put six different sentences in six corners.
+          showClosingSoon={false}
+        />
         {typeof rank === "number" && (
           <span
             className={`absolute left-3 flex h-7 w-7 items-center justify-center rounded-full bg-navey-ink text-xs font-bold text-navey-yellow ${
@@ -60,6 +72,16 @@ export function SpotCard({
         {spot.hidden_gem && (
           <span className="absolute right-3 top-3 rounded-full bg-navey-ink px-3 py-1 text-xs font-bold text-navey-yellow">
             Hidden Gem
+          </span>
+        )}
+        {/* "What's new?" is the question people bring to a discovery site, and
+            the answer was already in the table -- every listing has recorded
+            when it was added since the day the table was created, and nothing
+            ever said so. Yields the corner to Hidden Gem and Trending, which
+            are editorial and rarer. */}
+        {!spot.hidden_gem && !trending && isRecentlyAdded(spot.createdAt) && (
+          <span className="absolute right-3 top-3 rounded-full bg-navey-yellow px-3 py-1 text-xs font-bold text-navey-ink">
+            New
           </span>
         )}
         {trending && !spot.hidden_gem && (
@@ -80,6 +102,15 @@ export function SpotCard({
         <p className="text-[10px] uppercase tracking-wide text-navey-ink/50 sm:text-xs">
           {categoryLabel(spot.category)}
         </p>
+        {/* Two practical facts at most, and only ones actually recorded. This
+            is the line that answers "could I work here?" without opening the
+            listing, which is what half the people scanning a grid of cafes in
+            this country are trying to find out. */}
+        {amenitySummary && (
+          <p className="text-[10px] font-semibold text-navey-ink/60 sm:text-xs">
+            {amenitySummary}
+          </p>
+        )}
         {showDescription && spot.description && (
           <p className="line-clamp-2 text-sm text-navey-ink/70">
             {spot.description}

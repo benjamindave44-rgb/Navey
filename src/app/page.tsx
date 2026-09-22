@@ -12,6 +12,7 @@ import {
 } from "@/lib/queries";
 import { getCityDirectory } from "@/lib/cities";
 import { getTagDirectory } from "@/lib/tags";
+import { isRecentlyAdded } from "@/lib/time";
 
 // Rebuilt at most once a week. Publishing from the admin refreshes the
 // listing that changed straight away (src/lib/publish.ts), so this timer is
@@ -46,6 +47,17 @@ export default async function Home() {
   const communityPicks = [...allSpots]
     .filter((spot) => spot.saveCount > 0)
     .sort((a, b) => b.saveCount - a.saveCount)
+    .slice(0, 5);
+
+  // "What's new?" -- the question a discovery site exists to answer, and the
+  // one thing here worth coming back for weekly. The data has been in the
+  // table since the beginning and nothing ever read it. Free: these are the
+  // listings already fetched above, ordered newest-first, filtered in memory.
+  //
+  // Hidden entirely below three, because a "New this month" row with one card
+  // in it says the site is empty rather than that it is growing.
+  const justAdded = allSpots
+    .filter((spot) => isRecentlyAdded(spot.createdAt))
     .slice(0, 5);
 
 
@@ -146,6 +158,32 @@ export default async function Home() {
             </div>
           )}
         </section>
+
+        {justAdded.length >= 3 && (
+          <section className="px-4 py-10 sm:px-6 md:px-12 md:py-12">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="font-heading text-2xl font-extrabold">
+                  Just Added
+                </h2>
+                <p className="mt-1 text-sm text-navey-ink/60">
+                  New on Navey in the last month.
+                </p>
+              </div>
+              <Link
+                href="/explore?sort=newest"
+                className="text-sm font-semibold hover:opacity-60"
+              >
+                See all new
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-5">
+              {justAdded.map((spot) => (
+                <SpotCard key={spot.id} spot={spot} />
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="bg-navey-band px-4 py-10 sm:px-6 md:px-12 md:py-12">
           <div className="mb-6 flex items-center justify-between">

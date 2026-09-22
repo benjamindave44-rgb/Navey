@@ -21,7 +21,20 @@ const TIMEOUT_MS = 20000;
  */
 const CHECKS = [
   { name: "Homepage", path: "/", expect: ["Navigate good spots"] },
-  { name: "Explore", path: "/explore", expect: ["Explore"] },
+  {
+    name: "Explore",
+    path: "/explore",
+    expect: ["Explore"],
+    // The firewall rule on /explore challenges anything that is not a browser,
+    // and this script cannot pass a browser challenge -- so a 429 here is the
+    // rule doing its job, not the site being down. Reported as a note instead
+    // of a failure: a monitor that cries wolf every run stops being read, and
+    // then the run that matters is ignored too.
+    //
+    // Deliberately narrow. Only this path, only this status. A 429 anywhere
+    // else, or any other status here, still fails.
+    tolerate: [429],
+  },
   { name: "Collections", path: "/collections", expect: [] },
   { name: "Sign in", path: "/sign-in", expect: [] },
   { name: "Robots", path: "/robots.txt", expect: ["Sitemap:"] },
@@ -111,6 +124,12 @@ async function run() {
       const { status, body } = await get(url);
 
       if (status !== 200) {
+        if (check.tolerate?.includes(status)) {
+          console.log(
+            `  note ${check.name} — ${check.path} returned ${status} (expected: firewall challenge)`
+          );
+          continue;
+        }
         failures.push(`${check.name} (${check.path}) returned ${status}`);
         continue;
       }

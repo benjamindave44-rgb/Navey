@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Sora, Manrope } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { GuestSaveImporter } from "@/components/GuestSaveImporter";
 import "./globals.css";
 
 const sora = Sora({
@@ -52,6 +54,22 @@ export const metadata: Metadata = {
     description:
       "Discover coffee shops and restaurants worth the trip across the Philippines.",
   },
+  /**
+   * Proves to Google Search Console that we own this domain.
+   *
+   * Read from the environment rather than written in here, so the token can be
+   * pasted into Vercel's settings without editing code -- and so this file
+   * carries no secret. Left unset, the tag is simply absent and nothing breaks.
+   *
+   * Note that a value set in Vercel only appears after the next deployment,
+   * because this metadata is baked into the build. Verifying by DNS TXT record
+   * instead needs no deployment at all; see OPERATIONS.md.
+   */
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? {
+        verification: { google: process.env.GOOGLE_SITE_VERIFICATION },
+      }
+    : {}),
 };
 
 export default function RootLayout({
@@ -69,6 +87,19 @@ export default function RootLayout({
           Skip to content
         </a>
         {children}
+        {/* Carries anything saved before signing up into the new account. */}
+        <GuestSaveImporter />
+        {/*
+          Visitor counts.
+          Worth writing down what this costs, given the year this project has
+          had: the beacon goes to Vercel's own collector, not to a function of
+          ours, so it does not touch the CPU or invocation allowances that ran
+          out in August. It has its own separate monthly event quota on the free
+          plan. About a kilobyte of script.
+          It is here because promoting a site with no way to see what happened
+          teaches nothing, and that was the real blocker on launching.
+        */}
+        <Analytics />
       </body>
     </html>
   );

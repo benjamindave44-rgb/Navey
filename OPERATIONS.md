@@ -36,6 +36,26 @@ Three answers, in order of effort:
 
 Run the health check yourself any time: `npm run smoke`.
 
+## Deploy order for migrations 0039 and 0040
+
+**Run the migrations before deploying the code that needs them.** Not the other
+way round, and not at the same time.
+
+The app now selects `wifi`, `instagram`, `spot_price_anchors` and the rest. Ask
+PostgREST for a column that does not exist and it returns an error, not a null:
+listing pages would throw and every grid would render empty. Columns with no
+code reading them, by contrast, are completely harmless — so the safe order is
+database first, code second, and there is no window where the site is broken.
+
+```
+supabase/migrations/0039_practical_amenities_and_contacts.sql
+supabase/migrations/0040_one_tap_reactions.sql
+```
+
+Both are additive and re-runnable (`if not exists` throughout, policies dropped
+before being created). Nothing is renamed or deleted, so nothing existing can
+break. Apply them in the Supabase dashboard's SQL editor, or with the CLI.
+
 ## Things you will want to change
 
 **Add a tag** (e.g. "Ramen", "Lechon") — one database row, no deploy:
@@ -49,6 +69,34 @@ Groups: `Vibe`, `Setting`, `Good for`, `Food & Drink`, `Practical`, `Standout`.
 `sort_order` decides the position within a group. The icon is the emoji itself.
 A new tag stays hidden from browsing until a listing carries it, then it
 appears everywhere — including its own page at `/tag/ramen`.
+
+**Fill in the practical fields** — admin listing form, no deploy. Wifi, power
+outlets, laptops, aircon, outdoor seating and parking are chips: tap once to
+set, tap the same chip again to clear. **Blank is a real answer and the right
+one when you have not checked** — the listing shows nothing rather than claiming
+there is no wifi, which would send somebody elsewhere and cost the shop a
+customer. Two of these also drive filters on Explore: "Can work here" means good
+wifi *and* at least a few outlets, and "Aircon" means aircon confirmed present.
+
+**The Instagram handle is the highest-value field on that form.** Every coffee
+shop in the country is on Instagram, and without it a listing is a dead end —
+the visitor reads it and goes to search Instagram themselves. Paste the handle
+or the whole profile URL; either is reduced to a handle on the way in.
+
+**Prices**: two or three real items off the menu board. "₱₱" is true of most of
+Metro Manila and tells nobody anything; "Latte ₱170" is the actual answer, and
+it is the one thing Google Maps has never shown. A row needs both a name and a
+price or it is dropped.
+
+**"Details confirmed"** stamps today's date and the listing says "Details
+checked September 2026". Untick it to remove the line. This is the cheapest
+credibility on the site — a directory is only worth opening if its hours are
+true.
+
+**Photos and menus** are not on the admin form; they live in the owner editor,
+and there is now a **Photos & Menu** button at the top of each admin listing
+page that opens it. Listings created from the admin are recorded as submitted by
+the admin, which is what makes that editor accessible for them.
 
 **Add a city** — nothing to do. Add a listing with a new city and
 `/city/that-city` appears, sitemapped and linked from the homepage.
@@ -112,19 +160,52 @@ the server so they cannot disagree.
 
 Not urgent, not forgotten.
 
-1. **Google Search Console.** Free, no server cost, no script. Tells you what
-   people searched to reach Navey and which pages Google actually indexed. For
-   a directory that lives on search, this is the biggest missing thing.
-2. **Visitor analytics.** Right now nobody can answer "did anyone visit today".
-   Vercel Web Analytics is a toggle in the project; the free tier caps at a few
-   thousand events a month.
-3. **Direct-to-storage uploads**, to lift the ~4MB submission ceiling.
-4. **Leaked-password protection**, when the Supabase plan is paid.
-5. **The scheduled health check is still switched off.** It was turned off
+1. **Google Search Console** — half done. The verification meta tag is wired up
+   and reads `GOOGLE_SITE_VERIFICATION` from the environment, so the token can
+   be pasted into Vercel's project settings without touching code. It is baked
+   at build time, so it only appears after the next deployment. **Verifying by
+   DNS TXT record instead needs no deployment at all** and is the cheaper route:
+   Search Console offers "Domain" verification, which wants one TXT record on
+   `navey.co` at the registrar. Do that and the env var is unnecessary.
+2. **Narrow the firewall rule on `/explore`.** It currently challenges every
+   request to that path, and a challenge is something only a browser can pass —
+   so Googlebot cannot read Explore at all. Adding a second condition (Query
+   String · is not empty) keeps the flood blocked, since the flood carried
+   `?city=...`, and lets the plain page through. Dashboard change, no deploy.
+   Filtered URLs are already `noindex, follow` with a canonical pointing at
+   `/explore`, so nothing is lost in search by keeping them challenged.
+3. **Caching `/explore` properly** needs Next 16's Cache Components
+   (`cacheComponents` in `next.config.ts`). That is not a small switch: turning
+   it on removes `revalidate` and `dynamic` support from every page that uses
+   them — nine of them here — and each has to be rewritten with `"use cache"`.
+   Worth doing, as its own piece of work, not bundled with anything.
+4. **The new amenity fields are admin-only.** Wifi, outlets, laptops, aircon,
+   parking, contacts and prices are all editable from the admin listing form.
+   The owner dashboard's Amenities tab still only covers noise, seating, music
+   and lighting. Harmless — `updateAmenities` writes only its own four columns,
+   so it cannot clobber the new ones — but a business owner cannot yet fill them
+   in themselves.
+5. **Direct-to-storage uploads**, to lift the ~4MB submission ceiling.
+6. **Map clustering.** Pins already overlap in BGC and it worsens per listing.
+7. **Chains and branches.** There is no model for one brand with eight
+   locations, and retrofitting one at 200 listings is far harder than deciding
+   it at 50. The decision is a product one: one page listing its branches, or
+   one listing each.
+8. **Leaked-password protection**, when the Supabase plan is paid.
+9. **The scheduled health check is still switched off.** It was turned off
    because every page it opened was rendered fresh; now that they are cached,
    the reason is gone and the hourly timer in `.github/workflows/smoke.yml`
    can be uncommented. Left off deliberately rather than switched back on
-   quietly — it is a recurring cost, and those get agreed first here.
+   quietly — it is a recurring cost, and those get agreed first here. The check
+   now treats a 429 on `/explore` as a note rather than a failure, so it no
+   longer reports the firewall rule as an outage.
+
+**Visitor analytics is now on** (`@vercel/analytics`, mounted in
+`src/app/layout.tsx`). Worth knowing what it costs, given this year: the beacon
+goes to Vercel's own collector, not to a function of ours, so it does not touch
+the CPU or invocation allowances that ran out in August. It has its own separate
+monthly event quota on the free plan. Roughly a kilobyte of script. Removing it
+is deleting two lines from the layout.
 
 Listing content still to fill in: 8 listings have no neighbourhood, Sage Day
 Coffee has no tags, two listings have no description, and Auro Chocolate Cafe
@@ -163,6 +244,19 @@ What this means when you change something:
   browser. If you add something per-person to a public page, either do it in a
   client component the same way, or that page goes back to being rebuilt for
   every visitor — and the reason will not be obvious later.
+- **Nothing on a public page may depend on what time it is, either.** Same rule,
+  different axis, and it was missed the first time. The Open/Closed badge was
+  worked out on the server and baked into pages that are rebuilt weekly, so it
+  could tell a visitor a shop was open six days after that stopped being true.
+  Anything that changes by the hour — open state, "closes in 40 min" — is now
+  computed in the browser from the hours carried into the page
+  (`src/components/OpenBadge.tsx`). The server value is used for the first paint
+  only.
+- **A public action must not refresh a cached page.** `toggleSaveSpot` used to
+  revalidate `/`, `/explore` and `/profile` on every tap of a heart. Two of
+  those are rendered per request anyway so it achieved nothing; the homepage is
+  cached, so any visitor could rebuild it by tapping. Same fault as the
+  `publishChanges` one below, but triggerable by strangers rather than admins.
 - **A build that runs while the database is unreachable can bake empty pages.**
   The five-minute refresh heals it; the health check reads page contents rather
   than status codes, so a lasting one would be caught.

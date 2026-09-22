@@ -1,4 +1,10 @@
-import { openStatus, manilaNow, type OpenHourRow } from "../src/lib/open-status.ts";
+import {
+  openStatus,
+  openDetail,
+  closingSoonLabel,
+  manilaNow,
+  type OpenHourRow,
+} from "../src/lib/open-status.ts";
 
 let failures = 0;
 function check(label: string, actual: unknown, expected: unknown) {
@@ -75,6 +81,43 @@ check("closed beats 24 hours",
 // Legacy unpadded format still in the table.
 check("legacy 7:00AM parses",
   openStatus(everyDay("7:00AM", "9:00PM"), at("2026-08-07T04:00:00Z")), "open");
+
+// --- how long is left --------------------------------------------------
+// The countdown is the part most likely to be wrong by a whole day, because
+// closing times run past midnight and the arithmetic has to run forwards
+// through it rather than backwards to yesterday.
+const left = (hours: OpenHourRow[], iso: string) =>
+  openDetail(hours, at(iso)).minutesUntilClose;
+
+// 9-9, checked at 20:20 Manila (12:20Z): forty minutes left.
+check("counts down to closing", left(nineToNine, "2026-08-07T12:20:00Z"), 40);
+check("full day ahead still counts", left(nineToNine, "2026-08-07T01:00:00Z"), 720); // 09:00
+check("nothing left when shut", left(nineToNine, "2026-08-07T14:00:00Z"), null);     // 22:00
+
+// Angkan, 6:00 AM to 2:00 AM. At 23:00 Manila (15:00Z) it has three hours --
+// which only comes out right if midnight is crossed forwards.
+check("overnight: counts through midnight", left(angkan, "2026-08-07T15:00:00Z"), 180);
+// At 01:00 Manila (17:00Z) the closing time is today, one hour away, and it is
+// yesterday's row that is still running.
+check("overnight: small hours count from today", left(angkan, "2026-08-07T17:00:00Z"), 60);
+
+check("24 hours never closes",
+  left(everyDay(null, null, { is_24_hours: true }), "2026-08-07T15:00:00Z"), null);
+check("unreadable hours have no countdown",
+  left(everyDay("sometime", "later"), "2026-08-07T04:00:00Z"), null);
+
+// --- the words on the badge -------------------------------------------
+const label = (hours: OpenHourRow[], iso: string) =>
+  closingSoonLabel(openDetail(hours, at(iso)));
+
+check("badge at forty minutes", label(nineToNine, "2026-08-07T12:20:00Z"), "Closes in 40 min");
+check("badge rounds to hours", label(nineToNine, "2026-08-07T11:00:00Z"), "Closes in 2 hr"); // 19:00
+check("badge mixes hours and minutes", label(nineToNine, "2026-08-07T11:30:00Z"), "Closes in 1 hr 30 min");
+// Two hours and one minute is not "soon"; nobody needs telling at 10am.
+check("quiet outside the last two hours", label(nineToNine, "2026-08-07T02:00:00Z"), null); // 10:00
+check("quiet when closed", label(nineToNine, "2026-08-07T14:00:00Z"), null);
+check("quiet when open around the clock",
+  label(everyDay(null, null, { is_24_hours: true }), "2026-08-07T15:00:00Z"), null);
 
 console.log(failures === 0 ? "\nAll checks passed" : `\n${failures} FAILED`);
 process.exit(failures === 0 ? 0 : 1);

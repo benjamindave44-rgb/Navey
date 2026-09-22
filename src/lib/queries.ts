@@ -2,8 +2,13 @@ import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 import { supabase } from "@/lib/supabase";
 import { orderTagsForCards } from "@/lib/tag-priority";
-import { openStatus, type OpenState } from "@/lib/open-status";
+import {
+  openStatus,
+  type OpenHourRow,
+  type OpenState,
+} from "@/lib/open-status";
 import { memo } from "@/lib/memo";
+import type { AmenitySource } from "@/lib/amenities";
 
 /**
  * A query that fails is not a query that found nothing, and the two must not
@@ -27,9 +32,36 @@ export type SpotWithTags = {
   saveCount: number;
   tags: string[];
   coverPhoto: string | null;
-  /** Worked out at request time in Manila. "unknown" when the hours are
-   *  missing or unreadable, so the card can show no badge at all. */
+  /**
+   * Worked out when this page was built, which on a page cached for a week is
+   * not the same thing as now. Kept only so the badge has something to draw on
+   * the first paint; OpenBadge recalculates it in the browser and that is the
+   * value a visitor actually sees. "unknown" means the hours are missing or
+   * unreadable, and the badge stays hidden.
+   */
   openState: OpenState;
+  /**
+   * The opening hours themselves, carried to the browser so the badge can be
+   * worked out against the visitor's own clock rather than the build's.
+   *
+   * This is the fix for a bug the caching work introduced: with `revalidate`
+   * at a week, an "Open now" badge computed on the server could be six days
+   * stale -- confidently telling somebody a shop is open on a Tuesday because
+   * it was open when the page was built on a Wednesday. Seven small rows per
+   * card is a few hundred bytes; a wrong badge on a directory is the whole
+   * product.
+   */
+  hours: OpenHourRow[];
+  /**
+   * The practical facts, in the one shape src/lib/amenities.ts knows how to
+   * turn into words. Every field is optional: a card fetches only the three it
+   * has room for, a listing page fetches all six, and both can be handed
+   * straight to workChips and comfortChips without either caller reshaping
+   * anything.
+   */
+  amenities: AmenitySource;
+  /** For the "just added" row. ISO timestamp, as stored. */
+  createdAt: string;
 };
 
 export type SpotSort = "recommended" | "newest" | "most_saved";
@@ -45,6 +77,17 @@ export type SpotFilters = {
   price?: string;
   /** Only places open at the moment of the request, worked out in Manila. */
   openNow?: boolean;
+  /**
+   * "Somewhere I can work" -- good wifi, and at least a few outlets.
+   *
+   * One filter rather than three, because nobody wants to tick three boxes to
+   * ask one question. Good wifi only: patchy wifi is not somewhere you take a
+   * day's work. Listings nobody has checked are excluded, on the same principle
+   * as openNow -- an empty column is not a promise.
+   */
+  workFriendly?: boolean;
+  /** Aircon confirmed present. A genuinely Philippine filter. */
+  aircon?: boolean;
   sort?: SpotSort;
   limit?: number;
 };
@@ -58,13 +101,88 @@ type SupabaseLike = SupabaseClient<Database>;
  *  site, which is how two of them can quietly drift apart and one grid starts
  *  rendering without hours or tags. */
 const SPOT_CARD_SELECT =
-  "id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label, tag_group, sort_order)), spot_photos(url, kind), spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours)";
+  "id, name, category, price_range, city, province, hidden_gem, description, save_count, created_at, wifi, power_outlets, has_aircon, spot_tags(tags(label, tag_group, sort_order)), spot_photos(url, kind), spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours)";
+
+/** The shape SPOT_CARD_SELECT comes back as. Written out so the mapper below
+ *  can be shared without each caller having to name its own row type. */
+type SpotCardRow = {
+  id: string;
+  name: string;
+  category: string;
+  price_range: string | null;
+  city: string;
+  province: string | null;
+  hidden_gem: boolean;
+  description: string | null;
+  save_count: number;
+  created_at: string;
+  wifi: string | null;
+  power_outlets: string | null;
+  has_aircon: boolean | null;
+  spot_tags: { tags: { label: string; tag_group: string; sort_order: number } | null }[];
+  spot_photos: { url: string; kind: string }[];
+  spot_hours: OpenHourRow[];
+};
+
+/**
+ * One row to one card.
+ *
+ * The select string was already shared, with a comment explaining that writing
+ * it out per call site is how two of them drift apart -- but the mapping that
+ * followed it was still copied out four times, in getApprovedSpots,
+ * getFeaturedSpots, getSpotsByIds and getCollectionDetail. Adding a field meant
+ * remembering all four, which is the same trap one layer up.
+ */
+function toSpotCard(row: SpotCardRow, now: Date): SpotWithTags {
+  return {
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    price_range: row.price_range,
+    city: row.city,
+    province: row.province,
+    hidden_gem: row.hidden_gem,
+    description: row.description,
+    saveCount: row.save_count,
+    tags: orderTagsForCards(
+      row.spot_tags
+        .map((st) => st.tags)
+        .filter((tag): tag is NonNullable<typeof tag> => Boolean(tag))
+        .map((tag) => ({
+          label: tag.label,
+          group: tag.tag_group,
+          sort: tag.sort_order,
+        }))
+    ),
+    coverPhoto: row.spot_photos.find((p) => p.kind === "gallery")?.url ?? null,
+    openState: openStatus(row.spot_hours, now),
+    hours: row.spot_hours,
+    amenities: {
+      wifi: row.wifi,
+      power_outlets: row.power_outlets,
+      has_aircon: row.has_aircon,
+    },
+    createdAt: row.created_at,
+  };
+}
 
 export async function getApprovedSpots(
   filters: SpotFilters = {}
 ): Promise<SpotWithTags[]> {
-  const { search, category, city, district, tag, tags, price, openNow, sort, limit } =
-    filters;
+  const {
+    search,
+    category,
+    city,
+    district,
+    tag,
+    tags,
+    price,
+    openNow,
+    workFriendly,
+    aircon,
+    sort,
+    limit,
+  } = filters;
   const tagList = tags && tags.length > 0 ? tags : tag ? [tag] : [];
 
   let query = supabase
@@ -90,6 +208,13 @@ export async function getApprovedSpots(
   if (city) query = query.eq("city", city);
   if (district) query = query.eq("district", district);
   if (price) query = query.eq("price_range", price);
+  // Done in SQL rather than after the fetch, unlike openNow: these are plain
+  // column comparisons with no clock or timezone involved, and the partial
+  // index in migration 0039 covers exactly this pair.
+  if (workFriendly) {
+    query = query.eq("wifi", "good").in("power_outlets", ["few", "plenty"]);
+  }
+  if (aircon) query = query.eq("has_aircon", true);
 
   const { data, error } = await query;
   logQueryError("getApprovedSpots", error);
@@ -99,29 +224,7 @@ export async function getApprovedSpots(
   // minute boundary and show two spots with identical hours differently.
   const now = new Date();
 
-  let spots = data.map((spot) => ({
-    id: spot.id,
-    name: spot.name,
-    category: spot.category,
-    price_range: spot.price_range,
-    city: spot.city,
-    province: spot.province,
-    hidden_gem: spot.hidden_gem,
-    description: spot.description,
-    saveCount: spot.save_count,
-    tags: orderTagsForCards(
-      spot.spot_tags
-        .map((st) => st.tags)
-        .filter((tag): tag is NonNullable<typeof tag> => Boolean(tag))
-        .map((tag) => ({
-          label: tag.label,
-          group: tag.tag_group,
-          sort: tag.sort_order,
-        }))
-    ),
-    coverPhoto: spot.spot_photos.find((p) => p.kind === "gallery")?.url ?? null,
-    openState: openStatus(spot.spot_hours, now),
-  }));
+  let spots = data.map((spot) => toSpotCard(spot, now));
 
   if (tagList.length > 0) {
     spots = spots.filter((spot) => tagList.every((t) => spot.tags.includes(t)));
@@ -155,29 +258,7 @@ export async function getFeaturedSpots(limit = 5): Promise<SpotWithTags[]> {
     .limit(limit);
 
   const now = new Date();
-  const featured = (data ?? []).map((spot) => ({
-    id: spot.id,
-    name: spot.name,
-    category: spot.category,
-    price_range: spot.price_range,
-    city: spot.city,
-    province: spot.province,
-    hidden_gem: spot.hidden_gem,
-    description: spot.description,
-    saveCount: spot.save_count,
-    tags: orderTagsForCards(
-      spot.spot_tags
-        .map((st) => st.tags)
-        .filter((tag): tag is NonNullable<typeof tag> => Boolean(tag))
-        .map((tag) => ({
-          label: tag.label,
-          group: tag.tag_group,
-          sort: tag.sort_order,
-        }))
-    ),
-    coverPhoto: spot.spot_photos.find((p) => p.kind === "gallery")?.url ?? null,
-    openState: openStatus(spot.spot_hours, now),
-  }));
+  const featured = (data ?? []).map((spot) => toSpotCard(spot, now));
 
   if (featured.length > 0) return featured;
 
@@ -379,7 +460,7 @@ export async function getCollectionDetail(
       `id, title, description, created_at,
        curator:profiles(display_name),
        collection_photos(id, url),
-       collection_spots(rank, spots(id, name, category, price_range, city, province, hidden_gem, description, save_count, spot_tags(tags(label, tag_group, sort_order)), spot_photos(url, kind), spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours)))`
+       collection_spots(rank, spots(${SPOT_CARD_SELECT}))`
     )
     .eq("id", id)
     .maybeSingle();
@@ -390,33 +471,10 @@ export async function getCollectionDetail(
   const now = new Date();
   let spots: CollectionSpot[] = data.collection_spots
     .filter((entry) => entry.spots)
-    .map((entry) => {
-      const spot = entry.spots!;
-      return {
-        id: spot.id,
-        name: spot.name,
-        category: spot.category,
-        price_range: spot.price_range,
-        city: spot.city,
-        province: spot.province,
-        hidden_gem: spot.hidden_gem,
-        description: spot.description,
-        saveCount: spot.save_count,
-        tags: orderTagsForCards(
-          spot.spot_tags
-            .map((st) => st.tags)
-            .filter((tag): tag is NonNullable<typeof tag> => Boolean(tag))
-            .map((tag) => ({
-              label: tag.label,
-              group: tag.tag_group,
-              sort: tag.sort_order,
-            }))
-        ),
-        coverPhoto: spot.spot_photos.find((p) => p.kind === "gallery")?.url ?? null,
-        openState: openStatus(spot.spot_hours, now),
-        rank: entry.rank,
-      };
-    });
+    .map((entry) => ({
+      ...toSpotCard(entry.spots!, now),
+      rank: entry.rank,
+    }));
 
   spots =
     sort === "most_saved"
@@ -468,29 +526,64 @@ export type SpotDetail = SpotWithTags & {
   accepts_bank_transfer: boolean;
   galleryPhotos: { id: string; url: string }[];
   menuPhotos: { id: string; url: string }[];
-  hours: {
-    day_of_week: number;
-    open_time: string | null;
-    close_time: string | null;
-    is_closed: boolean;
-    is_24_hours: boolean;
-  }[];
   reviews: SpotReview[];
   averageRating: number | null;
   contributor: { id: string; name: string } | null;
+  instagram: string | null;
+  phone: string | null;
+  website: string | null;
+  /** Date, as stored -- rendered in Manila, never as a raw timestamp. */
+  detailsCheckedAt: string | null;
+  /** "Latte ₱170", in the order the admin arranged them. */
+  priceAnchors: { item: string; pricePhp: number }[];
+  /** Tally per label. Built when the page was, so it lags by up to a week on a
+   *  cached page -- acceptable for a mood signal, and the tap itself shows
+   *  immediately in the browser. */
+  reactionCounts: Record<string, number>;
 };
+
+/**
+ * The tally behind the one-tap reactions.
+ *
+ * A separate round trip rather than an embed on the listing query, because
+ * embedding requires PostgREST to work out a relationship between `spots` and
+ * a view, and that inference is not something to bet a page on. One extra read
+ * on a page rebuilt weekly is nothing; a listing page that throws because the
+ * embed could not be resolved is everything.
+ *
+ * An empty tally on failure is the right answer: no numbers is a fine way to
+ * render a board nobody has voted on, and the buttons still work.
+ */
+async function getReactionCounts(spotId: string): Promise<Record<string, number>> {
+  const { data, error } = await supabase
+    .from("spot_reaction_counts")
+    .select("label, total")
+    .eq("spot_id", spotId);
+
+  logQueryError(`getReactionCounts(${spotId})`, error);
+  if (error || !data) return {};
+
+  const counts: Record<string, number> = {};
+  for (const row of data) {
+    if (row.label && typeof row.total === "number") counts[row.label] = row.total;
+  }
+  return counts;
+}
 
 export async function getSpotDetail(id: string): Promise<SpotDetail | null> {
   const { data, error } = await supabase
     .from("spots")
     .select(
       `id, name, category, price_range, city, province, address, lat, lng,
-       description, hidden_gem, pwd_friendly, save_count,
+       description, hidden_gem, pwd_friendly, save_count, created_at,
        noise_level, music_style, lighting, seating_style,
        accepts_cash, accepts_qr_ph, accepts_cards, accepts_bank_transfer,
+       wifi, power_outlets, laptop_friendly, has_aircon, has_outdoor_seating,
+       parking, instagram, phone, website, details_checked_at,
        spot_tags(tags(label)),
        spot_photos(id, url, kind),
        spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours),
+       spot_price_anchors(item, price_php, sort_order),
        reviews(id, rating, body, created_at, user_id, profiles!reviews_user_id_fkey(display_name), review_photos(url)),
        submitted_by, submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)`
     )
@@ -522,6 +615,8 @@ export async function getSpotDetail(id: string): Promise<SpotDetail | null> {
   const averageRating = reviews.length
     ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
     : null;
+
+  const reactionCounts = await getReactionCounts(data.id);
 
   return {
     id: data.id,
@@ -560,6 +655,26 @@ export async function getSpotDetail(id: string): Promise<SpotDetail | null> {
       data.submitted_by && data.submitted_by_profile?.display_name
         ? { id: data.submitted_by, name: data.submitted_by_profile.display_name }
         : null,
+    createdAt: data.created_at,
+    amenities: {
+      wifi: data.wifi,
+      power_outlets: data.power_outlets,
+      laptop_friendly: data.laptop_friendly,
+      has_aircon: data.has_aircon,
+      has_outdoor_seating: data.has_outdoor_seating,
+      parking: data.parking,
+    },
+    instagram: data.instagram,
+    phone: data.phone,
+    website: data.website,
+    detailsCheckedAt: data.details_checked_at,
+    // Ordered here rather than in the query: the sort column is fetched
+    // alongside the rows, and a nested embed's order is not something to rely
+    // on.
+    priceAnchors: [...data.spot_price_anchors]
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((anchor) => ({ item: anchor.item, pricePhp: anchor.price_php })),
+    reactionCounts,
   };
 }
 
@@ -611,33 +726,7 @@ export async function getSpotsByIds(
   // rather than in whatever order the database happened to return.
   return ids.flatMap((id) => {
     const spot = byId.get(id);
-    if (!spot) return [];
-    return [
-      {
-        id: spot.id,
-        name: spot.name,
-        category: spot.category,
-        price_range: spot.price_range,
-        city: spot.city,
-        province: spot.province,
-        hidden_gem: spot.hidden_gem,
-        description: spot.description,
-        saveCount: spot.save_count,
-        tags: orderTagsForCards(
-          spot.spot_tags
-            .map((st) => st.tags)
-            .filter((tag): tag is NonNullable<typeof tag> => Boolean(tag))
-            .map((tag) => ({
-              label: tag.label,
-              group: tag.tag_group,
-              sort: tag.sort_order,
-            }))
-        ),
-        coverPhoto:
-          spot.spot_photos.find((p) => p.kind === "gallery")?.url ?? null,
-        openState: openStatus(spot.spot_hours, now),
-      },
-    ];
+    return spot ? [toSpotCard(spot, now)] : [];
   });
 }
 

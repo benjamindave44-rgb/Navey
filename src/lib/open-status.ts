@@ -79,14 +79,33 @@ function toMinutes(value: string | null): number | null {
   return hour * 60 + minute;
 }
 
-export function openStatus(
+const MINUTES_IN_DAY = 24 * 60;
+
+/**
+ * Whether the spot is open, and if so how much longer it has.
+ *
+ * `minutesUntilClose` is null whenever there is no answer worth giving: the
+ * spot is shut, the hours are unreadable, or it is open around the clock and
+ * therefore never closes. "Closes in 40 min" is the fact that stops somebody
+ * driving across the city for nothing, and it comes out of the branching that
+ * decides "open" anyway -- so it is worked out here rather than in a second
+ * function that would have to repeat the midnight rule and eventually disagree
+ * with this one about it.
+ */
+export type OpenDetail = {
+  state: OpenState;
+  minutesUntilClose: number | null;
+};
+
+export function openDetail(
   hours: OpenHourRow[] | null | undefined,
   now: Date = new Date()
-): OpenState {
-  if (!hours || hours.length === 0) return "unknown";
+): OpenDetail {
+  const unknown: OpenDetail = { state: "unknown", minutesUntilClose: null };
+  if (!hours || hours.length === 0) return unknown;
 
   const clock = manilaNow(now);
-  if (!clock) return "unknown";
+  if (!clock) return unknown;
 
   const { day, minutes } = clock;
   const rowFor = (which: number) =>
@@ -99,25 +118,69 @@ export function openStatus(
     const opens = toMinutes(yesterday.open_time);
     const closes = toMinutes(yesterday.close_time);
     if (opens !== null && closes !== null && closes <= opens && minutes < closes) {
-      return "open";
+      // Closing time is today, in the small hours: the gap is simply what is
+      // left before it.
+      return { state: "open", minutesUntilClose: closes - minutes };
     }
   }
 
   const today = rowFor(day);
-  if (!today) return "unknown";
+  if (!today) return unknown;
   // Closed is checked first, matching describeHours and the save action: a
   // shop that is shut cannot also be open around the clock, and if stray data
   // ever carries both flags, every part of the site should agree on which one
   // wins.
-  if (today.is_closed) return "closed";
-  if (today.is_24_hours) return "open";
+  if (today.is_closed) return { state: "closed", minutesUntilClose: null };
+  // Open around the clock never closes, so there is no countdown to show.
+  if (today.is_24_hours) return { state: "open", minutesUntilClose: null };
 
   const opens = toMinutes(today.open_time);
   const closes = toMinutes(today.close_time);
-  if (opens === null || closes === null) return "unknown";
+  if (opens === null || closes === null) return unknown;
 
-  // A closing time at or before the opening time means the following morning.
-  if (closes <= opens) return minutes >= opens ? "open" : "closed";
+  // A closing time at or before the opening time means the following morning,
+  // so the remaining time runs through midnight rather than backwards.
+  if (closes <= opens) {
+    if (minutes < opens) return { state: "closed", minutesUntilClose: null };
+    return {
+      state: "open",
+      minutesUntilClose: MINUTES_IN_DAY - minutes + closes,
+    };
+  }
 
-  return minutes >= opens && minutes < closes ? "open" : "closed";
+  if (minutes >= opens && minutes < closes) {
+    return { state: "open", minutesUntilClose: closes - minutes };
+  }
+  return { state: "closed", minutesUntilClose: null };
+}
+
+export function openStatus(
+  hours: OpenHourRow[] | null | undefined,
+  now: Date = new Date()
+): OpenState {
+  return openDetail(hours, now).state;
+}
+
+/**
+ * "Closes in 40 min", or nothing.
+ *
+ * Only inside the last two hours. Earlier than that it is noise -- nobody
+ * needs telling at ten in the morning that a cafe shuts at nine -- and the
+ * badge has to earn the space it takes on a card.
+ */
+const CLOSING_SOON_MINUTES = 120;
+
+export function closingSoonLabel(
+  detail: OpenDetail
+): string | null {
+  const left = detail.minutesUntilClose;
+  if (detail.state !== "open" || left === null) return null;
+  if (left <= 0 || left > CLOSING_SOON_MINUTES) return null;
+
+  if (left < 60) return `Closes in ${left} min`;
+
+  const hours = Math.floor(left / 60);
+  const minutes = left % 60;
+  if (minutes === 0) return `Closes in ${hours} hr`;
+  return `Closes in ${hours} hr ${minutes} min`;
 }
