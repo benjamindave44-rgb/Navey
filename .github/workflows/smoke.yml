@@ -32,10 +32,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: "npm"
 
-      # No install step: both checks use only Node built-ins, so neither can be
-      # broken by a dependency and both take seconds to run.
-      - name: Opening hours rules
+      # There used to be no install step, because every check used only Node
+      # built-ins. The link-preview check broke that: it has to actually draw
+      # the pictures, which needs `next`, and drawing them is the only thing
+      # that catches a fault Satori will reject -- a type check cannot see it.
+      #
+      # Worth the thirty seconds. A check that runs only on somebody's laptop
+      # is how a broken preview image sat unnoticed for a month and then killed
+      # four deployments in a row. This is GitHub's time, not Vercel's, so it
+      # costs nothing on the hosting plan.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rules, and the link previews
         run: npm test
 
       - name: Check the live site
