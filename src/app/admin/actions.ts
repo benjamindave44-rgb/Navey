@@ -349,9 +349,15 @@ export async function updateListing(formData: FormData) {
   }
 
   await replaceHours(supabase, id, formData);
-  await replacePriceAnchors(supabase, id, formData);
+  const priceProblem = await replacePriceAnchors(supabase, id, formData);
 
   await publishChanges(spotPath(id));
+
+  // Saved, but say so honestly if part of it did not stick.
+  if (priceProblem) {
+    redirect(`/admin/listings/${id}?error=${encodeURIComponent(priceProblem)}`);
+  }
+
   redirect(
     `/admin/listings/${id}?notice=${encodeURIComponent("Listing updated.")}`
   );
@@ -377,6 +383,12 @@ async function replaceHours(
  * means "remove the prices" -- there is no way to submit this form without
  * having seen them. Hours are different: that editor can be left untouched, and
  * clearing them on every save would be a data loss bug.
+ *
+ * Returns a message rather than swallowing the failure. The first version
+ * ignored both errors, so a refused write looked exactly like a successful one
+ * and the prices simply never appeared -- the kind of silent failure that has
+ * cost this project weeks. The rest of the save still stands: losing the
+ * prices is not a reason to discard the name and address someone just typed.
  */
 async function replacePriceAnchors(
   supabase: Awaited<ReturnType<typeof requireAdmin>>,
@@ -384,10 +396,21 @@ async function replacePriceAnchors(
   formData: FormData
 ) {
   const rows = priceAnchorsFromForm(formData, spotId);
-  await supabase.from("spot_price_anchors").delete().eq("spot_id", spotId);
+
+  const { error: clearError } = await supabase
+    .from("spot_price_anchors")
+    .delete()
+    .eq("spot_id", spotId);
+  if (clearError) return `Prices not saved: ${clearError.message}`;
+
   if (rows.length > 0) {
-    await supabase.from("spot_price_anchors").insert(rows);
+    const { error: insertError } = await supabase
+      .from("spot_price_anchors")
+      .insert(rows);
+    if (insertError) return `Prices not saved: ${insertError.message}`;
   }
+
+  return null;
 }
 
 export async function deleteListing(formData: FormData) {

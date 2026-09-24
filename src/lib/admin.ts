@@ -253,7 +253,13 @@ export async function getAdminSpotDetail(spotId: string): Promise<AdminSpotDetai
     phone: data.phone,
     website: data.website,
     detailsCheckedAt: data.details_checked_at,
-    priceAnchors: [...data.spot_price_anchors]
+    // `?? []` rather than spreading straight from the embed. An embedded list
+    // that comes back absent rather than empty makes `[...undefined]` throw
+    // "undefined is not iterable" -- an unhandled crash in a function with no
+    // try/catch, which reaches the visitor as the whole page falling over
+    // rather than as a listing with no prices on it. A missing price list is
+    // not worth taking a page down for.
+    priceAnchors: [...(data.spot_price_anchors ?? [])]
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((anchor) => ({ item: anchor.item, pricePhp: anchor.price_php })),
   };

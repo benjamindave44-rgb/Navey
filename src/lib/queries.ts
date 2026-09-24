@@ -671,7 +671,10 @@ export async function getSpotDetail(id: string): Promise<SpotDetail | null> {
     // Ordered here rather than in the query: the sort column is fetched
     // alongside the rows, and a nested embed's order is not something to rely
     // on.
-    priceAnchors: [...data.spot_price_anchors]
+    // `?? []` rather than spreading straight from the embed -- see the same
+    // guard in src/lib/admin.ts. An absent embed makes this throw, and a
+    // listing page with no prices is infinitely better than no listing page.
+    priceAnchors: [...(data.spot_price_anchors ?? [])]
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((anchor) => ({ item: anchor.item, pricePhp: anchor.price_php })),
     reactionCounts,
