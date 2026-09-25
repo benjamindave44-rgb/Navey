@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { publishChanges, spotPath } from "@/lib/publish";
+import { publishChanges, spotPaths } from "@/lib/publish";
 import { checkContentGuidelines } from "@/lib/content-guidelines";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { storagePathFromPublicUrl, uploadPhotos } from "@/lib/photo-upload";
@@ -105,7 +105,7 @@ export async function updateBasicInfo(formData: FormData) {
     : locationAdjusted && coords
       ? `Saved. Pin updated to ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}.`
       : "Saved.";
-  await publishChanges(spotPath(spotId));
+  await publishOwnerSpot(supabase, spotId);
   redirect(`/owner/${spotId}?tab=overview&notice=${encodeURIComponent(notice)}`);
 }
 
@@ -127,7 +127,7 @@ export async function updateHours(formData: FormData) {
     );
   }
 
-  await publishChanges(spotPath(spotId));
+  await publishOwnerSpot(supabase, spotId);
   redirect(`/owner/${spotId}?tab=hours&notice=${encodeURIComponent("Hours updated.")}`);
 }
 
@@ -145,7 +145,7 @@ export async function updatePayments(formData: FormData) {
     })
     .eq("id", spotId);
 
-  await publishChanges(spotPath(spotId));
+  await publishOwnerSpot(supabase, spotId);
   redirect(
     `/owner/${spotId}?tab=payments&notice=${encodeURIComponent(
       "Payment methods updated."
@@ -184,11 +184,34 @@ export async function updateAmenities(formData: FormData) {
     })
     .eq("id", spotId);
 
-  await publishChanges(spotPath(spotId));
+  await publishOwnerSpot(supabase, spotId);
   redirect(
     `/owner/${spotId}?tab=amenities&notice=${encodeURIComponent(
       "Amenities & Vibe updated."
     )}`
+  );
+}
+
+/**
+ * Refreshes every cached page showing this listing, not only its own.
+ *
+ * A gallery photo is the card on the homepage and on the city page as well as
+ * the picture at the top of the listing. Refreshing one and not the others is
+ * how a newly uploaded photo appeared on the shop's page while its card
+ * elsewhere kept showing the empty-cup placeholder -- for a week.
+ */
+async function publishOwnerSpot(
+  supabase: Awaited<ReturnType<typeof requireOwnerAccess>>,
+  spotId: string
+) {
+  const { data } = await supabase
+    .from("spots")
+    .select("city, district")
+    .eq("id", spotId)
+    .maybeSingle();
+
+  await publishChanges(
+    ...spotPaths({ id: spotId, city: data?.city, district: data?.district })
   );
 }
 
@@ -240,7 +263,7 @@ async function addSpotPhotos(kind: PhotoKind, formData: FormData) {
     failed > 0
       ? `${photoUrls.length} photo${photoUrls.length === 1 ? "" : "s"} added, ${failed} failed (check file type/size).`
       : "Photos updated.";
-  await publishChanges(spotPath(spotId));
+  await publishOwnerSpot(supabase, spotId);
   redirect(`/owner/${spotId}?tab=${kind}&notice=${encodeURIComponent(notice)}`);
 }
 
@@ -262,7 +285,7 @@ async function deleteSpotPhoto(kind: PhotoKind, formData: FormData) {
     await supabase.from("spot_photos").delete().eq("id", photo.id);
   }
 
-  await publishChanges(spotPath(spotId));
+  await publishOwnerSpot(supabase, spotId);
   redirect(`/owner/${spotId}?tab=${kind}&notice=${encodeURIComponent("Photo removed.")}`);
 }
 

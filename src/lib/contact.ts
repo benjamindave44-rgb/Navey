@@ -111,39 +111,39 @@ export function websiteLabel(value: string | null | undefined): string | null {
 }
 
 /**
- * "Get directions".
+ * "Get directions" — by name and address, never by coordinates.
  *
- * Coordinates when we have them, because an address typed by hand is the thing
- * most likely to be slightly wrong, and a map sent to the wrong street is
- * worse than no link. Falls back to the written address, which is still better
- * than making somebody copy and paste it.
+ * The first version of this used lat/lng when they existed, on the reasoning
+ * that stored coordinates beat an address typed by hand. That was wrong, and
+ * the listing page had already said so in a comment that I did not read:
+ *
+ *   "[coordinates] come from someone tapping a small map, so they land near
+ *    the building at best; Google's own record of the shop is the more
+ *    accurate destination, and a pin that is merely close sends people to the
+ *    wrong door."
+ *
+ * It did exactly that in practice -- sent people somewhere else entirely.
+ * Handing Google the shop's name and address lets it match its own record of
+ * the place, which is far better than any pin we hold. The coordinates remain
+ * authoritative for the Explore Map, where approximate is the whole point.
+ *
+ * `/maps/dir/` rather than `/maps/search/`, so the link opens directions from
+ * where the person is standing rather than a search result they then have to
+ * tap through.
  *
  * Deliberately not stored as a column: it is derived from fields the listing
- * already carries, and a stored copy is a stored copy that can disagree with
- * them.
+ * already carries, and a stored copy can drift out of agreement with them.
  */
 export function directionsUrl(spot: {
   name: string;
   address?: string | null;
   city?: string | null;
-  lat?: number | null;
-  lng?: number | null;
 }): string {
-  if (
-    typeof spot.lat === "number" &&
-    typeof spot.lng === "number" &&
-    Number.isFinite(spot.lat) &&
-    Number.isFinite(spot.lng)
-  ) {
-    // The name is passed alongside the coordinates so the pin is labelled
-    // rather than dropped anonymously in the street.
-    const query = encodeURIComponent(`${spot.lat},${spot.lng}`);
-    return `https://www.google.com/maps/search/?api=1&query=${query}`;
-  }
-
-  const written = [spot.name, spot.address, spot.city]
+  const destination = [spot.name, spot.address, spot.city]
     .filter((part): part is string => Boolean(part && part.trim()))
     .join(", ");
 
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(written)}`;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+    destination
+  )}`;
 }

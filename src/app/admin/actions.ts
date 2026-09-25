@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { publishChanges, spotPath } from "@/lib/publish";
+import { publishChanges, spotPath, spotPaths } from "@/lib/publish";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { geocodeAddress } from "@/lib/geocode";
 import { hasAnyHours, spotHoursRowsFromForm } from "@/lib/hours";
@@ -31,11 +31,38 @@ async function requireAdmin() {
   return supabase;
 }
 
+/**
+ * Refreshes every cached page that shows this listing, not just its own.
+ *
+ * The city and neighbourhood are looked up rather than passed, because most of
+ * the callers below only ever hold an id. One tiny single-row read per admin
+ * action is nothing next to getting this wrong -- which, before this existed,
+ * meant a new coffee shop sat on the homepage with no photo for a week.
+ *
+ * Call it before a delete, while the row still exists to be read.
+ */
+async function publishSpotEverywhere(
+  supabase: Awaited<ReturnType<typeof requireAdmin>>,
+  spotId: string
+) {
+  if (!spotId) return;
+
+  const { data } = await supabase
+    .from("spots")
+    .select("city, district")
+    .eq("id", spotId)
+    .maybeSingle();
+
+  await publishChanges(
+    ...spotPaths({ id: spotId, city: data?.city, district: data?.district })
+  );
+}
+
 export async function approveSpot(formData: FormData) {
   const supabase = await requireAdmin();
   const id = String(formData.get("id") ?? "");
   if (id) await supabase.from("spots").update({ status: "approved" }).eq("id", id);
-  await publishChanges(spotPath(id));
+  await publishSpotEverywhere(supabase, id);
   redirect("/admin");
 }
 
@@ -43,7 +70,7 @@ export async function rejectSpot(formData: FormData) {
   const supabase = await requireAdmin();
   const id = String(formData.get("id") ?? "");
   if (id) await supabase.from("spots").update({ status: "rejected" }).eq("id", id);
-  await publishChanges(spotPath(id));
+  await publishSpotEverywhere(supabase, id);
   redirect("/admin");
 }
 
@@ -63,7 +90,7 @@ export async function takeSpotOffline(formData: FormData) {
       .from("spots")
       .update({ status: "rejected", needs_review: false })
       .eq("id", id);
-  await publishChanges(spotPath(id));
+  await publishSpotEverywhere(supabase, id);
   redirect("/admin");
 }
 
@@ -264,7 +291,7 @@ export async function createListingAsAdmin(formData: FormData) {
       .insert(photoUrls.map((url) => ({ spot_id: spot.id, url, kind: "gallery" })));
   }
 
-  await publishChanges(spotPath(spot.id));
+  await publishSpotEverywhere(supabase, spot.id);
   redirect(`/admin/listings/new?success=${encodeURIComponent(name)}&spotId=${spot.id}`);
 }
 
@@ -351,7 +378,12 @@ export async function updateListing(formData: FormData) {
   await replaceHours(supabase, id, formData);
   const priceProblem = await replacePriceAnchors(supabase, id, formData);
 
-  await publishChanges(spotPath(id));
+  // The city and district come from the form rather than a second read: an
+  // edit may have just moved the listing, and the pages that need refreshing
+  // are the ones it is on now.
+  await publishChanges(
+    ...spotPaths({ id, city, district: district || null })
+  );
 
   // Saved, but say so honestly if part of it did not stick.
   if (priceProblem) {
@@ -420,11 +452,14 @@ export async function deleteListing(formData: FormData) {
 
   // Ask for the deleted row back: a delete blocked by row-level security
   // succeeds while removing nothing, so only the returned rows prove it went.
+  // City and district come back with it, so the pages that were showing this
+  // listing can be refreshed afterwards -- by then the row is gone and there
+  // is nothing left to ask which city it was in.
   const { data: deleted, error } = await supabase
     .from("spots")
     .delete()
     .eq("id", id)
-    .select("id");
+    .select("id, city, district");
 
   if (error) {
     redirect(
@@ -442,9 +477,16 @@ export async function deleteListing(formData: FormData) {
     );
   }
 
-  // The listing is gone from the database, but its page is cached: without
-  // naming it here the deleted shop stays readable, and indexable, for a day.
-  await publishChanges(spotPath(id));
+  // The listing is gone from the database, but its pages are cached: without
+  // naming them here the deleted shop stays readable, and indexable, for a
+  // week -- and its card keeps sitting on the homepage and its city page.
+  await publishChanges(
+    ...spotPaths({
+      id,
+      city: deleted[0]?.city,
+      district: deleted[0]?.district,
+    })
+  );
   redirect(
     `/admin/listings?notice=${encodeURIComponent("Listing permanently deleted.")}`
   );

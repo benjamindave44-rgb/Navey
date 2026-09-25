@@ -251,14 +251,12 @@ export default async function SpotDetailPage({
     ],
   };
 
-  // Route by business name rather than by our stored pin. Our coordinates
-  // come from someone tapping a small map, so they land near the building at
-  // best; Google's own record of the shop is the more accurate destination,
-  // and a pin that is merely close sends people to the wrong door. The pin
-  // stays authoritative for the Explore Map, where approximate is fine.
-  const mapsHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-    `${spot.name}, ${spot.address}, ${spot.city}`
-  )}`;
+  // Route by business name rather than by our stored pin -- the reasoning now
+  // lives with the function in src/lib/contact.ts, so the next person to add a
+  // maps link finds it there rather than in a comment on one page. That is how
+  // a second, coordinate-based directions button briefly got added here and
+  // sent people to the wrong place.
+  const mapsHref = directionsUrl(spot);
 
   return (
     <>
@@ -523,20 +521,14 @@ export default async function SpotDetailPage({
               {/* The way out of the page, and the point of the page.
                   Without these a visitor reads the listing, leaves, and
                   searches Instagram themselves -- which is where they were
-                  going anyway, only without us. Directions are always offered
-                  because they are built from the address and coordinates the
-                  listing already carries; the rest appear only when filled. */}
+                  going anyway, only without us.
+                  No directions link here: there is already one beside the
+                  address above, and this block briefly carried a second that
+                  pointed somewhere else. One destination, one button. */}
+              {(instagram || phoneHref || website || checkedOn) && (
               <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
-                <p className="font-heading font-bold">Go / get in touch</p>
+                <p className="font-heading font-bold">Get in touch</p>
                 <div className="mt-3 flex flex-col gap-2 text-sm">
-                  <a
-                    href={directionsUrl(spot)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 rounded-xl bg-navey-ink px-3 py-2 font-semibold text-navey-yellow"
-                  >
-                    <span aria-hidden>📍</span> Get directions
-                  </a>
                   {instagram && (
                     <a
                       href={`https://www.instagram.com/${instagram}/`}
@@ -575,6 +567,7 @@ export default async function SpotDetailPage({
                   </p>
                 )}
               </div>
+              )}
 
               {/* "Can I work here?" -- put above atmosphere on purpose. The
                   listing carried four fields describing a mood before it
