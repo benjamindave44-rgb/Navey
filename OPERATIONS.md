@@ -228,6 +228,76 @@ Coffee has no tags, two listings have no description, and Auro Chocolate Cafe
 and Outpost Market are filed under Taguig with a Bangkal address — Bangkal is
 in Makati.
 
+## Opening submissions to visitors — designed, not built
+
+Today a visitor must sign in before submitting a coffee shop. Reactions and
+saves do not require an account (deliberately — see below), but submissions do,
+and that gate costs submissions from people who found the site five minutes ago
+and will never make an account for it.
+
+**Do this after there is traffic to capture**, not before. Right now Google
+cannot read `/explore` and there is nobody arriving to convert. The order that
+matters is: firewall rule → Search Console → fill in the listings → promote →
+*then* open submissions.
+
+### The problem that has to be solved first
+
+Credit is the reward, and an anonymous submission cannot be credited. Nothing
+breaks if `submitted_by` is null — `src/lib/community.ts` filters those rows
+out of the feed and the leaderboard, and the listing page hides its
+"Contributed by" block — but the submission becomes invisible to the whole
+contribution system, which is the thing that was supposed to motivate it.
+
+Three identities are available, weakest first:
+
+1. **Nothing.** Anonymous. No credit is possible, ever.
+2. **An email they type.** Enough to reply to them. **Not enough to credit
+   publicly**, because anyone can type anyone's name — "submitted by
+   <famous person>" is one bored visitor away.
+3. **An account.** Verified, and safe to put on a public page.
+
+### The design: accept now, credit later
+
+Do not choose between "no account" and "no credit". Take the submission
+immediately and attach the identity afterwards.
+
+1. Visitor submits with a name and email, no account.
+2. It lands in the review queue exactly as now. **Nothing is public until an
+   admin approves it** — which is why the moderation risk here is low, and why
+   this is a much safer thing to open up than reviews.
+3. The published listing says **"Submitted by a visitor"**. No name, because an
+   unverified name on a public page is an impersonation waiting to happen, and
+   it must not earn a leaderboard position either.
+4. If that person later signs up **with the same email**, every submission they
+   made is attached to their new account retroactively: the name appears, the
+   leaderboard counts it, their profile fills up.
+
+Step 4 is the point. It changes the sign-up pitch from "make an account to
+submit" — which nobody does on a first visit — to "claim the three shops you
+already added". The same shape as guest saves in `src/lib/guest-saves.ts`: let
+people act first, and make the account the way to keep what they did.
+
+### What it needs
+
+- `spots.submitter_email` and `spots.submitter_name`, both nullable.
+  `submitted_by` stays null until claimed.
+- Removing the `redirect("/sign-in")` from `src/app/submit-a-spot/page.tsx`.
+- Rate limiting by email *and* address, via the existing `check_rate_limit`.
+  An open form with no limit is a spam queue.
+- A linking step on sign-in: attach spots whose `submitter_email` matches the
+  newly verified address and whose `submitted_by` is null.
+- The public credit stays "a visitor" until `submitted_by` is filled.
+
+Roughly a day. The real ongoing cost is admin time reviewing junk.
+
+### Reviews stay signed-in
+
+Not an oversight. A text box open to the world, on a site with no moderation
+staff, attracts spam links and abuse aimed at real businesses — and one nasty
+anonymous review about a real coffee shop is that owner's problem, not just
+ours. Reactions already give a signed-out visitor a voice; words cost an
+account.
+
 ## The public pages are cached
 
 Every public page except Explore and a single collection is now built once and
