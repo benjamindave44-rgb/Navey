@@ -205,6 +205,7 @@ export default async function ExplorePage({
             {search && (
               <Link
                 href={buildHref(baseParams, { q: "" })}
+                prefetch={false}
                 aria-label="Clear search"
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-navey-ink/50 hover:text-navey-ink"
               >
@@ -282,12 +283,26 @@ export default async function ExplorePage({
           </button>
         </form>
 
+        {/* Every link in this block points back at /explore, and every one of
+            them carries prefetch={false}.
+
+            Next prefetches links as they come into view, which is usually a
+            gift: the next page is ready before it is asked for. Here it is the
+            opposite. This page is rendered fresh on every request, so each
+            prefetched filter is a full server render of a page nobody clicked
+            -- and there are a dozen of them visible at once. Opening Explore
+            once quietly asked the server for Explore a dozen more times.
+
+            It was first noticed as a false alarm: the owner tripped his own
+            20-requests-a-minute firewall rule just by browsing. The rule was
+            not wrong; the page was. */}
         <div className="mt-4 flex flex-wrap items-center gap-2">
           {/* First, and a single tap. "What is open right now" is the question
               people actually arrive with, and making it a dropdown you then
               have to submit would bury it. */}
           <Link
             href={buildHref(baseParams, { open: openNow ? "" : "now" })}
+            prefetch={false}
             aria-pressed={openNow}
             className={`rounded-full px-4 py-2 text-xs font-bold transition-colors ${
               openNow
@@ -305,6 +320,7 @@ export default async function ExplorePage({
               three. */}
           <Link
             href={buildHref(baseParams, { work: workFriendly ? "" : "1" })}
+            prefetch={false}
             aria-pressed={workFriendly}
             className={`rounded-full px-4 py-2 text-xs font-bold transition-colors ${
               workFriendly
@@ -316,6 +332,7 @@ export default async function ExplorePage({
           </Link>
           <Link
             href={buildHref(baseParams, { aircon: aircon ? "" : "1" })}
+            prefetch={false}
             aria-pressed={aircon}
             className={`rounded-full px-4 py-2 text-xs font-bold transition-colors ${
               aircon
@@ -347,6 +364,7 @@ export default async function ExplorePage({
           {hasActiveFilters && (
             <Link
               href="/explore"
+              prefetch={false}
               className="rounded-full px-4 py-2 text-xs font-semibold text-navey-ink/50 hover:text-navey-ink"
             >
               Clear all
