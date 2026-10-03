@@ -1,5 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
+import { instagramHandle } from "@/lib/contact";
+
+/**
+ * Navey's own Instagram.
+ *
+ * Written here rather than read from the environment: it is a public handle,
+ * not a secret, it changes roughly never, and putting it in Vercel's settings
+ * would mean one more place to look and one more thing to forget. The env var
+ * still wins if it is set, so the handle can be changed without a code edit.
+ *
+ * Normalised through the same helper a listing's handle uses, so "@navey.ph"
+ * or a pasted profile URL both produce a working link.
+ */
+const INSTAGRAM_HANDLE =
+  instagramHandle(process.env.NEXT_PUBLIC_INSTAGRAM) ??
+  instagramHandle("navey.ph");
 
 const LINK_COLUMNS: { title: string; links: { label: string; href?: string }[] }[] = [
   {
@@ -60,6 +76,20 @@ export function Footer() {
           >
             navey.ph@gmail.com
           </a>
+          {/* Set NEXT_PUBLIC_INSTAGRAM in Vercel to the handle, without the @.
+              Absent until then, rather than a link to an account that may not
+              exist yet -- a dead social link on a directory reads worse than
+              none. Baked at build time, so it appears after the next deploy. */}
+          {INSTAGRAM_HANDLE && (
+            <a
+              href={`https://www.instagram.com/${INSTAGRAM_HANDLE}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-fit text-sm font-semibold underline hover:opacity-60"
+            >
+              @{INSTAGRAM_HANDLE} on Instagram
+            </a>
+          )}
         </div>
         {LINK_COLUMNS.map((column) => (
           <div key={column.title} className="flex flex-col gap-3">
