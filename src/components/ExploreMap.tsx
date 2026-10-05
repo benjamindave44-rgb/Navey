@@ -4,14 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { MapSpot } from "@/lib/queries";
-
-const CATEGORY_COLOR: Record<string, string> = {
-  coffee_shop: "#14120B",
-  restaurant: "#B45309",
-  both: "#7C3AED",
-};
+import { SPOT_CATEGORIES, UNKNOWN_CATEGORY_COLOR } from "@/lib/categories";
 
 const MANILA_CENTER: [number, number] = [121.0, 14.6];
+
+/** One source, clustered, feeding all three layers below. */
+const SOURCE = "spots";
 
 function buildPopupElement(spot: MapSpot) {
   const wrapper = document.createElement("div");
@@ -117,24 +115,145 @@ export function ExploreMap({
     mapRef.current = map;
 
     const bounds = new mapboxgl.LngLatBounds();
+    for (const spot of spots) bounds.extend([spot.lng, spot.lat]);
 
-    for (const spot of spots) {
-      const el = document.createElement("div");
-      el.style.cssText = `width:14px;height:14px;border-radius:9999px;background:${
-        CATEGORY_COLOR[spot.category] ?? "#14120B"
-      };border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;`;
+    const byId = new Map(spots.map((spot) => [spot.id, spot]));
+    let popup: mapboxgl.Popup | null = null;
 
-      new mapboxgl.Marker({ element: el })
-        .setLngLat([spot.lng, spot.lat])
-        .setPopup(new mapboxgl.Popup({ offset: 12 }).setDOMContent(buildPopupElement(spot)))
-        .addTo(map);
+    /**
+     * Drawn as map layers rather than as one HTML marker per listing.
+     *
+     * The old version placed a div per spot. At fifty listings that is fifty
+     * elements the browser positions on every pan and zoom, and in BGC they sat
+     * on top of each other -- a dozen shops in one block rendered as one
+     * unreadable blob, so the densest, most useful part of the map was the part
+     * you could not use. Clustering is the fix, and Mapbox can only cluster a
+     * source it owns, which means the markers had to go.
+     */
+    function draw() {
+      map.addSource(SOURCE, {
+        type: "geojson",
+        cluster: true,
+        // Below this zoom the dots merge; above it every listing stands alone.
+        clusterMaxZoom: 14,
+        clusterRadius: 45,
+        data: {
+          type: "FeatureCollection",
+          features: spots.map((spot) => ({
+            type: "Feature" as const,
+            geometry: {
+              type: "Point" as const,
+              coordinates: [spot.lng, spot.lat],
+            },
+            properties: { id: spot.id, category: spot.category },
+          })),
+        },
+      });
 
-      bounds.extend([spot.lng, spot.lat]);
+      map.addLayer({
+        id: "clusters",
+        type: "circle",
+        source: SOURCE,
+        filter: ["has", "point_count"],
+        paint: {
+          "circle-color": "#14120B",
+          // Grows with the count, so a block of twenty reads as busier than a
+          // pair -- the density is information, not noise.
+          "circle-radius": ["step", ["get", "point_count"], 16, 5, 20, 15, 26],
+          "circle-stroke-width": 3,
+          "circle-stroke-color": "#FFDE00",
+        },
+      });
+
+      map.addLayer({
+        id: "cluster-count",
+        type: "symbol",
+        source: SOURCE,
+        filter: ["has", "point_count"],
+        layout: {
+          "text-field": ["get", "point_count_abbreviated"],
+          "text-size": 13,
+          // The pair Mapbox's own clustering example uses. A font the style
+          // does not ship renders no label at all, which would leave silent
+          // black circles with no number in them.
+          "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+        },
+        paint: { "text-color": "#FFDE00" },
+      });
+
+      map.addLayer({
+        id: "spot-point",
+        type: "circle",
+        source: SOURCE,
+        filter: ["!", ["has", "point_count"]],
+        paint: {
+          // Built from SPOT_CATEGORIES so a new kind of place cannot end up
+          // sharing a colour with another one unnoticed.
+          "circle-color": [
+            "match",
+            ["get", "category"],
+            ...SPOT_CATEGORIES.flatMap((entry) => [entry.value, entry.color]),
+            UNKNOWN_CATEGORY_COLOR,
+          ],
+          "circle-radius": 7,
+          "circle-stroke-width": 2,
+          "circle-stroke-color": "#FFFFFF",
+        },
+      });
     }
+
+    function onClusterClick(event: mapboxgl.MapMouseEvent) {
+      const [feature] = map.queryRenderedFeatures(event.point, {
+        layers: ["clusters"],
+      });
+      const clusterId = feature?.properties?.cluster_id;
+      if (clusterId === undefined) return;
+
+      const source = map.getSource(SOURCE) as mapboxgl.GeoJSONSource;
+      source.getClusterExpansionZoom(clusterId, (error, zoom) => {
+        if (error || zoom === null || zoom === undefined) return;
+        map.easeTo({
+          center: (feature.geometry as GeoJSON.Point).coordinates as [number, number],
+          zoom,
+        });
+      });
+    }
+
+    function onSpotClick(event: mapboxgl.MapMouseEvent) {
+      const [feature] = map.queryRenderedFeatures(event.point, {
+        layers: ["spot-point"],
+      });
+      const spot = byId.get(String(feature?.properties?.id ?? ""));
+      if (!spot) return;
+
+      popup?.remove();
+      popup = new mapboxgl.Popup({ offset: 12 })
+        .setLngLat([spot.lng, spot.lat])
+        .setDOMContent(buildPopupElement(spot))
+        .addTo(map);
+    }
+
+    const pointer = () => {
+      map.getCanvas().style.cursor = "pointer";
+    };
+    const noPointer = () => {
+      map.getCanvas().style.cursor = "";
+    };
+
+    map.on("load", () => {
+      draw();
+      map.on("click", "clusters", onClusterClick);
+      map.on("click", "spot-point", onSpotClick);
+      for (const layer of ["clusters", "spot-point"] as const) {
+        map.on("mouseenter", layer, pointer);
+        map.on("mouseleave", layer, noPointer);
+      }
+    });
 
     map.fitBounds(bounds, { padding: 60, maxZoom: 14 });
 
     return () => {
+      popup?.remove();
       meRef.current?.remove();
       meRef.current = null;
       map.remove();

@@ -11,6 +11,16 @@ export type SpotCategory = {
   value: string;
   label: string;
   schemaType: string;
+  /**
+   * The dot on the Explore map.
+   *
+   * Here rather than in the map component, because the map kept its own list
+   * of three colours and quietly fell behind: a bakery was drawn in exactly
+   * the same black as a coffee shop, so the map claimed two different kinds of
+   * place were the same kind. A category now carries everything that must be
+   * true about it in one place.
+   */
+  color: string;
 };
 
 /**
@@ -20,19 +30,57 @@ export type SpotCategory = {
  * happened to "Bakery & Pastries" for months.
  */
 export const SPOT_CATEGORIES: SpotCategory[] = [
-  { value: "coffee_shop", label: "Coffee Shop", schemaType: "CafeOrCoffeeShop" },
-  { value: "restaurant", label: "Restaurant", schemaType: "Restaurant" },
+  {
+    value: "coffee_shop",
+    label: "Coffee Shop",
+    schemaType: "CafeOrCoffeeShop",
+    color: "#14120B",
+  },
+  {
+    value: "restaurant",
+    label: "Restaurant",
+    schemaType: "Restaurant",
+    color: "#B45309",
+  },
   // A patisserie is neither a cafe nor a restaurant, and calling it either
   // makes it harder to find for the thing it is actually known for.
-  { value: "bakery", label: "Bakery & Pastries", schemaType: "Bakery" },
+  {
+    value: "bakery",
+    label: "Bakery & Pastries",
+    schemaType: "Bakery",
+    color: "#CA8A04",
+  },
   // Milk tea is not a coffee shop. Nobody looking for boba wants a flat white,
   // and in this country it is a category of its own by volume, not a niche.
-  { value: "milk_tea", label: "Milk Tea & Boba", schemaType: "CafeOrCoffeeShop" },
-  { value: "bar", label: "Bar & Cocktails", schemaType: "BarOrPub" },
+  {
+    value: "milk_tea",
+    label: "Milk Tea & Boba",
+    schemaType: "CafeOrCoffeeShop",
+    color: "#0891B2",
+  },
+  {
+    value: "bar",
+    label: "Bar & Cocktails",
+    schemaType: "BarOrPub",
+    color: "#15803D",
+  },
   // The ice cream and cake shops that are neither a bakery nor a cafe.
-  { value: "dessert", label: "Dessert & Ice Cream", schemaType: "IceCreamShop" },
-  { value: "both", label: "Coffee Shop & Restaurant", schemaType: "FoodEstablishment" },
+  {
+    value: "dessert",
+    label: "Dessert & Ice Cream",
+    schemaType: "IceCreamShop",
+    color: "#DB2777",
+  },
+  {
+    value: "both",
+    label: "Coffee Shop & Restaurant",
+    schemaType: "FoodEstablishment",
+    color: "#7C3AED",
+  },
 ];
+
+/** The fallback dot colour for a value no longer in the list above. */
+export const UNKNOWN_CATEGORY_COLOR = "#6B7280";
 
 const BY_VALUE = new Map(SPOT_CATEGORIES.map((entry) => [entry.value, entry]));
 
@@ -40,6 +88,10 @@ const BY_VALUE = new Map(SPOT_CATEGORIES.map((entry) => [entry.value, entry]));
  *  silently blank -- easier to notice and fix than an empty space. */
 export function categoryLabel(value: string): string {
   return BY_VALUE.get(value)?.label ?? value;
+}
+
+export function categoryColor(value: string): string {
+  return BY_VALUE.get(value)?.color ?? UNKNOWN_CATEGORY_COLOR;
 }
 
 export function categorySchemaType(value: string): string {
