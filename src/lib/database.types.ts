@@ -597,6 +597,8 @@ export type Database = {
           seating_style: string | null
           status: string
           submitted_by: string | null
+          submitter_email: string | null
+          submitter_name: string | null
           website: string | null
           wifi: string | null
         }
@@ -637,6 +639,8 @@ export type Database = {
           seating_style?: string | null
           status?: string
           submitted_by?: string | null
+          submitter_email?: string | null
+          submitter_name?: string | null
           website?: string | null
           wifi?: string | null
         }
@@ -677,6 +681,8 @@ export type Database = {
           seating_style?: string | null
           status?: string
           submitted_by?: string | null
+          submitter_email?: string | null
+          submitter_name?: string | null
           website?: string | null
           wifi?: string | null
         }
@@ -752,6 +758,28 @@ export type Database = {
       delete_own_account: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      submit_spot_as_visitor: {
+        Args: {
+          p_name: string
+          p_address: string
+          p_city: string
+          p_province: string | null
+          p_district: string | null
+          p_category: string
+          p_price_range: string | null
+          p_description: string | null
+          p_tag_ids: number[]
+          p_submitter_name: string
+          p_submitter_email: string
+          p_lat: number | null
+          p_lng: number | null
+        }
+        Returns: string | null
+      }
+      claim_visitor_submissions: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       toggle_spot_reaction: {
         Args: { p_spot_id: string; p_voter_key: string; p_label: string }

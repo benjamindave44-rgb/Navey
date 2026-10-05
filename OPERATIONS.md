@@ -228,17 +228,36 @@ Coffee has no tags, two listings have no description, and Auro Chocolate Cafe
 and Outpost Market are filed under Taguig with a Bangkal address — Bangkal is
 in Makati.
 
-## Opening submissions to visitors — designed, not built
+## Opening submissions to visitors — built
 
 Today a visitor must sign in before submitting a coffee shop. Reactions and
 saves do not require an account (deliberately — see below), but submissions do,
 and that gate costs submissions from people who found the site five minutes ago
 and will never make an account for it.
 
-**Do this after there is traffic to capture**, not before. Right now Google
-cannot read `/explore` and there is nobody arriving to convert. The order that
-matters is: firewall rule → Search Console → fill in the listings → promote →
-*then* open submissions.
+**Built and live**, as migrations 0042 and the changes around
+`src/app/submit-a-spot/`. What follows is why it works the way it does.
+
+Two things an anonymous submission deliberately cannot carry: **photos**,
+because that is the one field on the form that could put arbitrary content in
+the project's storage, and **opening hours**, because somebody recommending a
+shop reliably knows its name and street and rarely its seven-day times — and
+the shorter form is the one people finish. Both are added here on approval.
+
+Anonymous submissions go through `submit_spot_as_visitor`, a privileged
+function, rather than an insert policy for `anon`. A policy would let anyone
+POST rows straight into `spots` through the API with no limit; a function can
+refuse. It forces `status` to pending, length-checks every field, matches the
+category against the real list, and carries two rate limits: a per-email one
+that stops the ordinary accident, and a **global cap of 60 an hour that no
+caller can influence** — the per-email limit is sidestepped by typing a
+different address, the global one is not, and it is what keeps the review queue
+readable if somebody scripts it.
+
+The visitor's typed name is **never rendered publicly**. It appears in the
+review queue marked "(visitor)", with their email beside it so you can ask
+them something. An unverified name on a public page is an impersonation
+waiting to happen, and it must not earn a leaderboard position either.
 
 ### The problem that has to be solved first
 

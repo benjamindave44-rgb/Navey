@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { getAreaDirectory } from "@/lib/areas";
-import { redirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SubmitSpotForm } from "@/components/SubmitSpotForm";
@@ -28,11 +27,15 @@ export default async function SubmitASpotPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/sign-in");
-
+  // No sign-in gate. Somebody five minutes into their first visit who knows a
+  // good place will not make an account to tell us about it -- they close the
+  // tab, and the recommendation is lost. Nothing they send is public until it
+  // has been approved here, so the risk is a queue to read, not a site to
+  // repair. See OPERATIONS.md and migration 0042.
   const params = await searchParams;
   const error = typeof params.error === "string" ? params.error : undefined;
   const success = typeof params.success === "string" ? params.success : undefined;
+  const asGuest = params.guest === "1";
 
   const tags = success ? [] : await getTags();
   const districts = (await getAreaDirectory()).map((area) => area.district);
@@ -55,6 +58,15 @@ export default async function SubmitASpotPage({
                 they go live — we&apos;ll let you know once it&apos;s
                 approved.
               </p>
+              {/* The ask lands here rather than in front of the form: they
+                  have already done the work, so "keep what you did" is a far
+                  better reason to make an account than "you must". */}
+              {asGuest && (
+                <p className="rounded-xl bg-navey-band px-4 py-3 text-sm">
+                  Make an account with the same email and this spot will be
+                  credited to you — along with anything else you send in.
+                </p>
+              )}
               <div className="mt-2 flex gap-3">
                 <Link
                   href="/submit-a-spot"
@@ -84,6 +96,7 @@ export default async function SubmitASpotPage({
                   tags={tags}
                   knownDistricts={districts}
                   error={error}
+                  asGuest={!user}
                 />
               </div>
             </>

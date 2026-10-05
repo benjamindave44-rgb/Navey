@@ -11,6 +11,8 @@ export type PendingSpot = {
   description: string | null;
   createdAt: string;
   submitterName: string | null;
+  /** Only ever set for a submission made without an account. */
+  submitterEmail?: string | null;
 };
 
 export async function getPendingSpots(): Promise<PendingSpot[]> {
@@ -18,7 +20,7 @@ export async function getPendingSpots(): Promise<PendingSpot[]> {
   const { data, error } = await supabase
     .from("spots")
     .select(
-      "id, name, category, city, province, address, price_range, description, created_at, submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)"
+      "id, name, category, city, province, address, price_range, description, created_at, submitter_name, submitter_email, submitted_by_profile:profiles!spots_submitted_by_fkey(display_name)"
     )
     .eq("status", "pending")
     .order("created_at", { ascending: true });
@@ -35,7 +37,13 @@ export async function getPendingSpots(): Promise<PendingSpot[]> {
     priceRange: spot.price_range,
     description: spot.description,
     createdAt: spot.created_at,
-    submitterName: spot.submitted_by_profile?.display_name ?? null,
+    // An account's display name when there is one, otherwise what the visitor
+    // typed. Marked as unverified so the queue never implies the two carry the
+    // same weight.
+    submitterName:
+      spot.submitted_by_profile?.display_name ??
+      (spot.submitter_name ? `${spot.submitter_name} (visitor)` : null),
+    submitterEmail: spot.submitter_email ?? null,
   }));
 }
 

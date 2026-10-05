@@ -34,6 +34,7 @@ export function SubmitSpotForm({
   submitLabel = "Submit Spot",
   footnote = "Submitted spots are reviewed by our team before they appear publicly. This usually takes a day or two.",
   allowFeature = false,
+  asGuest = false,
 }: {
   tags: Tag[];
   knownDistricts?: string[];
@@ -43,6 +44,14 @@ export function SubmitSpotForm({
   footnote?: string | null;
   /** Admin-only: regular submitters must not be able to feature themselves. */
   allowFeature?: boolean;
+  /**
+   * Nobody is signed in. Asks who they are, and hides the two sections an
+   * anonymous submission cannot carry -- photos, because that is the one field
+   * here that could put arbitrary content in our storage, and hours, because
+   * somebody recommending a shop knows its street but rarely its seven-day
+   * opening times. The short form is also the one people finish.
+   */
+  asGuest?: boolean;
 }) {
   const [category, setCategory] = useState("coffee_shop");
   const [price, setPrice] = useState("₱₱");
@@ -70,7 +79,13 @@ export function SubmitSpotForm({
 
       <section>
         <p className="mb-2 text-sm font-semibold">Photos</p>
-        <PhotoPicker name="photos" max={4} />
+        {!asGuest && <PhotoPicker name="photos" max={4} />}
+        {asGuest && (
+          <p className="rounded-xl bg-navey-band px-4 py-3 text-xs text-navey-ink/70">
+            Photos can be added once the spot is approved — or sign in first and
+            you can attach them now.
+          </p>
+        )}
       </section>
 
       <div className="flex flex-col gap-2">
@@ -123,7 +138,7 @@ export function SubmitSpotForm({
 
       <LocationFields onPick={handleLocationPick} knownDistricts={knownDistricts} />
 
-      <HoursQuickPicker />
+      {!asGuest && <HoursQuickPicker />}
 
       <div>
         <p className="mb-2 text-sm font-semibold">Price range</p>
@@ -173,6 +188,39 @@ export function SubmitSpotForm({
 
       {footnote && (
         <p className="text-xs text-navey-ink/50">{footnote}</p>
+      )}
+
+      {asGuest && (
+        <div className="flex flex-col gap-3 rounded-2xl bg-navey-band/50 p-4">
+          <div>
+            <p className="font-heading font-bold">Who should we credit?</p>
+            <p className="mt-0.5 text-xs text-navey-ink/60">
+              Your name is never shown on the listing. Make an account later
+              with this same email and every spot you have sent in becomes
+              yours.
+            </p>
+          </div>
+          <label className="flex flex-col gap-1 text-sm font-semibold">
+            Your name
+            <input
+              name="submitterName"
+              type="text"
+              required
+              maxLength={80}
+              className="rounded-full border border-black/10 px-4 py-3 text-base font-normal outline-none focus:border-navey-ink sm:text-sm"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-semibold">
+            Your email
+            <input
+              name="submitterEmail"
+              type="email"
+              required
+              maxLength={160}
+              className="rounded-full border border-black/10 px-4 py-3 text-base font-normal outline-none focus:border-navey-ink sm:text-sm"
+            />
+          </label>
+        </div>
       )}
 
       <SubmitButton label={submitLabel} />

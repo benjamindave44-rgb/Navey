@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { importGuestSaves } from "@/app/spots/actions";
+import { claimVisitorSubmissions } from "@/app/submit-a-spot/actions";
 import { clearGuestSaves, guestSavedIds } from "@/lib/guest-saves";
 import { forgetSavedSpots } from "@/lib/use-saved-spots";
 import { useViewer } from "@/lib/use-viewer";
@@ -27,6 +28,20 @@ export function GuestSaveImporter() {
 
   useEffect(() => {
     if (viewer.status !== "signed-in" || done.current) return;
+
+    /**
+     * Anything submitted before this account existed becomes theirs.
+     *
+     * Matched on the address Supabase holds for the account, not on anything
+     * the browser says, so nobody can collect someone else's submissions by
+     * typing their email into the form. Safe to run on every sign-in: once the
+     * rows are claimed there is nothing left to match.
+     *
+     * Deliberately not awaited alongside the saves below -- a person with
+     * nothing to claim should not wait on a round trip that will find nothing,
+     * and a failure here must not stop their saves being imported.
+     */
+    void claimVisitorSubmissions();
 
     const pending = guestSavedIds();
     if (pending.length === 0) {

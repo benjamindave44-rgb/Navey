@@ -109,6 +109,17 @@ export default async function ReviewQueuePage() {
                     {spot.submitterName ?? "unknown"} on{" "}
                     {new Date(spot.createdAt).toLocaleDateString()}
                   </p>
+                  {/* Only set on a submission made without an account. Worth
+                      having in front of you: the quickest way to resolve a thin
+                      submission is to ask the person who sent it. */}
+                  {spot.submitterEmail && (
+                    <a
+                      href={`mailto:${spot.submitterEmail}`}
+                      className="mt-1 inline-block text-xs font-semibold underline hover:opacity-60"
+                    >
+                      {spot.submitterEmail}
+                    </a>
+                  )}
                   {spot.description && (
                     <p className="mt-2 max-w-xl text-sm text-navey-ink/80">
                       {spot.description}
