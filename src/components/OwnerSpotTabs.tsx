@@ -18,6 +18,14 @@ import { PhotoPicker } from "@/components/PhotoPicker";
 import { PHOTO_LIMITS, UPLOAD_LIMIT_LABEL } from "@/lib/upload-limits";
 import { LocationFields } from "@/components/LocationFields";
 import type { OwnerSpotDetail } from "@/lib/owner";
+import { ChoiceChips, YesNoChips, yesNoValue } from "@/components/ChoiceChips";
+import {
+  LAPTOP_OPTIONS,
+  OUTLET_OPTIONS,
+  PARKING_OPTIONS,
+  WIFI_OPTIONS,
+} from "@/lib/amenities";
+import { PRICE_ANCHOR_SLOTS } from "@/lib/amenity-form";
 import type { Tag } from "@/lib/queries";
 import { TagPicker } from "@/components/TagPicker";
 
@@ -371,6 +379,148 @@ export function OwnerSpotTabs({
                   className="rounded-full border border-black/10 px-4 py-3 text-base sm:text-sm outline-none focus:border-navey-ink"
                 />
               </div>
+            </div>
+
+            {/* The practical facts, in the same chips the admin form uses.
+                These were admin-only until now, which meant the person who
+                actually knows whether the wifi holds up -- the owner -- could
+                not say so. Blank stays reachable: an unanswered question shows
+                nothing on the listing rather than claiming there is no wifi. */}
+            <div className="flex flex-col gap-5 rounded-2xl bg-navey-band/40 p-4">
+              <div>
+                <p className="font-heading font-bold">Can people work here?</p>
+                <p className="mt-0.5 text-xs text-navey-ink/60">
+                  Tap once to answer, tap again to clear.
+                </p>
+              </div>
+              <ChoiceChips
+                name="wifi"
+                label="Wifi"
+                initialValue={spot.wifi ?? ""}
+                options={WIFI_OPTIONS.map((o) => ({
+                  value: o.value,
+                  label: o.label,
+                }))}
+              />
+              <ChoiceChips
+                name="powerOutlets"
+                label="Power outlets"
+                initialValue={spot.powerOutlets ?? ""}
+                options={OUTLET_OPTIONS.map((o) => ({
+                  value: o.value,
+                  label: o.label,
+                }))}
+              />
+              <ChoiceChips
+                name="laptopFriendly"
+                label="Laptops"
+                initialValue={spot.laptopFriendly ?? ""}
+                options={LAPTOP_OPTIONS.map((o) => ({
+                  value: o.value,
+                  label: o.label,
+                }))}
+              />
+              <YesNoChips
+                name="hasAircon"
+                label="Aircon"
+                initialValue={yesNoValue(spot.hasAircon)}
+              />
+              <YesNoChips
+                name="hasOutdoorSeating"
+                label="Outdoor seating"
+                initialValue={yesNoValue(spot.hasOutdoorSeating)}
+              />
+              <ChoiceChips
+                name="parking"
+                label="Parking"
+                initialValue={spot.parking ?? ""}
+                options={PARKING_OPTIONS.map((o) => ({
+                  value: o.value,
+                  label: o.label,
+                }))}
+              />
+            </div>
+
+            <div className="flex flex-col gap-3 rounded-2xl bg-navey-band/40 p-4">
+              <div>
+                <p className="font-heading font-bold">How people reach you</p>
+                <p className="mt-0.5 text-xs text-navey-ink/60">
+                  The Instagram handle is the most useful of these by a wide
+                  margin.
+                </p>
+              </div>
+              <label className="flex flex-col gap-1 text-sm font-semibold">
+                Instagram
+                <input
+                  name="instagram"
+                  type="text"
+                  defaultValue={spot.instagram ?? ""}
+                  placeholder="yourshop"
+                  className="rounded-full border border-black/10 px-4 py-3 text-base font-normal outline-none focus:border-navey-ink sm:text-sm"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm font-semibold">
+                Phone
+                <input
+                  name="phone"
+                  type="tel"
+                  defaultValue={spot.phone ?? ""}
+                  placeholder="0917 123 4567"
+                  className="rounded-full border border-black/10 px-4 py-3 text-base font-normal outline-none focus:border-navey-ink sm:text-sm"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm font-semibold">
+                Website
+                <input
+                  name="website"
+                  type="url"
+                  defaultValue={spot.website ?? ""}
+                  placeholder="example.com"
+                  className="rounded-full border border-black/10 px-4 py-3 text-base font-normal outline-none focus:border-navey-ink sm:text-sm"
+                />
+              </label>
+            </div>
+
+            <div className="flex flex-col gap-3 rounded-2xl bg-navey-band/40 p-4">
+              <div>
+                <p className="font-heading font-bold">What it costs</p>
+                <p className="mt-0.5 text-xs text-navey-ink/60">
+                  Two or three real prices off your menu. A row needs both a
+                  name and a price to be saved.
+                </p>
+              </div>
+              {Array.from({ length: PRICE_ANCHOR_SLOTS }, (_, slot) => (
+                <div key={slot} className="flex gap-2">
+                  <input
+                    name={`anchorItem${slot}`}
+                    type="text"
+                    defaultValue={spot.priceAnchors[slot]?.item ?? ""}
+                    placeholder={["Latte", "Americano", "Pastry"][slot] ?? "Item"}
+                    className="flex-1 rounded-full border border-black/10 px-4 py-3 text-base outline-none focus:border-navey-ink sm:text-sm"
+                  />
+                  <input
+                    name={`anchorPrice${slot}`}
+                    type="number"
+                    min={1}
+                    defaultValue={spot.priceAnchors[slot]?.pricePhp ?? ""}
+                    placeholder="170"
+                    className="w-28 rounded-full border border-black/10 px-4 py-3 text-base outline-none focus:border-navey-ink sm:text-sm"
+                  />
+                </div>
+              ))}
+              <label className="mt-1 flex items-center gap-3 text-sm font-semibold">
+                <input
+                  type="checkbox"
+                  name="detailsChecked"
+                  defaultChecked={Boolean(spot.detailsCheckedAt)}
+                />
+                These details are correct
+              </label>
+              <input
+                type="hidden"
+                name="detailsCheckedAt"
+                value={spot.detailsCheckedAt ?? ""}
+              />
             </div>
 
             <SaveButton label="Save Amenities & Vibe" />

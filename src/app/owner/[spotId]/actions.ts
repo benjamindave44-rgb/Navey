@@ -2,6 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { publishChanges, spotPaths } from "@/lib/publish";
+import {
+  amenityColumnsFromForm,
+  priceAnchorsFromForm,
+} from "@/lib/amenity-form";
 import { checkContentGuidelines } from "@/lib/content-guidelines";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { storagePathFromPublicUrl, uploadPhotos } from "@/lib/photo-upload";
@@ -181,8 +185,19 @@ export async function updateAmenities(formData: FormData) {
       music_style: musicStyle || null,
       lighting: lighting || null,
       seating_style: seatingStyle || null,
+      // The practical fields, parsed by the same code the admin form uses, so
+      // the two cannot drift into disagreeing about what an empty chip means.
+      ...amenityColumnsFromForm(formData),
     })
     .eq("id", spotId);
+
+  // Replaced wholesale: all three slots are always present in the form, so an
+  // empty set genuinely means "remove the prices" rather than "left alone".
+  const anchors = priceAnchorsFromForm(formData, spotId);
+  await supabase.from("spot_price_anchors").delete().eq("spot_id", spotId);
+  if (anchors.length > 0) {
+    await supabase.from("spot_price_anchors").insert(anchors);
+  }
 
   await publishOwnerSpot(supabase, spotId);
   redirect(

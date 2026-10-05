@@ -57,6 +57,18 @@ export type OwnerSpotDetail = {
   tagIds: number[];
   galleryPhotos: { id: string; url: string }[];
   menuPhotos: { id: string; url: string }[];
+  /** The practical facts. Null throughout means nobody has checked. */
+  wifi: string | null;
+  powerOutlets: string | null;
+  laptopFriendly: string | null;
+  hasAircon: boolean | null;
+  hasOutdoorSeating: boolean | null;
+  parking: string | null;
+  instagram: string | null;
+  phone: string | null;
+  website: string | null;
+  detailsCheckedAt: string | null;
+  priceAnchors: { item: string; pricePhp: number }[];
 };
 
 export async function getOwnerSpotDetail(
@@ -70,8 +82,11 @@ export async function getOwnerSpotDetail(
       `id, name, category, price_range, address, city, province, district, lat, lng, description, status, needs_review,
        noise_level, music_style, lighting, seating_style,
        accepts_cash, accepts_qr_ph, accepts_cards, accepts_bank_transfer,
+       wifi, power_outlets, laptop_friendly, has_aircon, has_outdoor_seating,
+       parking, instagram, phone, website, details_checked_at,
        spot_hours(day_of_week, open_time, close_time, is_closed, is_24_hours),
        spot_tags(tag_id),
+       spot_price_anchors(item, price_php, sort_order),
        spot_photos(id, url, kind)`
     )
     .eq("id", spotId)
@@ -116,6 +131,22 @@ export async function getOwnerSpotDetail(
     menuPhotos: data.spot_photos
       .filter((photo) => photo.kind === "menu")
       .map((photo) => ({ id: photo.id, url: photo.url })),
+    wifi: data.wifi,
+    powerOutlets: data.power_outlets,
+    laptopFriendly: data.laptop_friendly,
+    hasAircon: data.has_aircon,
+    hasOutdoorSeating: data.has_outdoor_seating,
+    parking: data.parking,
+    instagram: data.instagram,
+    phone: data.phone,
+    website: data.website,
+    detailsCheckedAt: data.details_checked_at,
+    // `?? []` for the same reason as src/lib/admin.ts: an embed that comes back
+    // absent rather than empty makes spreading it throw, and a missing price
+    // list is not worth taking the page down for.
+    priceAnchors: [...(data.spot_price_anchors ?? [])]
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((anchor) => ({ item: anchor.item, pricePhp: anchor.price_php })),
   };
 }
 
