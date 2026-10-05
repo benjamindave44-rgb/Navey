@@ -95,7 +95,10 @@ export function AdminListingForm({
 
       <div>
         <p className="mb-2 text-sm font-semibold">Category</p>
-        <div className="flex gap-2">
+        {/* Wraps: there are seven kinds now, and a single row of seven
+            buttons runs off the side of a phone, which is where this form
+            is actually filled in. */}
+        <div className="flex flex-wrap gap-2">
           {SPOT_CATEGORIES.map((option) => (
             <button
               key={option.value}
