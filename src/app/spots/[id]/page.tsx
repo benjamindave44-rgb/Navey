@@ -574,35 +574,10 @@ export default async function SpotDetailPage({
                   carried one about wifi, and this is the block people came for.
                   Absent entirely when nothing has been checked, rather than
                   printed as a row of blanks. */}
-              {workChips.length > 0 && (
-                <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
-                  <p className="font-heading font-bold">Working here</p>
-                  <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                    {workChips.map((chip) => (
-                      <span key={chip.text} className={chipClass(chip.tone)}>
-                        {chip.text}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {comfortChips.length > 0 && (
-                <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
-                  <p className="font-heading font-bold">Comfort & parking</p>
-                  <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                    {comfortChips.map((chip) => (
-                      <span key={chip.text} className={chipClass(chip.tone)}>
-                        {chip.text}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* What things actually cost. "PP" is true of most of Metro
-                  Manila and tells nobody anything; "Latte ₱170" is the whole
-                  answer, and it is the one thing a map listing never shows. */}
+              {/* Prices keep a card to themselves, and that is the point of the
+                  hierarchy rather than an accident of it. "Latte ₱170" is the
+                  one thing here that a map listing never shows, so it gets the
+                  prominence of its own box while everything else shares one. */}
               {spot.priceAnchors.length > 0 && (
                 <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
                   <p className="font-heading font-bold">What it costs</p>
@@ -625,44 +600,90 @@ export default async function SpotDetailPage({
                 </div>
               )}
 
-              {/* Collected on the submission form and shown nowhere until now.
-                  "Is it quiet enough to take a call" is exactly the question a
-                  listing can answer and a map cannot -- and the answers were
-                  already sitting in the database. Only the fields that are
-                  filled in appear; a row of "unknown" tells nobody anything. */}
-              {atmosphere.length > 0 && (
-                <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
-                  <p className="font-heading font-bold">Atmosphere</p>
-                  <dl className="mt-3 flex flex-col gap-2 text-sm">
-                    {atmosphere.map(({ label, value }) => (
-                      <div key={label} className="flex justify-between gap-3">
-                        <dt className="text-navey-ink/60">{label}</dt>
-                        <dd className="font-semibold">{value}</dd>
+              {/* One card, four questions -- and it used to be four cards.
+                  Working here, Comfort & parking, Atmosphere and Payment
+                  Methods each had its own white box with its own heading and
+                  its own shadow, which on a phone is four indistinguishable
+                  slabs in a column of ten. They all answer the same thing:
+                  what is it like in there. Grouped under quiet subheadings
+                  instead, so the page has a shape rather than a stack.
+
+                  The whole card disappears when nothing in it is filled, so a
+                  thin listing is short rather than full of empty headings. */}
+              {(workChips.length > 0 ||
+                comfortChips.length > 0 ||
+                atmosphere.length > 0 ||
+                acceptedPayments.length > 0) && (
+                <div className="flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
+                  <p className="font-heading font-bold">What it&apos;s like</p>
+
+                  {workChips.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-navey-ink/45">
+                        Working here
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2 text-sm">
+                        {workChips.map((chip) => (
+                          <span key={chip.text} className={chipClass(chip.tone)}>
+                            {chip.text}
+                          </span>
+                        ))}
                       </div>
-                    ))}
-                  </dl>
+                    </div>
+                  )}
+
+                  {comfortChips.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-navey-ink/45">
+                        Comfort &amp; parking
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2 text-sm">
+                        {comfortChips.map((chip) => (
+                          <span key={chip.text} className={chipClass(chip.tone)}>
+                            {chip.text}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {atmosphere.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-navey-ink/45">
+                        Atmosphere
+                      </p>
+                      <dl className="mt-2 flex flex-col gap-1.5 text-sm">
+                        {atmosphere.map(({ label, value }) => (
+                          <div key={label} className="flex justify-between gap-3">
+                            <dt className="text-navey-ink/60">{label}</dt>
+                            <dd className="font-semibold">{value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                  )}
+
+                  {/* No "no payment info yet" any more. An empty row saying
+                      nothing is the clutter this change exists to remove. */}
+                  {acceptedPayments.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-navey-ink/45">
+                        Payments
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2 text-sm">
+                        {acceptedPayments.map(({ key, label }) => (
+                          <span
+                            key={key}
+                            className="rounded-full bg-navey-band px-3 py-1 font-semibold"
+                          >
+                            {label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
-
-              <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
-                <p className="font-heading font-bold">Payment Methods</p>
-                {acceptedPayments.length === 0 ? (
-                  <p className="mt-3 text-sm text-navey-ink/60">
-                    No payment info yet.
-                  </p>
-                ) : (
-                  <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                    {acceptedPayments.map(({ key, label }) => (
-                      <span
-                        key={key}
-                        className="rounded-full bg-navey-band px-3 py-1 font-semibold"
-                      >
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
 
               {spot.hours.length > 0 && (
                 <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
@@ -686,16 +707,20 @@ export default async function SpotDetailPage({
                 </div>
               )}
 
+              {/* A line, not a card. One person's name does not need a white
+                  slab with a heading and a shadow around it -- that was a
+                  seventh box competing with the hours and the prices for a
+                  credit nobody came to the page to read. */}
               {spot.contributor && (
-                <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(20,18,11,0.08)]">
-                  <p className="font-heading font-bold">Contributed by</p>
+                <p className="px-1 text-xs text-navey-ink/50">
+                  Contributed by{" "}
                   <Link
                     href={`/u/${spot.contributor.id}`}
-                    className="mt-2 block text-sm text-navey-ink/70 hover:text-navey-ink hover:underline"
+                    className="font-semibold text-navey-ink/70 hover:text-navey-ink hover:underline"
                   >
                     {spot.contributor.name}
                   </Link>
-                </div>
+                </p>
               )}
 
               <ClaimBusinessPanel
